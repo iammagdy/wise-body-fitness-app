@@ -459,6 +459,7 @@ function App() {
 
   const handleBackFromWorkout = () => {
     setScreen("dashboard");
+    setActiveExercise(null);
   };
 
   return (
@@ -482,16 +483,14 @@ function App() {
         />
       </div>
 
-      <div
-        className={`absolute inset-0 transition-opacity duration-300 ease-in-out ${
-          screen === "workout" ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-      >
-        <WorkoutScreen
-          exercise={activeExercise}
-          onBack={handleBackFromWorkout}
-        />
-      </div>
+      {screen === "workout" && activeExercise && (
+        <div className="absolute inset-0">
+          <WorkoutScreen
+            exercise={activeExercise}
+            onBack={handleBackFromWorkout}
+          />
+        </div>
+      )}
     </div>
   );
 }
