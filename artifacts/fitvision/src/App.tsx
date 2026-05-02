@@ -63,11 +63,7 @@ function useTheme() {
     setPref(next);
   }, []);
 
-  const cycle = useCallback(() => {
-    setTheme(pref === "light" ? "dark" : pref === "dark" ? "system" : "light");
-  }, [pref, setTheme]);
-
-  return { pref, isDark, setTheme, cycle };
+  return { pref, isDark, setTheme };
 }
 
 type Gender = "man" | "woman";
