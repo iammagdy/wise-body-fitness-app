@@ -271,7 +271,13 @@ function BackIcon() {
   );
 }
 
-function TimedBody({ exercise }: { exercise: Exercise }) {
+function TimedBody({
+  exercise,
+  active,
+}: {
+  exercise: Exercise;
+  active: boolean;
+}) {
   const [secondsLeft, setSecondsLeft] = useState(exercise.durationSeconds);
   const [running, setRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
@@ -293,9 +299,17 @@ function TimedBody({ exercise }: { exercise: Exercise }) {
     };
   }, [exercise.id, exercise.durationSeconds]);
 
-  // Drive the interval based on `running`
+  // Stop ticking immediately when the workout layer is no longer active
   useEffect(() => {
-    if (!running) {
+    if (!active) {
+      clearTimer();
+      setRunning(false);
+    }
+  }, [active]);
+
+  // Drive the interval based on `running` (only while active)
+  useEffect(() => {
+    if (!running || !active) {
       clearTimer();
       return;
     }
@@ -313,7 +327,7 @@ function TimedBody({ exercise }: { exercise: Exercise }) {
     return () => {
       clearTimer();
     };
-  }, [running]);
+  }, [running, active]);
 
   const toggle = () => {
     if (secondsLeft === 0) {
@@ -379,9 +393,11 @@ function RepsBody({
 
 function WorkoutScreen({
   exercise,
+  active,
   onBack,
 }: {
   exercise: Exercise | null;
+  active: boolean;
   onBack: () => void;
 }) {
   if (!exercise) return null;
@@ -434,7 +450,7 @@ function WorkoutScreen({
 
       {/* Mode-conditional body */}
       {exercise.mode === "timed" ? (
-        <TimedBody exercise={exercise} />
+        <TimedBody exercise={exercise} active={active} />
       ) : (
         <RepsBody exercise={exercise} onDone={onBack} />
       )}
@@ -459,7 +475,9 @@ function App() {
 
   const handleBackFromWorkout = () => {
     setScreen("dashboard");
-    setActiveExercise(null);
+    // Unmount workout content after the fade-out completes so the
+    // timer interval is fully torn down and no ticks linger.
+    window.setTimeout(() => setActiveExercise(null), 350);
   };
 
   return (
@@ -483,14 +501,19 @@ function App() {
         />
       </div>
 
-      {screen === "workout" && activeExercise && (
-        <div className="absolute inset-0">
+      <div
+        className={`absolute inset-0 transition-opacity duration-300 ease-in-out ${
+          screen === "workout" ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        {activeExercise && (
           <WorkoutScreen
             exercise={activeExercise}
+            active={screen === "workout"}
             onBack={handleBackFromWorkout}
           />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
