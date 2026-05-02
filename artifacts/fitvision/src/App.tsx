@@ -548,6 +548,7 @@ function DashboardScreen({
   }, [category]);
 
   const handleCategoryChange = (next: Category) => {
+    setActiveChip(SUB_CATEGORIES[next]?.[0] ?? "");
     setCategory(next);
   };
 
