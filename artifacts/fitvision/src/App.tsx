@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+
 type Gender = "man" | "woman";
 type Screen = "welcome" | "dashboard" | "workout";
 type Mode = "timed" | "reps";
@@ -462,6 +463,20 @@ function App() {
   const [screen, setScreen] = useState<Screen>("welcome");
   const [gender, setGender] = useState<Gender | null>(null);
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
+  const unmountTimeoutRef = useRef<number | null>(null);
+
+  const cancelPendingUnmount = () => {
+    if (unmountTimeoutRef.current !== null) {
+      window.clearTimeout(unmountTimeoutRef.current);
+      unmountTimeoutRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      cancelPendingUnmount();
+    };
+  }, []);
 
   const handleSelectGender = (g: Gender) => {
     setGender(g);
@@ -469,6 +484,7 @@ function App() {
   };
 
   const handleSelectExercise = (exercise: Exercise) => {
+    cancelPendingUnmount();
     setActiveExercise(exercise);
     setScreen("workout");
   };
@@ -476,8 +492,14 @@ function App() {
   const handleBackFromWorkout = () => {
     setScreen("dashboard");
     // Unmount workout content after the fade-out completes so the
-    // timer interval is fully torn down and no ticks linger.
-    window.setTimeout(() => setActiveExercise(null), 350);
+    // timer interval is fully torn down and no ticks linger. Cancel
+    // any pending unmount first so a rapid reopen can't blank the
+    // newly-opened workout screen.
+    cancelPendingUnmount();
+    unmountTimeoutRef.current = window.setTimeout(() => {
+      unmountTimeoutRef.current = null;
+      setActiveExercise(null);
+    }, 350);
   };
 
   return (
