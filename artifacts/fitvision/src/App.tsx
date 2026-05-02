@@ -565,7 +565,7 @@ function DashboardScreen({
 
   return (
     <div className="absolute inset-0 flex flex-col">
-      <header className="shrink-0 px-6 pt-8 pb-4">
+      <header className="pt-safe shrink-0 px-6 pb-4" style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 32px)" }}>
         <p className="text-xs font-medium uppercase tracking-wider text-stone-400">
           {CATEGORY_HEADINGS[category]}
         </p>
@@ -796,7 +796,7 @@ function WorkoutScreen({
   return (
     <div className="absolute inset-0 flex flex-col bg-stone-50">
       {/* Top bar with back button */}
-      <div className="relative shrink-0 px-4 pt-4">
+      <div className="pt-safe relative shrink-0 px-4" style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 16px)" }}>
         <button
           type="button"
           onClick={onBack}
