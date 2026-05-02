@@ -1,5 +1,73 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+
+type ThemePref = "system" | "light" | "dark";
+const THEME_KEY = "fitvision.theme";
+const LIGHT_BG = "#fafaf9";
+const DARK_BG = "#0c0a09";
+
+function readStoredTheme(): ThemePref {
+  try {
+    const v = localStorage.getItem(THEME_KEY);
+    if (v === "light" || v === "dark" || v === "system") return v;
+  } catch {
+    /* ignore */
+  }
+  return "system";
+}
+
+function systemPrefersDark(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function applyDomTheme(isDark: boolean) {
+  const root = document.documentElement;
+  root.classList.toggle("dark", isDark);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", isDark ? DARK_BG : LIGHT_BG);
+}
+
+function useTheme() {
+  const [pref, setPref] = useState<ThemePref>(() => readStoredTheme());
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    const p = readStoredTheme();
+    return p === "dark" || (p === "system" && systemPrefersDark());
+  });
+
+  // Apply DOM whenever resolved theme changes
+  useEffect(() => {
+    applyDomTheme(isDark);
+  }, [isDark]);
+
+  // Recompute resolved when pref changes; subscribe to system if "system"
+  useEffect(() => {
+    if (pref !== "system") {
+      setIsDark(pref === "dark");
+      return;
+    }
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    setIsDark(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [pref]);
+
+  const setTheme = useCallback((next: ThemePref) => {
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch {
+      /* ignore */
+    }
+    setPref(next);
+  }, []);
+
+  const cycle = useCallback(() => {
+    setTheme(pref === "light" ? "dark" : pref === "dark" ? "system" : "light");
+  }, [pref, setTheme]);
+
+  return { pref, isDark, setTheme, cycle };
+}
 
 type Gender = "man" | "woman";
 type Screen = "welcome" | "dashboard" | "workout";
@@ -406,10 +474,10 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
       <div className="mb-16 text-center">
-        <h1 className="text-5xl font-bold tracking-tight text-stone-900">
+        <h1 className="text-5xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
           FitVision
         </h1>
-        <p className="mt-3 text-base text-stone-500">
+        <p className="mt-3 text-base text-stone-500 dark:text-stone-400">
           Your personal fitness journey
         </p>
       </div>
@@ -418,7 +486,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
         <button
           type="button"
           onClick={() => onSelect("man")}
-          className="w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800"
+          className="w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
           style={{ minHeight: 60 }}
         >
           I am a Man
@@ -426,13 +494,61 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
         <button
           type="button"
           onClick={() => onSelect("woman")}
-          className="w-full rounded-2xl border border-stone-200 bg-white px-6 text-lg font-semibold text-stone-900 shadow-sm transition active:scale-[0.98] active:bg-stone-100"
+          className="w-full rounded-2xl border border-stone-200 bg-white px-6 text-lg font-semibold text-stone-900 shadow-sm transition active:scale-[0.98] active:bg-stone-100 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-50 dark:active:bg-stone-800"
           style={{ minHeight: 60 }}
         >
           I am a Woman
         </button>
       </div>
     </div>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
+function SystemIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="13" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+    </svg>
+  );
+}
+
+function ThemeToggle({
+  pref,
+  onCycle,
+}: {
+  pref: ThemePref;
+  onCycle: () => void;
+}) {
+  const label =
+    pref === "light" ? "Light" : pref === "dark" ? "Dark" : "System";
+  return (
+    <button
+      type="button"
+      onClick={onCycle}
+      aria-label={`Theme: ${label}. Tap to change.`}
+      title={`Theme: ${label}`}
+      className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-700 shadow-sm transition active:scale-95 active:bg-stone-200 dark:bg-stone-800 dark:text-stone-200 dark:active:bg-stone-700"
+    >
+      {pref === "light" ? <SunIcon /> : pref === "dark" ? <MoonIcon /> : <SystemIcon />}
+    </button>
   );
 }
 
@@ -454,36 +570,36 @@ function ExerciseCard({
           onClick();
         }
       }}
-      className="mb-3 cursor-pointer rounded-2xl bg-white p-4 shadow-sm transition active:scale-[0.99] active:bg-stone-50"
+      className="mb-4 cursor-pointer rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-100 transition hover:shadow-md active:scale-[0.99] active:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:active:bg-stone-800"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold text-stone-900">
+          <h3 className="truncate text-base font-semibold text-stone-900 dark:text-stone-50">
             {exercise.name}
           </h3>
-          <p className="mt-1 text-sm text-stone-500">{exercise.targetMuscle}</p>
+          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{exercise.targetMuscle}</p>
         </div>
-        <span className="shrink-0 rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-stone-600">
+        <span className="shrink-0 rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-stone-600 dark:bg-stone-800 dark:text-stone-300">
           {exercise.genderFocus === "both" ? "All" : exercise.genderFocus}
         </span>
       </div>
 
       <div className="mt-3 flex items-center gap-2">
-        <div className="flex-1 rounded-xl bg-stone-50 px-3 py-2">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-stone-400">
+        <div className="flex-1 rounded-xl bg-stone-50 px-3 py-2 dark:bg-stone-800/60">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-stone-400 dark:text-stone-500">
             {exercise.mode === "timed" ? "Duration" : "Reps"}
           </p>
-          <p className="mt-0.5 text-sm font-semibold text-stone-900">
+          <p className="mt-0.5 text-sm font-semibold text-stone-900 dark:text-stone-50">
             {exercise.mode === "timed"
               ? `${exercise.durationSeconds}s`
               : exercise.reps}
           </p>
         </div>
-        <div className="flex-1 rounded-xl bg-stone-50 px-3 py-2">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-stone-400">
+        <div className="flex-1 rounded-xl bg-stone-50 px-3 py-2 dark:bg-stone-800/60">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-stone-400 dark:text-stone-500">
             Mode
           </p>
-          <p className="mt-0.5 text-sm font-semibold capitalize text-stone-900">
+          <p className="mt-0.5 text-sm font-semibold capitalize text-stone-900 dark:text-stone-50">
             {exercise.mode}
           </p>
         </div>
@@ -532,8 +648,8 @@ function ChipRow({
             aria-pressed={isActive}
             className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition active:scale-[0.97] ${
               isActive
-                ? "bg-stone-900 text-white shadow-sm"
-                : "bg-stone-100 text-stone-700"
+                ? "bg-stone-900 text-white shadow-sm dark:bg-stone-50 dark:text-stone-900"
+                : "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300"
             }`}
           >
             {chip}
@@ -555,7 +671,7 @@ function BottomNav({
 }) {
   return (
     <nav
-      className="pb-safe absolute bottom-0 left-0 right-0 w-full max-w-md border-t border-stone-200 bg-white"
+      className="pb-safe absolute bottom-0 left-0 right-0 w-full max-w-md border-t border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900"
       aria-label="Primary"
     >
       <div className="flex w-full items-stretch">
@@ -568,7 +684,9 @@ function BottomNav({
               onClick={() => onChange(tab.id)}
               aria-current={isActive ? "page" : undefined}
               className={`flex flex-1 flex-col items-center justify-center gap-1 py-2 transition active:scale-[0.97] ${
-                isActive ? "text-stone-900" : "text-stone-400"
+                isActive
+                  ? "text-stone-900 dark:text-stone-50"
+                  : "text-stone-400 dark:text-stone-500"
               }`}
               style={{ minHeight: 60 }}
             >
@@ -597,6 +715,7 @@ function DashboardScreen({
   gender: Gender | null;
   onSelectExercise: (exercise: Exercise) => void;
 }) {
+  const { pref, cycle } = useTheme();
   const [category, setCategory] = useState<Category>("core");
   const chips = SUB_CATEGORIES[category];
   const [activeChip, setActiveChip] = useState<string>(chips?.[0] ?? "");
@@ -639,12 +758,17 @@ function DashboardScreen({
   return (
     <div className="absolute inset-0 flex flex-col">
       <header className="pt-safe shrink-0 px-6 pb-4" style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 32px)" }}>
-        <p className="text-xs font-medium uppercase tracking-wider text-stone-400">
-          {CATEGORY_HEADINGS[category]}
-        </p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-stone-900">
-          FitVision
-        </h1>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+              {CATEGORY_HEADINGS[category]}
+            </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+              FitVision
+            </h1>
+          </div>
+          <ThemeToggle pref={pref} onCycle={cycle} />
+        </div>
       </header>
 
       {chips && (
@@ -656,7 +780,7 @@ function DashboardScreen({
       )}
 
       <div
-        className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6"
+        className="no-scrollbar list-fade min-h-0 flex-1 overflow-y-auto px-6 pt-2"
         style={{ paddingBottom: 100 }}
       >
         {filtered.map((exercise) => (
@@ -667,7 +791,7 @@ function DashboardScreen({
           />
         ))}
         {filtered.length === 0 && (
-          <p className="mt-8 text-center text-sm text-stone-400">
+          <p className="mt-8 text-center text-sm text-stone-400 dark:text-stone-500">
             No exercises in this category yet.
           </p>
         )}
@@ -805,7 +929,7 @@ function TimedBody({
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6">
       <div
-        className="text-center font-mono font-bold tabular-nums text-stone-900"
+        className="text-center font-mono font-bold tabular-nums text-stone-900 dark:text-stone-50"
         style={{ fontSize: 72, lineHeight: 1 }}
       >
         {formatTime(secondsLeft)}
@@ -814,7 +938,7 @@ function TimedBody({
         type="button"
         onClick={toggle}
         aria-label={running ? "Pause" : "Play"}
-        className="mt-10 flex items-center justify-center rounded-full bg-stone-900 text-white shadow-lg transition active:scale-95 active:bg-stone-800"
+        className="mt-10 flex items-center justify-center rounded-full bg-stone-900 text-white shadow-lg transition active:scale-95 active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
         style={{ width: 80, height: 80 }}
       >
         {running ? <PauseIcon /> : <PlayIcon />}
@@ -833,11 +957,11 @@ function RepsBody({
   return (
     <div className="flex flex-1 flex-col px-6">
       <div className="flex flex-1 flex-col items-center justify-center">
-        <p className="text-xs font-medium uppercase tracking-widest text-stone-400">
+        <p className="text-xs font-medium uppercase tracking-widest text-stone-400 dark:text-stone-500">
           Reps
         </p>
         <div
-          className="mt-2 text-center font-bold tabular-nums text-stone-900"
+          className="mt-2 text-center font-bold tabular-nums text-stone-900 dark:text-stone-50"
           style={{ fontSize: 120, lineHeight: 1 }}
         >
           {exercise.reps}
@@ -846,7 +970,7 @@ function RepsBody({
       <button
         type="button"
         onClick={onDone}
-        className="mb-6 w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800"
+        className="mb-6 w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
         style={{ minHeight: 60 }}
       >
         Done
@@ -867,14 +991,14 @@ function WorkoutScreen({
   if (!exercise) return null;
 
   return (
-    <div className="absolute inset-0 flex flex-col bg-stone-50">
+    <div className="absolute inset-0 flex flex-col bg-stone-50 dark:bg-stone-950">
       {/* Top bar with back button */}
       <div className="pt-safe relative shrink-0 px-4" style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 16px)" }}>
         <button
           type="button"
           onClick={onBack}
           aria-label="Back"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
         >
           <BackIcon />
         </button>
@@ -882,8 +1006,8 @@ function WorkoutScreen({
 
       {/* Top 40% media placeholder */}
       <div className="shrink-0 px-4 pt-3" style={{ height: "40%" }}>
-        <div className="flex h-full w-full items-center justify-center rounded-3xl bg-stone-200">
-          <div className="flex flex-col items-center text-stone-400">
+        <div className="flex h-full w-full items-center justify-center rounded-3xl bg-stone-200 dark:bg-stone-800">
+          <div className="flex flex-col items-center text-stone-400 dark:text-stone-500">
             <svg
               width="44"
               height="44"
@@ -906,10 +1030,10 @@ function WorkoutScreen({
 
       {/* Exercise name */}
       <div className="shrink-0 px-6 pt-6 pb-2 text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-stone-900">
+        <h2 className="text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
           {exercise.name}
         </h2>
-        <p className="mt-1 text-sm text-stone-500">{exercise.targetMuscle}</p>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{exercise.targetMuscle}</p>
       </div>
 
       {/* Mode-conditional body */}
@@ -966,7 +1090,7 @@ function App() {
   };
 
   return (
-    <div className="relative mx-auto h-dvh w-full max-w-md overflow-hidden bg-stone-50">
+    <div className="relative mx-auto h-dvh w-full max-w-md overflow-hidden bg-stone-50 dark:bg-stone-950">
       <div
         className={`absolute inset-0 transition-opacity duration-500 ease-in-out ${
           screen === "welcome" ? "opacity-100" : "pointer-events-none opacity-0"
