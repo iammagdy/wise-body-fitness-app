@@ -66,6 +66,293 @@ function useTheme() {
   return { pref, isDark, setTheme };
 }
 
+// ===== Generic localStorage helper =====
+function useLocalStorage<T extends string>(
+  key: string,
+  initial: T,
+  validate?: (v: string) => v is T,
+): [T, (next: T) => void] {
+  const [value, setValue] = useState<T>(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored !== null) {
+        if (!validate || validate(stored)) return stored as T;
+      }
+    } catch {
+      /* ignore */
+    }
+    return initial;
+  });
+  const set = useCallback(
+    (next: T) => {
+      try {
+        localStorage.setItem(key, next);
+      } catch {
+        /* ignore */
+      }
+      setValue(next);
+    },
+    [key],
+  );
+  return [value, set];
+}
+
+// ===== Arabic voice coaching =====
+const VOICE_MUTED_KEY = "fitvision.voiceMuted";
+
+function useArabicVoice(muted: boolean) {
+  const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(null);
+  const [supported, setSupported] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setSupported(false);
+      return;
+    }
+    const pickVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (!voices.length) return;
+      const arSA = voices.find((v) => v.lang === "ar-SA");
+      const anyAr =
+        arSA ?? voices.find((v) => v.lang.toLowerCase().startsWith("ar"));
+      setVoice(anyAr ?? null);
+    };
+    pickVoice();
+    window.speechSynthesis.addEventListener("voiceschanged", pickVoice);
+    return () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", pickVoice);
+    };
+  }, []);
+
+  const cancel = useCallback(() => {
+    if (!supported) return;
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      /* ignore */
+    }
+  }, [supported]);
+
+  const speak = useCallback(
+    (text: string) => {
+      if (muted || !supported || !voice) return;
+      try {
+        // Cancel any in-flight utterance so cues don't pile up
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.voice = voice;
+        u.lang = voice.lang || "ar-SA";
+        u.rate = 0.95;
+        u.pitch = 1;
+        window.speechSynthesis.speak(u);
+      } catch {
+        /* ignore */
+      }
+    },
+    [muted, supported, voice],
+  );
+
+  return {
+    speak,
+    cancel,
+    supported,
+    hasArabicVoice: !!voice,
+  };
+}
+
+type ArabicCues = { start: string; mid: string; end: string };
+
+const DEFAULT_CUES: ArabicCues = {
+  start: "هيا نبدأ التمرين، ركّز على تنفسك",
+  mid: "أحسنت، استمر، أنت تقترب من النهاية",
+  end: "ممتاز، أكملت التمرين بنجاح",
+};
+
+const CUES_BY_SUB: Record<string, ArabicCues> = {
+  Strength: {
+    start: "تمرين قوة، حافظ على وضعية صحيحة",
+    mid: "نصف الطريق، حافظ على شدتك",
+    end: "ممتاز، أنهيت تمرين القوة",
+  },
+  Conditioning: {
+    start: "نبدأ تمرين اللياقة، خذ نفسًا عميقًا",
+    mid: "استمر، قلبك يقوى الآن",
+    end: "أحسنت، أنهيت تمرين اللياقة",
+  },
+  "Pregnancy Safe": {
+    start: "تمرين آمن للحمل، تحركي ببطء",
+    mid: "تنفسي بهدوء، أنتِ بأمان",
+    end: "ممتاز، أنهيتِ التمرين بأمان",
+  },
+  Postpartum: {
+    start: "تمرين ما بعد الولادة، استمعي لجسمك",
+    mid: "استمري بلطف، أنتِ تتعافين",
+    end: "أحسنتِ، تمرين رائع",
+  },
+  Hormonal: {
+    start: "تمرين توازن هرموني، استرخي",
+    mid: "تابعي بهدوء، تنفسي بعمق",
+    end: "ممتاز، شعور رائع",
+  },
+  "Tech Neck": {
+    start: "نريح الرقبة، حركات بطيئة",
+    mid: "استمر، رقبتك ترتاح الآن",
+    end: "ممتاز، رقبة مرتاحة",
+  },
+  "Foot Care": {
+    start: "نعتني بالقدمين، حركات لطيفة",
+    mid: "استمر، قدماك تشكرانك",
+    end: "ممتاز، قدمان منتعشتان",
+  },
+  "Tension Release": {
+    start: "نطلق التوتر، أرخِ كتفيك",
+    mid: "استمر، توتر أقل وراحة أكثر",
+    end: "ممتاز، شعور بالراحة",
+  },
+};
+
+function getCuesFor(ex: Exercise): ArabicCues {
+  return CUES_BY_SUB[ex.sub_category] ?? DEFAULT_CUES;
+}
+
+// ===== Loop animations =====
+// Files placed in /public/loops must be registered here; see
+// /public/loops/README.md.
+const LOOP_MANIFEST = new Set<string>([]);
+
+function subCategorySlug(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function loopSourceFor(exercise: Exercise): string | null {
+  if (LOOP_MANIFEST.has(exercise.id)) return `loops/${exercise.id}.mp4`;
+  const slug = subCategorySlug(exercise.sub_category);
+  if (LOOP_MANIFEST.has(slug)) return `loops/${slug}.mp4`;
+  return null;
+}
+
+function GenericMovementLoop() {
+  // Animated SVG: three concentric breathing rings + a sweeping
+  // motion arc. Tasteful, theme-friendly, deterministic.
+  return (
+    <svg
+      viewBox="0 0 200 200"
+      className="h-full w-full"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      <defs>
+        <radialGradient id="loop-bg" cx="50%" cy="50%" r="60%">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="200" height="200" fill="url(#loop-bg)" />
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="2"
+        opacity="0.55"
+      >
+        <circle cx="100" cy="100" r="30">
+          <animate
+            attributeName="r"
+            values="28;42;28"
+            dur="3.2s"
+            repeatCount="indefinite"
+          />
+          <animate
+            attributeName="opacity"
+            values="0.85;0.35;0.85"
+            dur="3.2s"
+            repeatCount="indefinite"
+          />
+        </circle>
+        <circle cx="100" cy="100" r="50">
+          <animate
+            attributeName="r"
+            values="46;64;46"
+            dur="3.2s"
+            begin="0.3s"
+            repeatCount="indefinite"
+          />
+          <animate
+            attributeName="opacity"
+            values="0.55;0.18;0.55"
+            dur="3.2s"
+            begin="0.3s"
+            repeatCount="indefinite"
+          />
+        </circle>
+        <circle cx="100" cy="100" r="74">
+          <animate
+            attributeName="r"
+            values="70;88;70"
+            dur="3.2s"
+            begin="0.6s"
+            repeatCount="indefinite"
+          />
+          <animate
+            attributeName="opacity"
+            values="0.35;0.08;0.35"
+            dur="3.2s"
+            begin="0.6s"
+            repeatCount="indefinite"
+          />
+        </circle>
+      </g>
+      <g transform="translate(100 100)">
+        <g>
+          <path
+            d="M -36 0 A 36 36 0 0 1 36 0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            opacity="0.9"
+          />
+          <animateTransform
+            attributeName="transform"
+            type="rotate"
+            from="0"
+            to="360"
+            dur="6s"
+            repeatCount="indefinite"
+          />
+        </g>
+      </g>
+    </svg>
+  );
+}
+
+function ExerciseLoop({ exercise }: { exercise: Exercise }) {
+  const src = loopSourceFor(exercise);
+  return (
+    <div className="relative h-full w-full overflow-hidden rounded-3xl bg-stone-200 text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+      <div className="absolute inset-0">
+        <GenericMovementLoop />
+      </div>
+      {src && (
+        <video
+          key={src}
+          src={src}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={(e) => {
+            // Hide the broken video and keep the SVG fallback visible
+            (e.currentTarget as HTMLVideoElement).style.display = "none";
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
 type Gender = "man" | "woman";
 type Screen = "welcome" | "dashboard" | "workout";
 type Mode = "timed" | "reps";
@@ -926,12 +1213,36 @@ function BackIcon() {
   );
 }
 
+function SpeakerOnIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+    </svg>
+  );
+}
+
+function SpeakerOffIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <line x1="22" y1="9" x2="16" y2="15" />
+      <line x1="16" y1="9" x2="22" y2="15" />
+    </svg>
+  );
+}
+
 function TimedBody({
   exercise,
   active,
+  cues,
+  speak,
 }: {
   exercise: Exercise;
   active: boolean;
+  cues: ArabicCues;
+  speak: (text: string) => void;
 }) {
   const [secondsLeft, setSecondsLeft] = useState(exercise.durationSeconds);
   const [running, setRunning] = useState(false);
@@ -962,6 +1273,12 @@ function TimedBody({
     }
   }, [active]);
 
+  // Reset mid-cue gate when the exercise changes
+  const midCueFiredRef = useRef(false);
+  useEffect(() => {
+    midCueFiredRef.current = false;
+  }, [exercise.id]);
+
   // Drive the interval based on `running` (only while active)
   useEffect(() => {
     if (!running || !active) {
@@ -969,20 +1286,30 @@ function TimedBody({
       return;
     }
     clearTimer();
+    const total = exercise.durationSeconds;
+    const midpoint = Math.max(1, Math.floor(total / 2));
     intervalRef.current = window.setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearTimer();
           setRunning(false);
+          // End cue
+          speak(cues.end);
           return 0;
         }
-        return prev - 1;
+        const next = prev - 1;
+        // Mid cue: fire once when we cross the midpoint
+        if (!midCueFiredRef.current && next <= midpoint) {
+          midCueFiredRef.current = true;
+          speak(cues.mid);
+        }
+        return next;
       });
     }, 1000);
     return () => {
       clearTimer();
     };
-  }, [running, active]);
+  }, [running, active, exercise.durationSeconds, cues, speak]);
 
   const toggle = () => {
     if (secondsLeft === 0) {
@@ -1017,9 +1344,13 @@ function TimedBody({
 function RepsBody({
   exercise,
   onDone,
+  cues,
+  speak,
 }: {
   exercise: Exercise;
   onDone: () => void;
+  cues: ArabicCues;
+  speak: (text: string) => void;
 }) {
   return (
     <div className="flex flex-1 flex-col px-6">
@@ -1036,7 +1367,13 @@ function RepsBody({
       </div>
       <button
         type="button"
-        onClick={onDone}
+        onClick={() => {
+          // Speak the end cue, then defer navigation slightly so the
+          // utterance isn't immediately cancelled by the workout
+          // screen's unmount cleanup.
+          speak(cues.end);
+          window.setTimeout(onDone, 700);
+        }}
         className="mb-6 w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
         style={{ minHeight: 60 }}
       >
@@ -1055,59 +1392,121 @@ function WorkoutScreen({
   active: boolean;
   onBack: () => void;
 }) {
+  const [mutedStr, setMutedStr] = useLocalStorage<"1" | "0">(
+    VOICE_MUTED_KEY,
+    "1",
+    (v): v is "1" | "0" => v === "1" || v === "0",
+  );
+  const muted = mutedStr === "1";
+  const { speak, cancel, supported, hasArabicVoice } = useArabicVoice(muted);
+
+  const cues = exercise ? getCuesFor(exercise) : DEFAULT_CUES;
+
+  // Speak the start cue shortly after the screen becomes active for
+  // this exercise. Cancel any in-flight speech when we leave.
+  useEffect(() => {
+    if (!exercise || !active) return;
+    const t = window.setTimeout(() => {
+      speak(cues.start);
+    }, 800);
+    return () => {
+      window.clearTimeout(t);
+      cancel();
+    };
+  }, [exercise?.id, active, cues, speak, cancel]);
+
+  // Always cancel speech on unmount
+  useEffect(() => {
+    return () => {
+      cancel();
+    };
+  }, [cancel]);
+
   if (!exercise) return null;
+
+  // Honest disclosure: surface the device limitation any time
+  // speech synthesis is supported but no Arabic voice is installed,
+  // regardless of mute state, so the user understands why turning
+  // voice on wouldn't speak Arabic.
+  const showVoiceUnavailableHint = supported && !hasArabicVoice;
 
   return (
     <div className="absolute inset-0 flex flex-col bg-stone-50 dark:bg-stone-950">
-      {/* Top bar with back button */}
-      <div className="pt-safe relative shrink-0 px-4" style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 16px)" }}>
+      {/* Top bar with back + mute toggle */}
+      <div
+        className="pt-safe relative flex shrink-0 items-center justify-between gap-3 px-4"
+        style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 16px)" }}
+      >
         <button
           type="button"
-          onClick={onBack}
+          onClick={() => {
+            cancel();
+            onBack();
+          }}
           aria-label="Back"
           className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
         >
           <BackIcon />
         </button>
+        {supported && (
+          <button
+            type="button"
+            onClick={() => {
+              const next = muted ? "0" : "1";
+              setMutedStr(next);
+              if (next === "1") cancel();
+            }}
+            aria-pressed={!muted}
+            aria-label={
+              muted ? "Unmute Arabic coaching" : "Mute Arabic coaching"
+            }
+            title={muted ? "Voice off" : "Voice on"}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
+          >
+            {muted ? <SpeakerOffIcon /> : <SpeakerOnIcon />}
+          </button>
+        )}
       </div>
 
-      {/* Top 40% media placeholder */}
+      {/* Top 40% looping animation slot */}
       <div className="shrink-0 px-4 pt-3" style={{ height: "40%" }}>
-        <div className="flex h-full w-full items-center justify-center rounded-3xl bg-stone-200 dark:bg-stone-800">
-          <div className="flex flex-col items-center text-stone-400 dark:text-stone-500">
-            <svg
-              width="44"
-              height="44"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <polygon points="6 4 20 12 6 20 6 4" />
-            </svg>
-            <p className="mt-2 text-xs font-medium uppercase tracking-widest">
-              Video preview
-            </p>
-          </div>
-        </div>
+        <ExerciseLoop exercise={exercise} />
       </div>
+
+      {/* Honest UX fallback if no Arabic voice available */}
+      {showVoiceUnavailableHint && (
+        <div className="shrink-0 px-6 pt-2">
+          <p className="rounded-xl bg-amber-50 px-3 py-2 text-center text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+            Arabic voice unavailable on this device
+          </p>
+        </div>
+      )}
 
       {/* Exercise name */}
-      <div className="shrink-0 px-6 pt-6 pb-2 text-center">
+      <div className="shrink-0 px-6 pt-4 pb-2 text-center">
         <h2 className="text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
           {exercise.name}
         </h2>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{exercise.targetMuscle}</p>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+          {exercise.targetMuscle}
+        </p>
       </div>
 
       {/* Mode-conditional body */}
       {exercise.mode === "timed" ? (
-        <TimedBody exercise={exercise} active={active} />
+        <TimedBody
+          exercise={exercise}
+          active={active}
+          cues={cues}
+          speak={speak}
+        />
       ) : (
-        <RepsBody exercise={exercise} onDone={onBack} />
+        <RepsBody
+          exercise={exercise}
+          onDone={onBack}
+          cues={cues}
+          speak={speak}
+        />
       )}
     </div>
   );
