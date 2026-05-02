@@ -1843,7 +1843,10 @@ function WorkoutScreen({
                 return;
               }
               const result = await cast.start();
-              if (result !== "ok") onOpenCastModal();
+              // Only fall back to the help modal when the platform
+              // genuinely can't cast. A "failed" result usually means
+              // the user dismissed the picker — don't nag them.
+              if (result === "unsupported") onOpenCastModal();
             }}
             aria-label={
               cast.state === "casting" ? "Stop casting to TV" : "Cast to TV"
@@ -1859,7 +1862,7 @@ function WorkoutScreen({
             {cast.state === "casting" ? <CastingIcon /> : <CastIcon />}
             {cast.state === "casting" && (
               <span className="text-xs font-semibold uppercase tracking-wide">
-                {cast.state === "casting" ? "Stop" : "Cast"}
+                Casting · Stop
               </span>
             )}
             {cast.state === "connecting" && (
