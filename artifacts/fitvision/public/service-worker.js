@@ -1,11 +1,16 @@
 const CACHE_NAME = "fitvision-v1";
-const OFFLINE_URLS = ["/", "/index.html"];
+
+function scopedUrl(path) {
+  return new URL(path, self.registration.scope).toString();
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => cache.addAll(OFFLINE_URLS))
+      .then((cache) =>
+        cache.addAll([scopedUrl("./"), scopedUrl("./index.html")]),
+      )
       .then(() => self.skipWaiting()),
   );
 });
@@ -33,8 +38,8 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request).catch(() =>
         caches
-          .match("/index.html")
-          .then((cached) => cached || caches.match("/")),
+          .match(scopedUrl("./index.html"))
+          .then((cached) => cached || caches.match(scopedUrl("./"))),
       ),
     );
     return;
