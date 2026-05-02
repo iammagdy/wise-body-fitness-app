@@ -110,39 +110,7 @@ const EXERCISES: Exercise[] = [
   },
 
   // ----- Women's Health -----
-  {
-    id: "w1",
-    name: "Hip Thrusts",
-    targetMuscle: "Glutes",
-    durationSeconds: 40,
-    reps: 15,
-    genderFocus: "women",
-    mode: "reps",
-    category: "womens_health",
-    sub_category: "Glutes",
-  },
-  {
-    id: "w3",
-    name: "Cable Kickbacks",
-    targetMuscle: "Glutes",
-    durationSeconds: 30,
-    reps: 20,
-    genderFocus: "women",
-    mode: "reps",
-    category: "womens_health",
-    sub_category: "Glutes",
-  },
-  {
-    id: "wh1",
-    name: "Pelvic Floor Bridge",
-    targetMuscle: "Pelvic Floor",
-    durationSeconds: 30,
-    reps: 12,
-    genderFocus: "women",
-    mode: "reps",
-    category: "womens_health",
-    sub_category: "Pelvic Floor",
-  },
+  // Pregnancy Safe
   {
     id: "wh2",
     name: "Side-Lying Leg Raise",
@@ -152,7 +120,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "women",
     mode: "reps",
     category: "womens_health",
-    sub_category: "Mobility",
+    sub_category: "Pregnancy Safe",
   },
   {
     id: "wh3",
@@ -163,10 +131,158 @@ const EXERCISES: Exercise[] = [
     genderFocus: "women",
     mode: "timed",
     category: "womens_health",
-    sub_category: "Prenatal",
+    sub_category: "Pregnancy Safe",
+  },
+  {
+    id: "wh4",
+    name: "Pregnancy Pelvic Tilt",
+    targetMuscle: "Lower Back",
+    durationSeconds: 40,
+    reps: 12,
+    genderFocus: "women",
+    mode: "reps",
+    category: "womens_health",
+    sub_category: "Pregnancy Safe",
+  },
+  // Postpartum
+  {
+    id: "w1",
+    name: "Hip Thrusts",
+    targetMuscle: "Glutes",
+    durationSeconds: 40,
+    reps: 15,
+    genderFocus: "women",
+    mode: "reps",
+    category: "womens_health",
+    sub_category: "Postpartum",
+  },
+  {
+    id: "wh1",
+    name: "Pelvic Floor Bridge",
+    targetMuscle: "Pelvic Floor",
+    durationSeconds: 30,
+    reps: 12,
+    genderFocus: "women",
+    mode: "reps",
+    category: "womens_health",
+    sub_category: "Postpartum",
+  },
+  {
+    id: "wh5",
+    name: "Diastasis Recovery Breath",
+    targetMuscle: "Deep Core",
+    durationSeconds: 60,
+    reps: 1,
+    genderFocus: "women",
+    mode: "timed",
+    category: "womens_health",
+    sub_category: "Postpartum",
+  },
+  // Hormonal
+  {
+    id: "w3",
+    name: "Cable Kickbacks",
+    targetMuscle: "Glutes",
+    durationSeconds: 30,
+    reps: 20,
+    genderFocus: "women",
+    mode: "reps",
+    category: "womens_health",
+    sub_category: "Hormonal",
+  },
+  {
+    id: "wh6",
+    name: "Hormonal Yoga Flow",
+    targetMuscle: "Full Body",
+    durationSeconds: 120,
+    reps: 1,
+    genderFocus: "women",
+    mode: "timed",
+    category: "womens_health",
+    sub_category: "Hormonal",
+  },
+  {
+    id: "wh7",
+    name: "Cortisol Reset Walk",
+    targetMuscle: "Cardio",
+    durationSeconds: 300,
+    reps: 1,
+    genderFocus: "women",
+    mode: "timed",
+    category: "womens_health",
+    sub_category: "Hormonal",
   },
 
   // ----- Recovery -----
+  // Tech Neck
+  {
+    id: "rn1",
+    name: "Neck Rolls",
+    targetMuscle: "Neck",
+    durationSeconds: 45,
+    reps: 1,
+    genderFocus: "both",
+    mode: "timed",
+    category: "recovery",
+    sub_category: "Tech Neck",
+  },
+  {
+    id: "rn2",
+    name: "Chin Tucks",
+    targetMuscle: "Cervical Spine",
+    durationSeconds: 30,
+    reps: 12,
+    genderFocus: "both",
+    mode: "reps",
+    category: "recovery",
+    sub_category: "Tech Neck",
+  },
+  {
+    id: "rn3",
+    name: "Upper Trap Stretch",
+    targetMuscle: "Upper Traps",
+    durationSeconds: 45,
+    reps: 1,
+    genderFocus: "both",
+    mode: "timed",
+    category: "recovery",
+    sub_category: "Tech Neck",
+  },
+  // Foot Care
+  {
+    id: "rf1",
+    name: "Foot Arch Massage",
+    targetMuscle: "Plantar Fascia",
+    durationSeconds: 60,
+    reps: 1,
+    genderFocus: "both",
+    mode: "timed",
+    category: "recovery",
+    sub_category: "Foot Care",
+  },
+  {
+    id: "rf2",
+    name: "Toe Yoga",
+    targetMuscle: "Toes",
+    durationSeconds: 45,
+    reps: 10,
+    genderFocus: "both",
+    mode: "reps",
+    category: "recovery",
+    sub_category: "Foot Care",
+  },
+  {
+    id: "rf3",
+    name: "Calf Wall Stretch",
+    targetMuscle: "Calves",
+    durationSeconds: 45,
+    reps: 1,
+    genderFocus: "both",
+    mode: "timed",
+    category: "recovery",
+    sub_category: "Foot Care",
+  },
+  // Tension Release
   {
     id: "r1",
     name: "Foam Roll Quads",
@@ -176,7 +292,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "both",
     mode: "timed",
     category: "recovery",
-    sub_category: "Foam Rolling",
+    sub_category: "Tension Release",
   },
   {
     id: "r2",
@@ -187,7 +303,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "both",
     mode: "timed",
     category: "recovery",
-    sub_category: "Stretching",
+    sub_category: "Tension Release",
   },
   {
     id: "r3",
@@ -198,7 +314,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "both",
     mode: "timed",
     category: "recovery",
-    sub_category: "Mobility",
+    sub_category: "Tension Release",
   },
   {
     id: "r4",
@@ -209,7 +325,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "both",
     mode: "timed",
     category: "recovery",
-    sub_category: "Breathwork",
+    sub_category: "Tension Release",
   },
 ];
 
@@ -317,6 +433,44 @@ const CATEGORY_HEADINGS: Record<Category, string> = {
   recovery: "Recovery & mobility",
 };
 
+const SUB_CATEGORIES: Partial<Record<Category, string[]>> = {
+  womens_health: ["Pregnancy Safe", "Postpartum", "Hormonal"],
+  recovery: ["Tech Neck", "Foot Care", "Tension Release"],
+};
+
+function ChipRow({
+  chips,
+  active,
+  onChange,
+}: {
+  chips: string[];
+  active: string;
+  onChange: (chip: string) => void;
+}) {
+  return (
+    <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto whitespace-nowrap p-4">
+      {chips.map((chip) => {
+        const isActive = chip === active;
+        return (
+          <button
+            key={chip}
+            type="button"
+            onClick={() => onChange(chip)}
+            aria-pressed={isActive}
+            className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition active:scale-[0.97] ${
+              isActive
+                ? "bg-stone-900 text-white shadow-sm"
+                : "bg-stone-100 text-stone-700"
+            }`}
+          >
+            {chip}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function BottomNav({
   tabs,
   active,
@@ -371,6 +525,8 @@ function DashboardScreen({
   onSelectExercise: (exercise: Exercise) => void;
 }) {
   const [category, setCategory] = useState<Category>("core");
+  const chips = SUB_CATEGORIES[category];
+  const [activeChip, setActiveChip] = useState<string>(chips?.[0] ?? "");
 
   const visibleTabs = useMemo(() => {
     return ALL_TABS.filter(
@@ -385,14 +541,26 @@ function DashboardScreen({
     }
   }, [gender, category]);
 
+  // Reset to the first chip whenever the active tab changes.
+  useEffect(() => {
+    const next = SUB_CATEGORIES[category]?.[0] ?? "";
+    setActiveChip(next);
+  }, [category]);
+
+  const handleCategoryChange = (next: Category) => {
+    setCategory(next);
+  };
+
   const filtered = useMemo(() => {
     if (!gender) return [];
     const focus = gender === "man" ? "men" : "women";
     return EXERCISES.filter((e) => {
       if (e.category !== category) return false;
-      return e.genderFocus === focus || e.genderFocus === "both";
+      if (!(e.genderFocus === focus || e.genderFocus === "both")) return false;
+      if (chips && activeChip && e.sub_category !== activeChip) return false;
+      return true;
     });
-  }, [gender, category]);
+  }, [gender, category, chips, activeChip]);
 
   return (
     <div className="absolute inset-0 flex flex-col">
@@ -404,6 +572,14 @@ function DashboardScreen({
           FitVision
         </h1>
       </header>
+
+      {chips && (
+        <ChipRow
+          chips={chips}
+          active={activeChip}
+          onChange={setActiveChip}
+        />
+      )}
 
       <div
         className="no-scrollbar flex-1 overflow-y-auto px-6"
@@ -423,7 +599,11 @@ function DashboardScreen({
         )}
       </div>
 
-      <BottomNav tabs={visibleTabs} active={category} onChange={setCategory} />
+      <BottomNav
+        tabs={visibleTabs}
+        active={category}
+        onChange={handleCategoryChange}
+      />
     </div>
   );
 }
