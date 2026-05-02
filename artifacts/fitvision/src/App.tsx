@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Gender = "man" | "woman";
-type Screen = "welcome" | "dashboard";
+type Screen = "welcome" | "dashboard" | "workout";
+type Mode = "timed" | "reps";
 
 type Exercise = {
   id: string;
@@ -10,6 +11,7 @@ type Exercise = {
   durationSeconds: number;
   reps: number;
   genderFocus: "men" | "women" | "both";
+  mode: Mode;
 };
 
 const EXERCISES: Exercise[] = [
@@ -20,6 +22,7 @@ const EXERCISES: Exercise[] = [
     durationSeconds: 45,
     reps: 10,
     genderFocus: "men",
+    mode: "timed",
   },
   {
     id: "m2",
@@ -28,6 +31,7 @@ const EXERCISES: Exercise[] = [
     durationSeconds: 60,
     reps: 8,
     genderFocus: "men",
+    mode: "timed",
   },
   {
     id: "m3",
@@ -36,6 +40,7 @@ const EXERCISES: Exercise[] = [
     durationSeconds: 30,
     reps: 12,
     genderFocus: "men",
+    mode: "reps",
   },
   {
     id: "w1",
@@ -44,6 +49,7 @@ const EXERCISES: Exercise[] = [
     durationSeconds: 40,
     reps: 15,
     genderFocus: "women",
+    mode: "reps",
   },
   {
     id: "w2",
@@ -52,6 +58,7 @@ const EXERCISES: Exercise[] = [
     durationSeconds: 45,
     reps: 12,
     genderFocus: "women",
+    mode: "timed",
   },
   {
     id: "w3",
@@ -60,6 +67,7 @@ const EXERCISES: Exercise[] = [
     durationSeconds: 30,
     reps: 20,
     genderFocus: "women",
+    mode: "reps",
   },
   {
     id: "b1",
@@ -68,6 +76,7 @@ const EXERCISES: Exercise[] = [
     durationSeconds: 60,
     reps: 1,
     genderFocus: "both",
+    mode: "timed",
   },
   {
     id: "b2",
@@ -76,6 +85,7 @@ const EXERCISES: Exercise[] = [
     durationSeconds: 30,
     reps: 25,
     genderFocus: "both",
+    mode: "reps",
   },
 ];
 
@@ -148,18 +158,20 @@ function ExerciseCard({
       <div className="mt-3 flex items-center gap-2">
         <div className="flex-1 rounded-xl bg-stone-50 px-3 py-2">
           <p className="text-[11px] font-medium uppercase tracking-wide text-stone-400">
-            Duration
+            {exercise.mode === "timed" ? "Duration" : "Reps"}
           </p>
           <p className="mt-0.5 text-sm font-semibold text-stone-900">
-            {exercise.durationSeconds}s
+            {exercise.mode === "timed"
+              ? `${exercise.durationSeconds}s`
+              : exercise.reps}
           </p>
         </div>
         <div className="flex-1 rounded-xl bg-stone-50 px-3 py-2">
           <p className="text-[11px] font-medium uppercase tracking-wide text-stone-400">
-            Reps
+            Mode
           </p>
-          <p className="mt-0.5 text-sm font-semibold text-stone-900">
-            {exercise.reps}
+          <p className="mt-0.5 text-sm font-semibold capitalize text-stone-900">
+            {exercise.mode}
           </p>
         </div>
       </div>
@@ -167,7 +179,13 @@ function ExerciseCard({
   );
 }
 
-function DashboardScreen({ gender }: { gender: Gender | null }) {
+function DashboardScreen({
+  gender,
+  onSelectExercise,
+}: {
+  gender: Gender | null;
+  onSelectExercise: (exercise: Exercise) => void;
+}) {
   const filtered = useMemo(() => {
     if (!gender) return [];
     const focus = gender === "man" ? "men" : "women";
@@ -192,9 +210,7 @@ function DashboardScreen({ gender }: { gender: Gender | null }) {
           <ExerciseCard
             key={exercise.id}
             exercise={exercise}
-            onClick={() => {
-              console.log("Selected exercise:", exercise.name);
-            }}
+            onClick={() => onSelectExercise(exercise)}
           />
         ))}
       </div>
@@ -202,23 +218,257 @@ function DashboardScreen({ gender }: { gender: Gender | null }) {
   );
 }
 
+function formatTime(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function PlayIcon() {
+  return (
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M8 5.14v13.72a1 1 0 0 0 1.55.83l10.29-6.86a1 1 0 0 0 0-1.66L9.55 4.31A1 1 0 0 0 8 5.14z" />
+    </svg>
+  );
+}
+
+function PauseIcon() {
+  return (
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <rect x="6" y="5" width="4" height="14" rx="1" />
+      <rect x="14" y="5" width="4" height="14" rx="1" />
+    </svg>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="15 6 9 12 15 18" />
+    </svg>
+  );
+}
+
+function TimedBody({ exercise }: { exercise: Exercise }) {
+  const [secondsLeft, setSecondsLeft] = useState(exercise.durationSeconds);
+  const [running, setRunning] = useState(false);
+  const intervalRef = useRef<number | null>(null);
+
+  const clearTimer = () => {
+    if (intervalRef.current !== null) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  // Reset whenever a different exercise is opened
+  useEffect(() => {
+    clearTimer();
+    setSecondsLeft(exercise.durationSeconds);
+    setRunning(false);
+    return () => {
+      clearTimer();
+    };
+  }, [exercise.id, exercise.durationSeconds]);
+
+  // Drive the interval based on `running`
+  useEffect(() => {
+    if (!running) {
+      clearTimer();
+      return;
+    }
+    clearTimer();
+    intervalRef.current = window.setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          clearTimer();
+          setRunning(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      clearTimer();
+    };
+  }, [running]);
+
+  const toggle = () => {
+    if (secondsLeft === 0) {
+      setSecondsLeft(exercise.durationSeconds);
+      setRunning(true);
+      return;
+    }
+    setRunning((r) => !r);
+  };
+
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center px-6">
+      <div
+        className="text-center font-mono font-bold tabular-nums text-stone-900"
+        style={{ fontSize: 72, lineHeight: 1 }}
+      >
+        {formatTime(secondsLeft)}
+      </div>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={running ? "Pause" : "Play"}
+        className="mt-10 flex items-center justify-center rounded-full bg-stone-900 text-white shadow-lg transition active:scale-95 active:bg-stone-800"
+        style={{ width: 80, height: 80 }}
+      >
+        {running ? <PauseIcon /> : <PlayIcon />}
+      </button>
+    </div>
+  );
+}
+
+function RepsBody({
+  exercise,
+  onDone,
+}: {
+  exercise: Exercise;
+  onDone: () => void;
+}) {
+  return (
+    <div className="flex flex-1 flex-col px-6">
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <p className="text-xs font-medium uppercase tracking-widest text-stone-400">
+          Reps
+        </p>
+        <div
+          className="mt-2 text-center font-bold tabular-nums text-stone-900"
+          style={{ fontSize: 120, lineHeight: 1 }}
+        >
+          {exercise.reps}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onDone}
+        className="mb-6 w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800"
+        style={{ minHeight: 60 }}
+      >
+        Done
+      </button>
+    </div>
+  );
+}
+
+function WorkoutScreen({
+  exercise,
+  onBack,
+}: {
+  exercise: Exercise | null;
+  onBack: () => void;
+}) {
+  if (!exercise) return null;
+
+  return (
+    <div className="absolute inset-0 flex flex-col bg-stone-50">
+      {/* Top bar with back button */}
+      <div className="relative shrink-0 px-4 pt-4">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Back"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100"
+        >
+          <BackIcon />
+        </button>
+      </div>
+
+      {/* Top 40% media placeholder */}
+      <div className="shrink-0 px-4 pt-3" style={{ height: "40%" }}>
+        <div className="flex h-full w-full items-center justify-center rounded-3xl bg-stone-200">
+          <div className="flex flex-col items-center text-stone-400">
+            <svg
+              width="44"
+              height="44"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polygon points="6 4 20 12 6 20 6 4" />
+            </svg>
+            <p className="mt-2 text-xs font-medium uppercase tracking-widest">
+              Video preview
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Exercise name */}
+      <div className="shrink-0 px-6 pt-6 pb-2 text-center">
+        <h2 className="text-3xl font-bold tracking-tight text-stone-900">
+          {exercise.name}
+        </h2>
+        <p className="mt-1 text-sm text-stone-500">{exercise.targetMuscle}</p>
+      </div>
+
+      {/* Mode-conditional body */}
+      {exercise.mode === "timed" ? (
+        <TimedBody exercise={exercise} />
+      ) : (
+        <RepsBody exercise={exercise} onDone={onBack} />
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [screen, setScreen] = useState<Screen>("welcome");
   const [gender, setGender] = useState<Gender | null>(null);
+  const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
 
-  const handleSelect = (g: Gender) => {
+  const handleSelectGender = (g: Gender) => {
     setGender(g);
     setScreen("dashboard");
   };
 
+  const handleSelectExercise = (exercise: Exercise) => {
+    setActiveExercise(exercise);
+    setScreen("workout");
+  };
+
+  const handleBackFromWorkout = () => {
+    setScreen("dashboard");
+  };
+
   return (
-    <div className="relative mx-auto h-full w-full max-w-md bg-stone-50">
+    <div className="relative mx-auto h-full w-full max-w-md overflow-hidden bg-stone-50">
       <div
         className={`absolute inset-0 transition-opacity duration-500 ease-in-out ${
           screen === "welcome" ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        <WelcomeScreen onSelect={handleSelect} />
+        <WelcomeScreen onSelect={handleSelectGender} />
       </div>
 
       <div
@@ -226,7 +476,21 @@ function App() {
           screen === "dashboard" ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        <DashboardScreen gender={gender} />
+        <DashboardScreen
+          gender={gender}
+          onSelectExercise={handleSelectExercise}
+        />
+      </div>
+
+      <div
+        className={`absolute inset-0 transition-opacity duration-300 ease-in-out ${
+          screen === "workout" ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      >
+        <WorkoutScreen
+          exercise={activeExercise}
+          onBack={handleBackFromWorkout}
+        />
       </div>
     </div>
   );
