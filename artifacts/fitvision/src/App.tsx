@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 type Gender = "man" | "woman";
 type Screen = "welcome" | "dashboard" | "workout";
 type Mode = "timed" | "reps";
+type Category = "core" | "womens_health" | "recovery";
 
 type Exercise = {
   id: string;
@@ -13,9 +14,12 @@ type Exercise = {
   reps: number;
   genderFocus: "men" | "women" | "both";
   mode: Mode;
+  category: Category;
+  subCategory: string;
 };
 
 const EXERCISES: Exercise[] = [
+  // ----- Core (Workout) -----
   {
     id: "m1",
     name: "Barbell Bench Press",
@@ -24,6 +28,8 @@ const EXERCISES: Exercise[] = [
     reps: 10,
     genderFocus: "men",
     mode: "timed",
+    category: "core",
+    subCategory: "Strength",
   },
   {
     id: "m2",
@@ -33,6 +39,8 @@ const EXERCISES: Exercise[] = [
     reps: 8,
     genderFocus: "men",
     mode: "timed",
+    category: "core",
+    subCategory: "Strength",
   },
   {
     id: "m3",
@@ -42,15 +50,19 @@ const EXERCISES: Exercise[] = [
     reps: 12,
     genderFocus: "men",
     mode: "reps",
+    category: "core",
+    subCategory: "Strength",
   },
   {
-    id: "w1",
-    name: "Hip Thrusts",
-    targetMuscle: "Glutes",
+    id: "m4",
+    name: "Overhead Press",
+    targetMuscle: "Shoulders",
     durationSeconds: 40,
-    reps: 15,
-    genderFocus: "women",
+    reps: 10,
+    genderFocus: "men",
     mode: "reps",
+    category: "core",
+    subCategory: "Strength",
   },
   {
     id: "w2",
@@ -60,15 +72,19 @@ const EXERCISES: Exercise[] = [
     reps: 12,
     genderFocus: "women",
     mode: "timed",
+    category: "core",
+    subCategory: "Strength",
   },
   {
-    id: "w3",
-    name: "Cable Kickbacks",
-    targetMuscle: "Glutes",
-    durationSeconds: 30,
-    reps: 20,
+    id: "w4",
+    name: "Goblet Squat",
+    targetMuscle: "Quads & Glutes",
+    durationSeconds: 40,
+    reps: 12,
     genderFocus: "women",
     mode: "reps",
+    category: "core",
+    subCategory: "Strength",
   },
   {
     id: "b1",
@@ -78,6 +94,8 @@ const EXERCISES: Exercise[] = [
     reps: 1,
     genderFocus: "both",
     mode: "timed",
+    category: "core",
+    subCategory: "Conditioning",
   },
   {
     id: "b2",
@@ -87,6 +105,111 @@ const EXERCISES: Exercise[] = [
     reps: 25,
     genderFocus: "both",
     mode: "reps",
+    category: "core",
+    subCategory: "Conditioning",
+  },
+
+  // ----- Women's Health -----
+  {
+    id: "w1",
+    name: "Hip Thrusts",
+    targetMuscle: "Glutes",
+    durationSeconds: 40,
+    reps: 15,
+    genderFocus: "women",
+    mode: "reps",
+    category: "womens_health",
+    subCategory: "Glutes",
+  },
+  {
+    id: "w3",
+    name: "Cable Kickbacks",
+    targetMuscle: "Glutes",
+    durationSeconds: 30,
+    reps: 20,
+    genderFocus: "women",
+    mode: "reps",
+    category: "womens_health",
+    subCategory: "Glutes",
+  },
+  {
+    id: "wh1",
+    name: "Pelvic Floor Bridge",
+    targetMuscle: "Pelvic Floor",
+    durationSeconds: 30,
+    reps: 12,
+    genderFocus: "women",
+    mode: "reps",
+    category: "womens_health",
+    subCategory: "Pelvic Floor",
+  },
+  {
+    id: "wh2",
+    name: "Side-Lying Leg Raise",
+    targetMuscle: "Hip Abductors",
+    durationSeconds: 40,
+    reps: 15,
+    genderFocus: "women",
+    mode: "reps",
+    category: "womens_health",
+    subCategory: "Mobility",
+  },
+  {
+    id: "wh3",
+    name: "Prenatal Cat-Cow",
+    targetMuscle: "Spine",
+    durationSeconds: 45,
+    reps: 1,
+    genderFocus: "women",
+    mode: "timed",
+    category: "womens_health",
+    subCategory: "Prenatal",
+  },
+
+  // ----- Recovery -----
+  {
+    id: "r1",
+    name: "Foam Roll Quads",
+    targetMuscle: "Quads",
+    durationSeconds: 60,
+    reps: 1,
+    genderFocus: "both",
+    mode: "timed",
+    category: "recovery",
+    subCategory: "Foam Rolling",
+  },
+  {
+    id: "r2",
+    name: "Hamstring Stretch",
+    targetMuscle: "Hamstrings",
+    durationSeconds: 45,
+    reps: 1,
+    genderFocus: "both",
+    mode: "timed",
+    category: "recovery",
+    subCategory: "Stretching",
+  },
+  {
+    id: "r3",
+    name: "Child's Pose",
+    targetMuscle: "Lower Back",
+    durationSeconds: 60,
+    reps: 1,
+    genderFocus: "both",
+    mode: "timed",
+    category: "recovery",
+    subCategory: "Mobility",
+  },
+  {
+    id: "r4",
+    name: "Box Breathing",
+    targetMuscle: "Nervous System",
+    durationSeconds: 90,
+    reps: 1,
+    genderFocus: "both",
+    mode: "timed",
+    category: "recovery",
+    subCategory: "Breathwork",
   },
 ];
 
@@ -180,6 +303,66 @@ function ExerciseCard({
   );
 }
 
+type TabDef = { id: Category; label: string; icon: string };
+
+const ALL_TABS: TabDef[] = [
+  { id: "core", label: "Workout", icon: "💪" },
+  { id: "womens_health", label: "Women's Health", icon: "🌸" },
+  { id: "recovery", label: "Recovery", icon: "🩹" },
+];
+
+const CATEGORY_HEADINGS: Record<Category, string> = {
+  core: "Today's workout",
+  womens_health: "Women's health",
+  recovery: "Recovery & mobility",
+};
+
+function BottomNav({
+  tabs,
+  active,
+  onChange,
+}: {
+  tabs: TabDef[];
+  active: Category;
+  onChange: (id: Category) => void;
+}) {
+  return (
+    <nav
+      className="pb-safe absolute bottom-0 left-0 right-0 w-full max-w-md border-t border-stone-200 bg-white"
+      aria-label="Primary"
+    >
+      <div className="flex w-full items-stretch">
+        {tabs.map((tab) => {
+          const isActive = tab.id === active;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onChange(tab.id)}
+              aria-current={isActive ? "page" : undefined}
+              className={`flex flex-1 flex-col items-center justify-center gap-1 py-2 transition active:scale-[0.97] ${
+                isActive ? "text-stone-900" : "text-stone-400"
+              }`}
+              style={{ minHeight: 60 }}
+            >
+              <span className="text-2xl leading-none" aria-hidden="true">
+                {tab.icon}
+              </span>
+              <span
+                className={`text-[11px] font-medium tracking-wide ${
+                  isActive ? "font-semibold" : ""
+                }`}
+              >
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
 function DashboardScreen({
   gender,
   onSelectExercise,
@@ -187,26 +370,45 @@ function DashboardScreen({
   gender: Gender | null;
   onSelectExercise: (exercise: Exercise) => void;
 }) {
+  const [category, setCategory] = useState<Category>("core");
+
+  const visibleTabs = useMemo(() => {
+    return ALL_TABS.filter(
+      (t) => !(t.id === "womens_health" && gender === "man"),
+    );
+  }, [gender]);
+
+  // If gender changes to man while womens_health is active, snap back to core.
+  useEffect(() => {
+    if (gender === "man" && category === "womens_health") {
+      setCategory("core");
+    }
+  }, [gender, category]);
+
   const filtered = useMemo(() => {
     if (!gender) return [];
     const focus = gender === "man" ? "men" : "women";
-    return EXERCISES.filter(
-      (e) => e.genderFocus === focus || e.genderFocus === "both",
-    );
-  }, [gender]);
+    return EXERCISES.filter((e) => {
+      if (e.category !== category) return false;
+      return e.genderFocus === focus || e.genderFocus === "both";
+    });
+  }, [gender, category]);
 
   return (
     <div className="absolute inset-0 flex flex-col">
       <header className="shrink-0 px-6 pt-8 pb-4">
         <p className="text-xs font-medium uppercase tracking-wider text-stone-400">
-          Today's workout
+          {CATEGORY_HEADINGS[category]}
         </p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight text-stone-900">
           FitVision
         </h1>
       </header>
 
-      <div className="no-scrollbar flex-1 overflow-y-auto px-6 pb-6">
+      <div
+        className="no-scrollbar flex-1 overflow-y-auto px-6"
+        style={{ paddingBottom: 100 }}
+      >
         {filtered.map((exercise) => (
           <ExerciseCard
             key={exercise.id}
@@ -214,7 +416,14 @@ function DashboardScreen({
             onClick={() => onSelectExercise(exercise)}
           />
         ))}
+        {filtered.length === 0 && (
+          <p className="mt-8 text-center text-sm text-stone-400">
+            No exercises in this category yet.
+          </p>
+        )}
       </div>
+
+      <BottomNav tabs={visibleTabs} active={category} onChange={setCategory} />
     </div>
   );
 }
