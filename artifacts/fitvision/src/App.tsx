@@ -336,7 +336,13 @@ function GenericMovementLoop() {
   );
 }
 
-function ExerciseLoop({ exercise }: { exercise: Exercise }) {
+function ExerciseLoop({
+  exercise,
+  videoRef,
+}: {
+  exercise: Exercise;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
+}) {
   const src = loopSourceFor(exercise);
   return (
     <div className="relative h-full w-full overflow-hidden rounded-3xl bg-stone-200 text-stone-500 dark:bg-stone-800 dark:text-stone-400">
@@ -345,6 +351,7 @@ function ExerciseLoop({ exercise }: { exercise: Exercise }) {
       </div>
       {src && (
         <video
+          ref={videoRef}
           key={src}
           src={src}
           autoPlay
@@ -353,6 +360,10 @@ function ExerciseLoop({ exercise }: { exercise: Exercise }) {
           playsInline
           preload="metadata"
           className="absolute inset-0 h-full w-full object-cover"
+          // Native casting attributes so this element is the real
+          // surface for Remote Playback (Chromium) and AirPlay (Safari).
+          disableRemotePlayback={false}
+          {...{ "x-webkit-airplay": "allow" }}
           onError={(e) => {
             // Hide the broken video and keep the SVG fallback visible
             (e.currentTarget as HTMLVideoElement).style.display = "none";
@@ -361,6 +372,269 @@ function ExerciseLoop({ exercise }: { exercise: Exercise }) {
       )}
     </div>
   );
+}
+
+// ===== Cast to TV =====
+type CastState = "idle" | "connecting" | "casting" | "unsupported";
+
+type CastSupport = { remote: boolean; airplay: boolean };
+
+type RemotePlaybackLike = {
+  state: "disconnected" | "connecting" | "connected";
+  prompt: () => Promise<void>;
+  addEventListener: (type: string, cb: EventListener) => void;
+  removeEventListener: (type: string, cb: EventListener) => void;
+};
+
+type AirPlayEvent = Event & { availability?: "available" | "not-available" };
+
+type AirPlayVideo = HTMLVideoElement & {
+  webkitShowPlaybackTargetPicker?: () => void;
+  webkitCurrentPlaybackTargetIsWireless?: boolean;
+};
+
+function useCast(
+  videoRef: React.RefObject<HTMLVideoElement | null>,
+  // attachKey changes whenever the video element identity changes
+  // (e.g. exercise swap). Used to re-bind playback listeners after
+  // the <video> remounts.
+  attachKey: string | null,
+) {
+  const [support, setSupport] = useState<CastSupport>({
+    remote: false,
+    airplay: false,
+  });
+  const [state, setState] = useState<CastState>("idle");
+
+  // Detect support once
+  useEffect(() => {
+    if (typeof window === "undefined" || !("HTMLVideoElement" in window)) {
+      setState("unsupported");
+      return;
+    }
+    const proto = HTMLVideoElement.prototype as unknown as Record<
+      string,
+      unknown
+    >;
+    const remote = "remote" in proto;
+    const airplay = "webkitShowPlaybackTargetPicker" in proto;
+    setSupport({ remote, airplay });
+    if (!remote && !airplay) setState("unsupported");
+  }, []);
+
+  // Subscribe to remote playback + AirPlay events. Re-runs whenever
+  // the underlying <video> element changes (attachKey) so listeners
+  // bind to the freshly-mounted node, not to a stale null ref.
+  useEffect(() => {
+    if (!attachKey) return;
+    if (!support.remote && !support.airplay) return;
+
+    // The <video> may not be in the DOM in the same tick attachKey
+    // updates. Poll briefly until it appears, then wire listeners.
+    let cleanup: (() => void) | null = null;
+    let cancelled = false;
+
+    const wire = () => {
+      if (cancelled) return;
+      const v = videoRef.current as
+        | (HTMLVideoElement & { remote?: RemotePlaybackLike })
+        | null;
+      if (!v) {
+        window.setTimeout(wire, 50);
+        return;
+      }
+
+      const disposers: Array<() => void> = [];
+
+      if (support.remote && v.remote) {
+        const remote = v.remote;
+        // Hydrate from current state in case we're already connected
+        const initial = remote.state;
+        if (initial === "connected") setState("casting");
+        else if (initial === "connecting") setState("connecting");
+
+        const onConnecting = () => setState("connecting");
+        const onConnect = () => setState("casting");
+        const onDisconnect = () =>
+          setState((prev) => (prev === "unsupported" ? prev : "idle"));
+        remote.addEventListener("connecting", onConnecting);
+        remote.addEventListener("connect", onConnect);
+        remote.addEventListener("disconnect", onDisconnect);
+        disposers.push(() => {
+          remote.removeEventListener("connecting", onConnecting);
+          remote.removeEventListener("connect", onConnect);
+          remote.removeEventListener("disconnect", onDisconnect);
+        });
+      }
+
+      if (support.airplay) {
+        const av = v as AirPlayVideo;
+        // Hydrate from AirPlay's "currently wireless" flag
+        if (av.webkitCurrentPlaybackTargetIsWireless) setState("casting");
+
+        const onWirelessChange = () => {
+          if (av.webkitCurrentPlaybackTargetIsWireless) setState("casting");
+          else
+            setState((prev) => (prev === "unsupported" ? prev : "idle"));
+        };
+        const onAvailability = (_e: AirPlayEvent) => {
+          // Availability changes don't imply an active session;
+          // only update if we're already mid-connect.
+        };
+        av.addEventListener(
+          "webkitcurrentplaybacktargetiswirelesschanged",
+          onWirelessChange as EventListener,
+        );
+        av.addEventListener(
+          "webkitplaybacktargetavailabilitychanged",
+          onAvailability as EventListener,
+        );
+        disposers.push(() => {
+          av.removeEventListener(
+            "webkitcurrentplaybacktargetiswirelesschanged",
+            onWirelessChange as EventListener,
+          );
+          av.removeEventListener(
+            "webkitplaybacktargetavailabilitychanged",
+            onAvailability as EventListener,
+          );
+        });
+      }
+
+      cleanup = () => disposers.forEach((d) => d());
+    };
+
+    wire();
+    return () => {
+      cancelled = true;
+      if (cleanup) cleanup();
+    };
+  }, [support.remote, support.airplay, videoRef, attachKey]);
+
+  const start = useCallback(async (): Promise<
+    "ok" | "unsupported" | "failed"
+  > => {
+    const v = videoRef.current as
+      | (HTMLVideoElement & { remote?: RemotePlaybackLike })
+      | null;
+    if (!v) return "unsupported";
+    if (support.remote && v.remote) {
+      try {
+        setState("connecting");
+        await v.remote.prompt();
+        // Reflect actual remote state in case events haven't fired yet
+        const s = v.remote.state;
+        if (s === "connected") setState("casting");
+        else if (s === "connecting") setState("connecting");
+        else setState("idle");
+        return "ok";
+      } catch {
+        setState((prev) => (prev === "unsupported" ? prev : "idle"));
+        return "failed";
+      }
+    }
+    if (support.airplay) {
+      const av = v as AirPlayVideo;
+      if (typeof av.webkitShowPlaybackTargetPicker === "function") {
+        try {
+          av.webkitShowPlaybackTargetPicker();
+          // The wireless-changed event will flip state to casting if
+          // the user picks a target.
+          return "ok";
+        } catch {
+          return "failed";
+        }
+      }
+    }
+    return "unsupported";
+  }, [videoRef, support]);
+
+  const stop = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) {
+      setState((prev) => (prev === "unsupported" ? prev : "idle"));
+      return;
+    }
+    // Toggling disableRemotePlayback true forces a disconnect; we
+    // restore it to false on the next tick so the element stays
+    // castable for a future session.
+    try {
+      v.disableRemotePlayback = true;
+      window.setTimeout(() => {
+        try {
+          v.disableRemotePlayback = false;
+        } catch {
+          /* ignore */
+        }
+      }, 50);
+    } catch {
+      /* ignore */
+    }
+    setState((prev) => (prev === "unsupported" ? prev : "idle"));
+  }, [videoRef]);
+
+  return { state, support, start, stop };
+}
+
+type Platform = "ios" | "android" | "macos" | "windows" | "other";
+
+function detectPlatform(): Platform {
+  if (typeof navigator === "undefined") return "other";
+  const ua = navigator.userAgent || "";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
+  if (/Android/i.test(ua)) return "android";
+  if (/Macintosh/i.test(ua)) return "macos";
+  if (/Windows/i.test(ua)) return "windows";
+  return "other";
+}
+
+function castInstructionsFor(p: Platform): { title: string; steps: string[] } {
+  switch (p) {
+    case "android":
+      return {
+        title: "Mirror your screen on Android",
+        steps: [
+          "Open Quick Settings (swipe down from the top).",
+          "Tap Cast (or Smart View / Screen Cast).",
+          "Pick your TV or Chromecast device.",
+        ],
+      };
+    case "ios":
+      return {
+        title: "Mirror your screen on iPhone or iPad",
+        steps: [
+          "Open Control Center.",
+          "Tap Screen Mirroring.",
+          "Choose your Apple TV or AirPlay receiver.",
+        ],
+      };
+    case "macos":
+      return {
+        title: "Mirror your Mac",
+        steps: [
+          "Click the Control Center icon in the menu bar.",
+          "Click Screen Mirroring.",
+          "Pick your Apple TV or AirPlay-enabled display.",
+        ],
+      };
+    case "windows":
+      return {
+        title: "Mirror your Windows PC",
+        steps: [
+          "Press Windows key + K to open the Cast pane.",
+          "Pick your wireless display or TV.",
+        ],
+      };
+    default:
+      return {
+        title: "Open your device's screen mirroring",
+        steps: [
+          "Open your device's Quick Settings or Control Center.",
+          "Find Cast, Screen Mirroring, AirPlay, or Smart View.",
+          "Pick your TV.",
+        ],
+      };
+  }
 }
 
 type Gender = "man" | "woman";
@@ -1233,6 +1507,35 @@ function SpeakerOnIcon() {
   );
 }
 
+function CastIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 16.5V19a2 2 0 0 0 2 2h2.5" />
+      <path d="M2 12.5a8.5 8.5 0 0 1 8.5 8.5" />
+      <path d="M2 8.5A12.5 12.5 0 0 1 14.5 21" />
+      <path d="M2 5V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3.5" />
+    </svg>
+  );
+}
+
+function CastingIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="3" width="20" height="18" rx="2" fill="none" />
+      <path d="M6 8 L18 8 L18 16 L6 16 Z" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="6" y1="6" x2="18" y2="18" />
+      <line x1="6" y1="18" x2="18" y2="6" />
+    </svg>
+  );
+}
+
 function SpeakerOffIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1393,14 +1696,87 @@ function RepsBody({
   );
 }
 
+function CastInstructionsModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const platform = useMemo(() => detectPlatform(), []);
+  const { title, steps } = useMemo(
+    () => castInstructionsFor(platform),
+    [platform],
+  );
+  if (!open) return null;
+  return (
+    <div
+      className="absolute inset-0 z-50 flex items-end justify-center bg-stone-900/50 px-4 pb-6 pt-10 sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cast-modal-title"
+      onClick={onClose}
+    >
+      <div
+        className="w-full rounded-3xl bg-white p-5 shadow-xl dark:bg-stone-900"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <h3
+            id="cast-modal-title"
+            className="text-lg font-semibold text-stone-900 dark:text-stone-50"
+          >
+            {title}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+        <p className="mb-3 text-sm text-stone-500 dark:text-stone-400">
+          The web can't open the screen-mirroring picker for you, so
+          start it from your device:
+        </p>
+        <ol className="space-y-2 text-sm text-stone-700 dark:text-stone-200">
+          {steps.map((s, i) => (
+            <li key={i} className="flex gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-stone-900 text-xs font-bold text-white dark:bg-stone-50 dark:text-stone-900">
+                {i + 1}
+              </span>
+              <span className="pt-0.5">{s}</span>
+            </li>
+          ))}
+        </ol>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 w-full rounded-2xl bg-stone-900 px-6 py-3 text-base font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function WorkoutScreen({
   exercise,
   active,
   onBack,
+  videoRef,
+  cast,
+  onOpenCastModal,
 }: {
   exercise: Exercise | null;
   active: boolean;
   onBack: () => void;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  cast: ReturnType<typeof useCast>;
+  onOpenCastModal: () => void;
 }) {
   const [mutedStr, setMutedStr] = useLocalStorage<"1" | "0">(
     VOICE_MUTED_KEY,
@@ -1458,29 +1834,64 @@ function WorkoutScreen({
         >
           <BackIcon />
         </button>
-        {supported && (
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              const next = muted ? "0" : "1";
-              setMutedStr(next);
-              if (next === "1") cancel();
+            onClick={async () => {
+              if (cast.state === "casting") {
+                cast.stop();
+                return;
+              }
+              const result = await cast.start();
+              if (result !== "ok") onOpenCastModal();
             }}
-            aria-pressed={!muted}
             aria-label={
-              muted ? "Unmute Arabic coaching" : "Mute Arabic coaching"
+              cast.state === "casting" ? "Stop casting to TV" : "Cast to TV"
             }
-            title={muted ? "Voice off" : "Voice on"}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
+            aria-pressed={cast.state === "casting"}
+            title={cast.state === "casting" ? "Casting…" : "Cast to TV"}
+            className={`flex h-11 items-center justify-center gap-1.5 rounded-full px-3 shadow-sm transition active:scale-95 ${
+              cast.state === "casting"
+                ? "bg-stone-900 text-white active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
+                : "bg-white text-stone-900 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
+            }`}
           >
-            {muted ? <SpeakerOffIcon /> : <SpeakerOnIcon />}
+            {cast.state === "casting" ? <CastingIcon /> : <CastIcon />}
+            {cast.state === "casting" && (
+              <span className="text-xs font-semibold uppercase tracking-wide">
+                {cast.state === "casting" ? "Stop" : "Cast"}
+              </span>
+            )}
+            {cast.state === "connecting" && (
+              <span className="text-xs font-semibold uppercase tracking-wide">
+                Connecting…
+              </span>
+            )}
           </button>
-        )}
+          {supported && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = muted ? "0" : "1";
+                setMutedStr(next);
+                if (next === "1") cancel();
+              }}
+              aria-pressed={!muted}
+              aria-label={
+                muted ? "Unmute Arabic coaching" : "Mute Arabic coaching"
+              }
+              title={muted ? "Voice off" : "Voice on"}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
+            >
+              {muted ? <SpeakerOffIcon /> : <SpeakerOnIcon />}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Top 40% looping animation slot */}
       <div className="shrink-0 px-4 pt-3" style={{ height: "40%" }}>
-        <ExerciseLoop exercise={exercise} />
+        <ExerciseLoop exercise={exercise} videoRef={videoRef} />
       </div>
 
       {/* Honest UX fallback if no Arabic voice available */}
@@ -1527,6 +1938,11 @@ function App() {
   const [screen, setScreen] = useState<Screen>("welcome");
   const [gender, setGender] = useState<Gender | null>(null);
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
+  const [castModalOpen, setCastModalOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // attachKey re-binds cast listeners whenever the underlying video
+  // element changes (exercise swap remounts <video src=...>).
+  const cast = useCast(videoRef, activeExercise?.id ?? null);
   const unmountTimeoutRef = useRef<number | null>(null);
 
   const cancelPendingUnmount = () => {
@@ -1555,15 +1971,28 @@ function App() {
 
   const handleBackFromWorkout = () => {
     setScreen("dashboard");
-    // Unmount workout content after the fade-out completes so the
-    // timer interval is fully torn down and no ticks linger. Cancel
-    // any pending unmount first so a rapid reopen can't blank the
-    // newly-opened workout screen.
     cancelPendingUnmount();
+    // While casting, keep the workout layer (and therefore the
+    // video element) mounted so the cast session survives in-app
+    // navigation — the user can stop it via the dashboard pill.
+    if (cast.state === "casting" || cast.state === "connecting") return;
     unmountTimeoutRef.current = window.setTimeout(() => {
       unmountTimeoutRef.current = null;
       setActiveExercise(null);
     }, 350);
+  };
+
+  const handleStopCastFromDashboard = () => {
+    cast.stop();
+    // Once cast is stopped, allow the workout layer to unmount
+    // shortly after if we're not on the workout screen.
+    if (screen !== "workout") {
+      cancelPendingUnmount();
+      unmountTimeoutRef.current = window.setTimeout(() => {
+        unmountTimeoutRef.current = null;
+        setActiveExercise(null);
+      }, 350);
+    }
   };
 
   return (
@@ -1599,9 +2028,42 @@ function App() {
             exercise={activeExercise}
             active={screen === "workout"}
             onBack={handleBackFromWorkout}
+            videoRef={videoRef}
+            cast={cast}
+            onOpenCastModal={() => setCastModalOpen(true)}
           />
         )}
       </div>
+
+      {/* Casting pill — visible on dashboard while a cast session is
+          alive, so the user can always stop the cast even after
+          navigating away from the workout screen. */}
+      {screen === "dashboard" &&
+        activeExercise &&
+        (cast.state === "casting" || cast.state === "connecting") && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-24 z-40 flex justify-center px-4">
+            <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-stone-900 py-2 pl-4 pr-2 text-white shadow-lg dark:bg-stone-50 dark:text-stone-900">
+              <CastingIcon />
+              <span className="text-sm font-medium">
+                {cast.state === "connecting"
+                  ? "Connecting…"
+                  : `Casting ${activeExercise.name}`}
+              </span>
+              <button
+                type="button"
+                onClick={handleStopCastFromDashboard}
+                className="ml-1 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide active:scale-95 dark:bg-stone-900/15"
+              >
+                Stop
+              </button>
+            </div>
+          </div>
+        )}
+
+      <CastInstructionsModal
+        open={castModalOpen}
+        onClose={() => setCastModalOpen(false)}
+      />
     </div>
   );
 }
