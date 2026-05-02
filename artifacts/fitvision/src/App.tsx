@@ -15,7 +15,7 @@ type Exercise = {
   genderFocus: "men" | "women" | "both";
   mode: Mode;
   category: Category;
-  subCategory: string;
+  sub_category: string;
 };
 
 const EXERCISES: Exercise[] = [
@@ -29,7 +29,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "men",
     mode: "timed",
     category: "core",
-    subCategory: "Strength",
+    sub_category: "Strength",
   },
   {
     id: "m2",
@@ -40,7 +40,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "men",
     mode: "timed",
     category: "core",
-    subCategory: "Strength",
+    sub_category: "Strength",
   },
   {
     id: "m3",
@@ -51,7 +51,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "men",
     mode: "reps",
     category: "core",
-    subCategory: "Strength",
+    sub_category: "Strength",
   },
   {
     id: "m4",
@@ -62,7 +62,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "men",
     mode: "reps",
     category: "core",
-    subCategory: "Strength",
+    sub_category: "Strength",
   },
   {
     id: "w2",
@@ -73,7 +73,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "women",
     mode: "timed",
     category: "core",
-    subCategory: "Strength",
+    sub_category: "Strength",
   },
   {
     id: "w4",
@@ -84,7 +84,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "women",
     mode: "reps",
     category: "core",
-    subCategory: "Strength",
+    sub_category: "Strength",
   },
   {
     id: "b1",
@@ -95,7 +95,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "both",
     mode: "timed",
     category: "core",
-    subCategory: "Conditioning",
+    sub_category: "Conditioning",
   },
   {
     id: "b2",
@@ -106,7 +106,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "both",
     mode: "reps",
     category: "core",
-    subCategory: "Conditioning",
+    sub_category: "Conditioning",
   },
 
   // ----- Women's Health -----
@@ -119,7 +119,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "women",
     mode: "reps",
     category: "womens_health",
-    subCategory: "Glutes",
+    sub_category: "Glutes",
   },
   {
     id: "w3",
@@ -130,7 +130,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "women",
     mode: "reps",
     category: "womens_health",
-    subCategory: "Glutes",
+    sub_category: "Glutes",
   },
   {
     id: "wh1",
@@ -141,7 +141,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "women",
     mode: "reps",
     category: "womens_health",
-    subCategory: "Pelvic Floor",
+    sub_category: "Pelvic Floor",
   },
   {
     id: "wh2",
@@ -152,7 +152,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "women",
     mode: "reps",
     category: "womens_health",
-    subCategory: "Mobility",
+    sub_category: "Mobility",
   },
   {
     id: "wh3",
@@ -163,7 +163,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "women",
     mode: "timed",
     category: "womens_health",
-    subCategory: "Prenatal",
+    sub_category: "Prenatal",
   },
 
   // ----- Recovery -----
@@ -176,7 +176,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "both",
     mode: "timed",
     category: "recovery",
-    subCategory: "Foam Rolling",
+    sub_category: "Foam Rolling",
   },
   {
     id: "r2",
@@ -187,7 +187,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "both",
     mode: "timed",
     category: "recovery",
-    subCategory: "Stretching",
+    sub_category: "Stretching",
   },
   {
     id: "r3",
@@ -198,7 +198,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "both",
     mode: "timed",
     category: "recovery",
-    subCategory: "Mobility",
+    sub_category: "Mobility",
   },
   {
     id: "r4",
@@ -209,7 +209,7 @@ const EXERCISES: Exercise[] = [
     genderFocus: "both",
     mode: "timed",
     category: "recovery",
-    subCategory: "Breathwork",
+    sub_category: "Breathwork",
   },
 ];
 
