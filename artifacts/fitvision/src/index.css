@@ -58,6 +58,61 @@ button {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* ===== Movement-family loop animations =====
+   CSS keyframes (not SMIL) so prefers-reduced-motion can pause them. */
+.movement-loop g {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+@keyframes ml-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50%      { transform: scale(1.18); opacity: 0.45; }
+}
+@keyframes ml-breathe-soft {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50%      { transform: scale(1.22); opacity: 0.2; }
+}
+@keyframes ml-push {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(8px); }
+}
+@keyframes ml-squat {
+  0%, 100% { transform: translateY(-6px) scaleY(1); }
+  50%      { transform: translateY(6px)  scaleY(0.92); }
+}
+@keyframes ml-sway {
+  0%, 100% { transform: rotate(-6deg); }
+  50%      { transform: rotate(6deg); }
+}
+@keyframes ml-trail {
+  0%   { opacity: 0;   transform: translateY(0); }
+  50%  { opacity: 0.6; }
+  100% { opacity: 0;   transform: translateY(-14px); }
+}
+@keyframes ml-arm {
+  0%, 100% { transform: rotate(-12deg); }
+  50%      { transform: rotate(18deg); }
+}
+
+.ml-anim-breathe      { animation: ml-breathe 4s ease-in-out infinite; }
+.ml-anim-breathe-soft { animation: ml-breathe-soft 4s ease-in-out infinite; }
+.ml-anim-push         { animation: ml-push 1.6s ease-in-out infinite; }
+.ml-anim-squat        { animation: ml-squat 2s ease-in-out infinite; }
+.ml-anim-sway         { animation: ml-sway 3.6s ease-in-out infinite; }
+.ml-anim-trail        { animation: ml-trail 2.2s ease-out infinite; }
+.ml-anim-arm          { animation: ml-arm 2.4s ease-in-out infinite; }
+.ml-delay-1 { animation-delay: 0.4s; }
+.ml-delay-2 { animation-delay: 0.8s; }
+.ml-delay-3 { animation-delay: 1.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .movement-loop g {
+    animation: none !important;
+  }
+}
+
 /* Soft top fade so cards melt into the header instead of clipping */
 .list-fade {
   -webkit-mask-image: linear-gradient(

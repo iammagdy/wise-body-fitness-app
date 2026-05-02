@@ -241,99 +241,239 @@ function loopSourceFor(exercise: Exercise): string | null {
   return null;
 }
 
-function GenericMovementLoop() {
-  // Animated SVG: three concentric breathing rings + a sweeping
-  // motion arc. Tasteful, theme-friendly, deterministic.
+type MovementFamily = "push" | "squat" | "stretch" | "breathing";
+
+function movementFamilyFor(ex: Exercise): MovementFamily {
+  const n = ex.name.toLowerCase();
+  if (/breath|nostril/.test(n)) return "breathing";
+  if (
+    /push|plank|row|pull|climb|burpee|crawl|tap|press|superman|bug|bird/.test(n)
+  )
+    return "push";
+  if (
+    /squat|lunge|bridge|hinge|thrust|tilt|jump|kick|march|sit|raise|ball bounce|deadlift/.test(
+      n,
+    )
+  )
+    return "squat";
+  if (
+    /stretch|pose|fold|roll|cow|opener|circle|twist|angel|massage|splay|spinal|wall|fascia|pigeon|butterfly|goddess|yin|yoga|reset|walk|legs-up|knees|needle|release|flow/.test(
+      n,
+    )
+  )
+    return "stretch";
+  if (ex.sub_category === "Hormonal" && ex.mode === "timed") return "breathing";
+  if (ex.sub_category === "Strength" || ex.sub_category === "Conditioning")
+    return "push";
+  return "stretch";
+}
+
+function LoopFrame({ children }: { children: ReactNode }) {
   return (
     <svg
       viewBox="0 0 200 200"
-      className="h-full w-full"
+      className="movement-loop h-full w-full"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
     >
       <defs>
-        <radialGradient id="loop-bg" cx="50%" cy="50%" r="60%">
-          <stop offset="0%" stopColor="currentColor" stopOpacity="0.18" />
+        <radialGradient id="loop-bg" cx="50%" cy="50%" r="65%">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.16" />
           <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
         </radialGradient>
       </defs>
       <rect width="200" height="200" fill="url(#loop-bg)" />
+      {children}
+    </svg>
+  );
+}
+
+function PushLoop() {
+  // Side view of a push-up silhouette: head, body bar, arm + leg.
+  // Body bar dips up/down to suggest the rep.
+  return (
+    <LoopFrame>
+      <g className="ml-anim-breathe-soft" opacity="0.6">
+        <circle cx="100" cy="100" r="60" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </g>
+      <g
+        className="ml-anim-push"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        {/* head */}
+        <circle cx="50" cy="108" r="8" fill="currentColor" stroke="none" />
+        {/* torso */}
+        <line x1="58" y1="112" x2="148" y2="118" />
+        {/* arm */}
+        <line x1="68" y1="114" x2="80" y2="148" />
+        {/* leg */}
+        <line x1="148" y1="118" x2="170" y2="148" />
+      </g>
+      {/* floor */}
+      <line
+        x1="30"
+        y1="156"
+        x2="180"
+        y2="156"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        opacity="0.3"
+        strokeDasharray="3 5"
+      />
+    </LoopFrame>
+  );
+}
+
+function SquatLoop() {
+  // Front silhouette compressing/expanding vertically.
+  return (
+    <LoopFrame>
+      <g className="ml-anim-breathe-soft" opacity="0.55">
+        <circle cx="100" cy="110" r="62" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </g>
+      <g
+        className="ml-anim-squat"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* head */}
+        <circle cx="100" cy="58" r="9" fill="currentColor" stroke="none" />
+        {/* torso */}
+        <line x1="100" y1="68" x2="100" y2="108" />
+        {/* arms forward */}
+        <path d="M100 78 L78 96 M100 78 L122 96" />
+        {/* legs bent */}
+        <path d="M100 108 L82 132 L82 154" />
+        <path d="M100 108 L118 132 L118 154" />
+      </g>
+      <line
+        x1="30"
+        y1="160"
+        x2="180"
+        y2="160"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        opacity="0.3"
+        strokeDasharray="3 5"
+      />
+    </LoopFrame>
+  );
+}
+
+function StretchLoop() {
+  // Standing figure with one arm sweeping overhead, gentle sway.
+  return (
+    <LoopFrame>
+      <g className="ml-anim-breathe-soft" opacity="0.55">
+        <circle cx="100" cy="100" r="64" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </g>
+      <g className="ml-anim-sway" style={{ transformOrigin: "100px 150px" }}>
+        <g
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          {/* head */}
+          <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+          {/* torso */}
+          <line x1="100" y1="60" x2="100" y2="120" />
+          {/* legs */}
+          <path d="M100 120 L88 156" />
+          <path d="M100 120 L112 156" />
+        </g>
+        {/* sweeping arm */}
+        <g
+          className="ml-anim-arm"
+          style={{ transformOrigin: "100px 76px" }}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="6"
+          strokeLinecap="round"
+        >
+          <line x1="100" y1="76" x2="100" y2="36" />
+        </g>
+        {/* opposite arm hanging */}
+        <line
+          x1="100"
+          y1="76"
+          x2="118"
+          y2="110"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="6"
+          strokeLinecap="round"
+        />
+      </g>
+      <line
+        x1="30"
+        y1="160"
+        x2="180"
+        y2="160"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        opacity="0.3"
+        strokeDasharray="3 5"
+      />
+    </LoopFrame>
+  );
+}
+
+function BreathingLoop() {
+  // Slow nested rings + soft rising trails.
+  return (
+    <LoopFrame>
       <g
         fill="none"
         stroke="currentColor"
-        strokeLinecap="round"
         strokeWidth="2"
-        opacity="0.55"
+        strokeLinecap="round"
       >
-        <circle cx="100" cy="100" r="30">
-          <animate
-            attributeName="r"
-            values="28;42;28"
-            dur="3.2s"
-            repeatCount="indefinite"
-          />
-          <animate
-            attributeName="opacity"
-            values="0.85;0.35;0.85"
-            dur="3.2s"
-            repeatCount="indefinite"
-          />
-        </circle>
-        <circle cx="100" cy="100" r="50">
-          <animate
-            attributeName="r"
-            values="46;64;46"
-            dur="3.2s"
-            begin="0.3s"
-            repeatCount="indefinite"
-          />
-          <animate
-            attributeName="opacity"
-            values="0.55;0.18;0.55"
-            dur="3.2s"
-            begin="0.3s"
-            repeatCount="indefinite"
-          />
-        </circle>
-        <circle cx="100" cy="100" r="74">
-          <animate
-            attributeName="r"
-            values="70;88;70"
-            dur="3.2s"
-            begin="0.6s"
-            repeatCount="indefinite"
-          />
-          <animate
-            attributeName="opacity"
-            values="0.35;0.08;0.35"
-            dur="3.2s"
-            begin="0.6s"
-            repeatCount="indefinite"
-          />
-        </circle>
-      </g>
-      <g transform="translate(100 100)">
-        <g>
-          <path
-            d="M -36 0 A 36 36 0 0 1 36 0"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3.5"
-            strokeLinecap="round"
-            opacity="0.9"
-          />
-          <animateTransform
-            attributeName="transform"
-            type="rotate"
-            from="0"
-            to="360"
-            dur="6s"
-            repeatCount="indefinite"
-          />
+        <g className="ml-anim-breathe">
+          <circle cx="100" cy="100" r="32" />
+        </g>
+        <g className="ml-anim-breathe ml-delay-1" opacity="0.6">
+          <circle cx="100" cy="100" r="50" />
+        </g>
+        <g className="ml-anim-breathe ml-delay-2" opacity="0.35">
+          <circle cx="100" cy="100" r="70" />
         </g>
       </g>
-    </svg>
+      <g fill="currentColor">
+        <g className="ml-anim-trail">
+          <circle cx="80" cy="120" r="2.5" />
+        </g>
+        <g className="ml-anim-trail ml-delay-1">
+          <circle cx="100" cy="120" r="2.5" />
+        </g>
+        <g className="ml-anim-trail ml-delay-2">
+          <circle cx="120" cy="120" r="2.5" />
+        </g>
+      </g>
+      <circle cx="100" cy="100" r="4" fill="currentColor" />
+    </LoopFrame>
   );
+}
+
+function MovementFamilyLoop({ family }: { family: MovementFamily }) {
+  switch (family) {
+    case "push":
+      return <PushLoop />;
+    case "squat":
+      return <SquatLoop />;
+    case "stretch":
+      return <StretchLoop />;
+    case "breathing":
+    default:
+      return <BreathingLoop />;
+  }
 }
 
 function ExerciseLoop({
@@ -345,9 +485,9 @@ function ExerciseLoop({
 }) {
   const src = loopSourceFor(exercise);
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-3xl bg-stone-200 text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+    <div className="relative h-full w-full overflow-hidden rounded-3xl bg-gradient-to-br from-stone-200 to-stone-100 text-stone-600 shadow-inner ring-1 ring-stone-200/60 dark:from-stone-800 dark:to-stone-900 dark:text-stone-300 dark:ring-stone-800/60">
       <div className="absolute inset-0">
-        <GenericMovementLoop />
+        <MovementFamilyLoop family={movementFamilyFor(exercise)} />
       </div>
       {src && (
         <video
@@ -658,31 +798,31 @@ const EXERCISES: Exercise[] = [
   // ----- Core (Workout) -----
   {
     id: "m1",
-    name: "Barbell Bench Press",
-    targetMuscle: "Chest",
-    durationSeconds: 45,
-    reps: 10,
+    name: "Push-Up",
+    targetMuscle: "Chest & Triceps",
+    durationSeconds: 40,
+    reps: 12,
     genderFocus: "men",
-    mode: "timed",
+    mode: "reps",
     category: "core",
     sub_category: "Strength",
   },
   {
     id: "m2",
-    name: "Deadlift",
-    targetMuscle: "Back & Hamstrings",
-    durationSeconds: 60,
-    reps: 8,
+    name: "Single-Leg Glute Bridge",
+    targetMuscle: "Glutes & Hamstrings",
+    durationSeconds: 45,
+    reps: 12,
     genderFocus: "men",
-    mode: "timed",
+    mode: "reps",
     category: "core",
     sub_category: "Strength",
   },
   {
     id: "m3",
-    name: "Pull-Ups",
-    targetMuscle: "Lats & Biceps",
-    durationSeconds: 30,
+    name: "Doorway Row",
+    targetMuscle: "Back & Biceps",
+    durationSeconds: 40,
     reps: 12,
     genderFocus: "men",
     mode: "reps",
@@ -691,10 +831,10 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "m4",
-    name: "Overhead Press",
+    name: "Pike Push-Up",
     targetMuscle: "Shoulders",
     durationSeconds: 40,
-    reps: 10,
+    reps: 8,
     genderFocus: "men",
     mode: "reps",
     category: "core",
@@ -702,21 +842,21 @@ const EXERCISES: Exercise[] = [
   },
   {
     id: "w2",
-    name: "Bulgarian Split Squat",
+    name: "Split Squat",
     targetMuscle: "Quads & Glutes",
     durationSeconds: 45,
     reps: 12,
     genderFocus: "women",
-    mode: "timed",
+    mode: "reps",
     category: "core",
     sub_category: "Strength",
   },
   {
     id: "w4",
-    name: "Goblet Squat",
+    name: "Bodyweight Squat",
     targetMuscle: "Quads & Glutes",
     durationSeconds: 40,
-    reps: 12,
+    reps: 15,
     genderFocus: "women",
     mode: "reps",
     category: "core",
@@ -817,10 +957,10 @@ const EXERCISES: Exercise[] = [
   // Hormonal
   {
     id: "w3",
-    name: "Cable Kickbacks",
+    name: "Standing Donkey Kicks",
     targetMuscle: "Glutes",
     durationSeconds: 30,
-    reps: 20,
+    reps: 15,
     genderFocus: "women",
     mode: "reps",
     category: "womens_health",
@@ -921,7 +1061,7 @@ const EXERCISES: Exercise[] = [
   // Tension Release
   {
     id: "r1",
-    name: "Foam Roll Quads",
+    name: "Standing Quad Stretch",
     targetMuscle: "Quads",
     durationSeconds: 60,
     reps: 1,
@@ -967,29 +1107,29 @@ const EXERCISES: Exercise[] = [
   // ===== Expanded library (Task #12) =====
 
   // Strength (additions)
-  { id: "s1", name: "Barbell Back Squat", targetMuscle: "Quads & Glutes", durationSeconds: 60, reps: 8, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
-  { id: "s2", name: "Bent-Over Row", targetMuscle: "Mid Back", durationSeconds: 45, reps: 10, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
-  { id: "s3", name: "Dumbbell Lunge", targetMuscle: "Legs & Glutes", durationSeconds: 45, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
-  { id: "s4", name: "Lat Pulldown", targetMuscle: "Lats", durationSeconds: 40, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
-  { id: "s5", name: "Romanian Deadlift", targetMuscle: "Hamstrings", durationSeconds: 45, reps: 10, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
-  { id: "s6", name: "Seated Shoulder Press", targetMuscle: "Shoulders", durationSeconds: 40, reps: 10, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
+  { id: "s1", name: "Jump Squat", targetMuscle: "Quads & Glutes", durationSeconds: 40, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
+  { id: "s2", name: "Superman Hold", targetMuscle: "Mid Back", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Strength" },
+  { id: "s3", name: "Reverse Lunge", targetMuscle: "Legs & Glutes", durationSeconds: 45, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
+  { id: "s4", name: "Towel Pull-Down", targetMuscle: "Lats", durationSeconds: 40, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
+  { id: "s5", name: "Single-Leg Deadlift", targetMuscle: "Hamstrings", durationSeconds: 45, reps: 10, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
+  { id: "s6", name: "Pike Shoulder Tap", targetMuscle: "Shoulders", durationSeconds: 40, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
 
   // Conditioning (additions)
-  { id: "c1", name: "Jump Rope", targetMuscle: "Cardio", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
+  { id: "c1", name: "Invisible Jump Rope", targetMuscle: "Cardio", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
   { id: "c2", name: "Burpees", targetMuscle: "Full Body", durationSeconds: 45, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning" },
-  { id: "c3", name: "Kettlebell Swings", targetMuscle: "Posterior Chain", durationSeconds: 40, reps: 20, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning" },
-  { id: "c4", name: "Box Jumps", targetMuscle: "Legs", durationSeconds: 30, reps: 10, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning" },
-  { id: "c5", name: "Battle Ropes", targetMuscle: "Shoulders & Cardio", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
-  { id: "c6", name: "Sled Push", targetMuscle: "Full Body", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
+  { id: "c3", name: "Bodyweight Hip Hinge", targetMuscle: "Posterior Chain", durationSeconds: 40, reps: 20, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning" },
+  { id: "c4", name: "Tuck Jumps", targetMuscle: "Legs", durationSeconds: 30, reps: 10, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning" },
+  { id: "c5", name: "Plank Shoulder Taps", targetMuscle: "Shoulders & Core", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
+  { id: "c6", name: "Bear Crawl", targetMuscle: "Full Body", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
   { id: "c7", name: "High Knees", targetMuscle: "Cardio", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
   { id: "c8", name: "Bicycle Crunches", targetMuscle: "Core", durationSeconds: 40, reps: 30, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning" },
 
   // Pregnancy Safe (additions)
   { id: "ps1", name: "Wall Sit", targetMuscle: "Quads", durationSeconds: 30, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
-  { id: "ps2", name: "Seated Bicep Curl", targetMuscle: "Biceps", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Pregnancy Safe" },
+  { id: "ps2", name: "Seated Towel Curl", targetMuscle: "Biceps", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Pregnancy Safe" },
   { id: "ps3", name: "Standing Calf Raise", targetMuscle: "Calves", durationSeconds: 40, reps: 15, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Pregnancy Safe" },
   { id: "ps4", name: "Modified Side Plank", targetMuscle: "Obliques", durationSeconds: 30, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
-  { id: "ps5", name: "Birth Ball Bounce", targetMuscle: "Hips", durationSeconds: 60, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
+  { id: "ps5", name: "Standing Pelvic Rocks", targetMuscle: "Hips", durationSeconds: 60, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
   { id: "ps6", name: "Prenatal Squat Hold", targetMuscle: "Pelvic Floor", durationSeconds: 30, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
   { id: "ps7", name: "Seated Spinal Twist", targetMuscle: "Spine", durationSeconds: 45, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
 
@@ -1021,7 +1161,7 @@ const EXERCISES: Exercise[] = [
   { id: "tn7", name: "Seated Neck Flexion", targetMuscle: "Neck", durationSeconds: 30, reps: 10, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Tech Neck" },
 
   // Foot Care (additions)
-  { id: "fc1", name: "Tennis Ball Roll", targetMuscle: "Plantar Fascia", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care" },
+  { id: "fc1", name: "Plantar Fascia Press", targetMuscle: "Plantar Fascia", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care" },
   { id: "fc2", name: "Toe Splay", targetMuscle: "Toes", durationSeconds: 30, reps: 15, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Foot Care" },
   { id: "fc3", name: "Heel Walks", targetMuscle: "Shin & Foot", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care" },
   { id: "fc4", name: "Ankle Circles", targetMuscle: "Ankles", durationSeconds: 30, reps: 10, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Foot Care" },
@@ -1033,24 +1173,51 @@ const EXERCISES: Exercise[] = [
   { id: "tr1", name: "Pigeon Pose", targetMuscle: "Hips", durationSeconds: 90, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
   { id: "tr2", name: "Seated Forward Fold", targetMuscle: "Hamstrings", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
   { id: "tr3", name: "Cat-Cow Flow", targetMuscle: "Spine", durationSeconds: 60, reps: 10, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Tension Release" },
-  { id: "tr4", name: "Foam Roll Upper Back", targetMuscle: "Thoracic", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
+  { id: "tr4", name: "Thoracic Extension", targetMuscle: "Thoracic", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
   { id: "tr5", name: "Standing Forward Fold", targetMuscle: "Posterior Chain", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
   { id: "tr6", name: "Supine Twist", targetMuscle: "Lower Back", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
 ];
 
 function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
-      <div className="mb-16 text-center">
-        <h1 className="text-5xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+    <div className="absolute inset-0 flex flex-col px-6 pt-safe pb-safe">
+      {/* Hero illustration */}
+      <div className="relative mt-10 flex h-56 w-full items-center justify-center">
+        <div
+          className="absolute inset-0 mx-auto h-56 w-56 rounded-full opacity-80 blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(16,185,129,0.35) 0%, rgba(16,185,129,0) 70%)",
+          }}
+        />
+        <div
+          className="absolute inset-0 mx-auto h-56 w-56 translate-x-10 translate-y-4 rounded-full opacity-70 blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(245,158,11,0.30) 0%, rgba(245,158,11,0) 70%)",
+          }}
+        />
+        <div className="relative z-10 h-44 w-44 text-stone-700 dark:text-stone-200">
+          <BreathingLoop />
+        </div>
+      </div>
+
+      <div className="mt-2 flex flex-1 flex-col items-center justify-center text-center">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">
+          Home workouts · No equipment
+        </p>
+        <h1 className="mt-3 text-5xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
           FitVision
         </h1>
-        <p className="mt-3 text-base text-stone-500 dark:text-stone-400">
-          Your personal fitness journey
+        <p className="mt-3 max-w-xs text-base leading-snug text-stone-500 dark:text-stone-400">
+          Strength, recovery and breathing sessions you can do in your living room — no gear required.
         </p>
       </div>
 
-      <div className="flex w-full flex-col gap-4">
+      <div className="flex w-full flex-col gap-3 pb-4">
+        <p className="text-center text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+          Pick what fits you
+        </p>
         <button
           type="button"
           onClick={() => onSelect("man")}
@@ -1187,6 +1354,64 @@ function ThemeMenu({
   );
 }
 
+function FamilyGlyph({ family }: { family: MovementFamily }) {
+  // Tiny line glyph next to the exercise name. 20x20.
+  const common = {
+    width: 20,
+    height: 20,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+  if (family === "push")
+    return (
+      <svg {...common}>
+        <circle cx="5" cy="13" r="1.6" fill="currentColor" stroke="none" />
+        <path d="M6 14 L18 15" />
+        <path d="M9 14 L11 19 M16 15 L19 19" />
+      </svg>
+    );
+  if (family === "squat")
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none" />
+        <path d="M12 7 v6" />
+        <path d="M12 13 L9 17 v3 M12 13 L15 17 v3" />
+      </svg>
+    );
+  if (family === "stretch")
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="5" r="1.6" fill="currentColor" stroke="none" />
+        <path d="M12 7 v8" />
+        <path d="M12 9 L17 5" />
+        <path d="M12 9 L8 13" />
+        <path d="M12 15 L9 20 M12 15 L15 20" />
+      </svg>
+    );
+  // breathing
+  return (
+    <svg {...common}>
+      <circle cx="12" cy="12" r="3" />
+      <circle cx="12" cy="12" r="6" opacity="0.6" />
+      <circle cx="12" cy="12" r="9" opacity="0.3" />
+    </svg>
+  );
+}
+
+function NoEquipmentBadge() {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
+      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+      No equipment
+    </span>
+  );
+}
+
 function ExerciseCard({
   exercise,
   onClick,
@@ -1194,6 +1419,7 @@ function ExerciseCard({
   exercise: Exercise;
   onClick: () => void;
 }) {
+  const family = movementFamilyFor(exercise);
   return (
     <div
       role="button"
@@ -1205,39 +1431,47 @@ function ExerciseCard({
           onClick();
         }
       }}
-      className="mb-4 cursor-pointer rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-100 transition hover:shadow-md active:scale-[0.99] active:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:active:bg-stone-800"
+      className="group mb-3 cursor-pointer rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200/70 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.985] active:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:active:bg-stone-800"
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start gap-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-stone-100 text-stone-700 ring-1 ring-stone-200/70 dark:bg-stone-800 dark:text-stone-200 dark:ring-stone-700/60">
+          <FamilyGlyph family={family} />
+        </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold text-stone-900 dark:text-stone-50">
+          <h3 className="truncate text-[15px] font-semibold leading-tight text-stone-900 dark:text-stone-50">
             {exercise.name}
           </h3>
-          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{exercise.targetMuscle}</p>
+          <p className="mt-0.5 truncate text-[13px] text-stone-500 dark:text-stone-400">
+            {exercise.targetMuscle}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <NoEquipmentBadge />
+            <span className="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600 dark:bg-stone-800 dark:text-stone-300">
+              {exercise.mode === "timed"
+                ? `${exercise.durationSeconds}s`
+                : `${exercise.reps} reps`}
+            </span>
+            {exercise.genderFocus !== "both" && (
+              <span className="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+                {exercise.genderFocus}
+              </span>
+            )}
+          </div>
         </div>
-        <span className="shrink-0 rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-stone-600 dark:bg-stone-800 dark:text-stone-300">
-          {exercise.genderFocus === "both" ? "All" : exercise.genderFocus}
-        </span>
-      </div>
-
-      <div className="mt-3 flex items-center gap-2">
-        <div className="flex-1 rounded-xl bg-stone-50 px-3 py-2 dark:bg-stone-800/60">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-stone-400 dark:text-stone-500">
-            {exercise.mode === "timed" ? "Duration" : "Reps"}
-          </p>
-          <p className="mt-0.5 text-sm font-semibold text-stone-900 dark:text-stone-50">
-            {exercise.mode === "timed"
-              ? `${exercise.durationSeconds}s`
-              : exercise.reps}
-          </p>
-        </div>
-        <div className="flex-1 rounded-xl bg-stone-50 px-3 py-2 dark:bg-stone-800/60">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-stone-400 dark:text-stone-500">
-            Mode
-          </p>
-          <p className="mt-0.5 text-sm font-semibold capitalize text-stone-900 dark:text-stone-50">
-            {exercise.mode}
-          </p>
-        </div>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          className="mt-1 shrink-0 text-stone-300 transition group-hover:translate-x-0.5 group-hover:text-stone-500 dark:text-stone-600 dark:group-hover:text-stone-400"
+        >
+          <polyline points="9 6 15 12 9 18" />
+        </svg>
       </div>
     </div>
   );
@@ -1911,9 +2145,13 @@ function WorkoutScreen({
         <h2 className="text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
           {exercise.name}
         </h2>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-          {exercise.targetMuscle}
-        </p>
+        <div className="mt-2 flex items-center justify-center gap-2">
+          <p className="text-sm text-stone-500 dark:text-stone-400">
+            {exercise.targetMuscle}
+          </p>
+          <span aria-hidden="true" className="text-stone-300 dark:text-stone-600">·</span>
+          <NoEquipmentBadge />
+        </div>
       </div>
 
       {/* Mode-conditional body */}
