@@ -583,7 +583,7 @@ function DashboardScreen({
       )}
 
       <div
-        className="no-scrollbar flex-1 overflow-y-auto px-6"
+        className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-6"
         style={{ paddingBottom: 100 }}
       >
         {filtered.map((exercise) => (
@@ -893,7 +893,7 @@ function App() {
   };
 
   return (
-    <div className="relative mx-auto h-full w-full max-w-md overflow-hidden bg-stone-50">
+    <div className="relative mx-auto h-dvh w-full max-w-md overflow-hidden bg-stone-50">
       <div
         className={`absolute inset-0 transition-opacity duration-500 ease-in-out ${
           screen === "welcome" ? "opacity-100" : "pointer-events-none opacity-0"
