@@ -218,7 +218,17 @@ function getCuesFor(ex: Exercise): ArabicCues {
 // ===== Loop animations =====
 // Files placed in /public/loops must be registered here; see
 // /public/loops/README.md.
-const LOOP_MANIFEST = new Set<string>([]);
+const LOOP_MANIFEST = new Set<string>([
+  // Sub-category fallback loops (one per sub-category)
+  "strength",
+  "conditioning",
+  "pregnancy-safe",
+  "postpartum",
+  "hormonal",
+  "tech-neck",
+  "foot-care",
+  "tension-release",
+]);
 
 function subCategorySlug(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
