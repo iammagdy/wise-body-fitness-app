@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 
 type ThemePref = "system" | "light" | "dark";
@@ -530,25 +531,92 @@ function SystemIcon() {
   );
 }
 
-function ThemeToggle({
+function ThemeMenu({
   pref,
-  onCycle,
+  onSelect,
 }: {
   pref: ThemePref;
-  onCycle: () => void;
+  onSelect: (next: ThemePref) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   const label =
     pref === "light" ? "Light" : pref === "dark" ? "Dark" : "System";
+  const options: { value: ThemePref; label: string; icon: ReactNode }[] =
+    [
+      { value: "light", label: "Light", icon: <SunIcon /> },
+      { value: "dark", label: "Dark", icon: <MoonIcon /> },
+      { value: "system", label: "System", icon: <SystemIcon /> },
+    ];
+
   return (
-    <button
-      type="button"
-      onClick={onCycle}
-      aria-label={`Theme: ${label}. Tap to change.`}
-      title={`Theme: ${label}`}
-      className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-700 shadow-sm transition active:scale-95 active:bg-stone-200 dark:bg-stone-800 dark:text-stone-200 dark:active:bg-stone-700"
-    >
-      {pref === "light" ? <SunIcon /> : pref === "dark" ? <MoonIcon /> : <SystemIcon />}
-    </button>
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label={`Theme: ${label}. Tap to change.`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={`Theme: ${label}`}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-700 shadow-sm transition active:scale-95 active:bg-stone-200 dark:bg-stone-800 dark:text-stone-200 dark:active:bg-stone-700"
+      >
+        {pref === "light" ? <SunIcon /> : pref === "dark" ? <MoonIcon /> : <SystemIcon />}
+      </button>
+      {open && (
+        <div
+          role="menu"
+          aria-label="Choose theme"
+          className="absolute right-0 top-12 z-10 w-40 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-lg dark:border-stone-800 dark:bg-stone-900"
+        >
+          {options.map((opt) => {
+            const isActive = opt.value === pref;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="menuitemradio"
+                aria-checked={isActive}
+                onClick={() => {
+                  onSelect(opt.value);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-medium transition ${
+                  isActive
+                    ? "bg-stone-100 text-stone-900 dark:bg-stone-800 dark:text-stone-50"
+                    : "text-stone-700 hover:bg-stone-50 dark:text-stone-300 dark:hover:bg-stone-800/60"
+                }`}
+              >
+                <span className="flex h-5 w-5 items-center justify-center">
+                  {opt.icon}
+                </span>
+                <span className="flex-1">{opt.label}</span>
+                {isActive && (
+                  <span aria-hidden="true" className="text-xs">●</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -711,11 +779,14 @@ function BottomNav({
 function DashboardScreen({
   gender,
   onSelectExercise,
+  themePref,
+  onThemeChange,
 }: {
   gender: Gender | null;
   onSelectExercise: (exercise: Exercise) => void;
+  themePref: ThemePref;
+  onThemeChange: (next: ThemePref) => void;
 }) {
-  const { pref, cycle } = useTheme();
   const [category, setCategory] = useState<Category>("core");
   const chips = SUB_CATEGORIES[category];
   const [activeChip, setActiveChip] = useState<string>(chips?.[0] ?? "");
@@ -767,7 +838,7 @@ function DashboardScreen({
               FitVision
             </h1>
           </div>
-          <ThemeToggle pref={pref} onCycle={cycle} />
+          <ThemeMenu pref={themePref} onSelect={onThemeChange} />
         </div>
       </header>
 
@@ -1047,6 +1118,7 @@ function WorkoutScreen({
 }
 
 function App() {
+  const { pref: themePref, setTheme } = useTheme();
   const [screen, setScreen] = useState<Screen>("welcome");
   const [gender, setGender] = useState<Gender | null>(null);
   const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
@@ -1107,6 +1179,8 @@ function App() {
         <DashboardScreen
           gender={gender}
           onSelectExercise={handleSelectExercise}
+          themePref={themePref}
+          onThemeChange={setTheme}
         />
       </div>
 
