@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "FitVision"
+version = "1.0.0"
+id = "artifacts/fitvision"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24512
+
+[services.development]
+run = "pnpm --filter @workspace/fitvision run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/fitvision", "run", "build" ]
+publicDir = "artifacts/fitvision/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24512"
+BASE_PATH = "/"
