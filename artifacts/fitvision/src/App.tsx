@@ -101,6 +101,98 @@ function useLocalStorage<T extends string>(
 const WORKOUT_TOTAL_SETS_KEY = "fitvision.workout.totalSets";
 const WORKOUT_REST_SECONDS_KEY = "fitvision.workout.restSeconds";
 
+// ===== Workout history (logged completed sessions) =====
+const HISTORY_KEY = "fitvision.history.v1";
+const HISTORY_MAX = 200;
+
+type WorkoutSession = {
+  id: string;
+  endedAt: number;
+  durationSeconds: number;
+  exercises: number;
+  sets: number;
+  category: "core" | "womens_health" | "recovery";
+  firstExerciseName: string;
+};
+
+function isWorkoutSession(v: unknown): v is WorkoutSession {
+  if (!v || typeof v !== "object") return false;
+  const s = v as Record<string, unknown>;
+  return (
+    typeof s.id === "string" &&
+    typeof s.endedAt === "number" &&
+    typeof s.durationSeconds === "number" &&
+    typeof s.exercises === "number" &&
+    typeof s.sets === "number" &&
+    (s.category === "core" || s.category === "womens_health" || s.category === "recovery") &&
+    typeof s.firstExerciseName === "string"
+  );
+}
+
+function loadHistory(): WorkoutSession[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isWorkoutSession);
+  } catch {
+    return [];
+  }
+}
+
+const historyListeners = new Set<() => void>();
+
+function persistHistory(list: WorkoutSession[]) {
+  try {
+    localStorage.setItem(
+      HISTORY_KEY,
+      JSON.stringify(list.slice(-HISTORY_MAX)),
+    );
+  } catch {
+    /* ignore */
+  }
+  historyListeners.forEach((l) => l());
+}
+
+function useWorkoutHistory() {
+  const [history, setHistory] = useState<WorkoutSession[]>(() => loadHistory());
+  useEffect(() => {
+    const sync = () => setHistory(loadHistory());
+    historyListeners.add(sync);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === HISTORY_KEY) sync();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => {
+      historyListeners.delete(sync);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+  const logSession = useCallback(
+    (s: Omit<WorkoutSession, "id" | "endedAt"> & { endedAt?: number }) => {
+      const session: WorkoutSession = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        endedAt: s.endedAt ?? Date.now(),
+        durationSeconds: Math.max(0, Math.round(s.durationSeconds)),
+        exercises: Math.max(0, Math.round(s.exercises)),
+        sets: Math.max(0, Math.round(s.sets)),
+        category: s.category,
+        firstExerciseName: s.firstExerciseName,
+      };
+      const next = [...loadHistory(), session].slice(-HISTORY_MAX);
+      persistHistory(next);
+      setHistory(next);
+    },
+    [],
+  );
+  const clearHistory = useCallback(() => {
+    persistHistory([]);
+    setHistory([]);
+  }, []);
+  return { history, logSession, clearHistory };
+}
+
 // ===== Arabic voice coaching =====
 const VOICE_MUTED_KEY = "fitvision.voiceMuted";
 
@@ -4451,18 +4543,225 @@ function BottomNav({
   );
 }
 
+function startOfDay(ts: number): number {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function computeStreak(history: WorkoutSession[]): number {
+  if (history.length === 0) return 0;
+  const days = new Set<number>();
+  for (const s of history) days.add(startOfDay(s.endedAt));
+  const today = startOfDay(Date.now());
+  let cursor = days.has(today) ? today : today - DAY_MS;
+  if (!days.has(cursor)) return 0;
+  let streak = 0;
+  while (days.has(cursor)) {
+    streak += 1;
+    cursor -= DAY_MS;
+  }
+  return streak;
+}
+
+function ProgressOverview({
+  history,
+  onClear,
+}: {
+  history: WorkoutSession[];
+  onClear: () => void;
+}) {
+  const today = startOfDay(Date.now());
+  const todays = history.filter((s) => startOfDay(s.endedAt) === today);
+  const todaysSets = todays.reduce((acc, s) => acc + s.sets, 0);
+  const todaysSeconds = todays.reduce((acc, s) => acc + s.durationSeconds, 0);
+  const streak = computeStreak(history);
+
+  const days = Array.from({ length: 7 }, (_, i) => today - (6 - i) * DAY_MS);
+  const perDay = days.map((d) => {
+    const sessions = history.filter((s) => startOfDay(s.endedAt) === d);
+    const seconds = sessions.reduce((acc, s) => acc + s.durationSeconds, 0);
+    return { day: d, count: sessions.length, seconds };
+  });
+  const maxSeconds = Math.max(60, ...perDay.map((p) => p.seconds));
+  const dayLabels = ["S", "M", "T", "W", "T", "F", "S"];
+
+  const recent = [...history].sort((a, b) => b.endedAt - a.endedAt).slice(0, 3);
+  const [confirmingClear, setConfirmingClear] = useState(false);
+
+  const minutesLabel = Math.round(todaysSeconds / 60);
+
+  return (
+    <section className="mb-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200/70 dark:bg-stone-900 dark:ring-stone-800">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
+            Today
+          </p>
+          <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+            {todays.length === 0
+              ? "No workouts yet — finish one to log it."
+              : `${todays.length} workout${todays.length === 1 ? "" : "s"} logged`}
+          </p>
+        </div>
+        <div
+          className="flex h-12 min-w-[3.25rem] flex-col items-center justify-center rounded-2xl bg-emerald-50 px-3 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+          aria-label={`${streak}-day streak`}
+        >
+          <span className="text-lg font-bold leading-none tabular-nums">
+            {streak}
+          </span>
+          <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-widest">
+            day streak
+          </span>
+        </div>
+      </div>
+
+      <dl className="mt-4 grid grid-cols-3 gap-2">
+        <div className="rounded-2xl bg-stone-100 px-2 py-3 text-center dark:bg-stone-800">
+          <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+            Workouts
+          </dt>
+          <dd className="mt-1 text-xl font-bold tabular-nums text-stone-900 dark:text-stone-50">
+            {todays.length}
+          </dd>
+        </div>
+        <div className="rounded-2xl bg-stone-100 px-2 py-3 text-center dark:bg-stone-800">
+          <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+            Sets
+          </dt>
+          <dd className="mt-1 text-xl font-bold tabular-nums text-stone-900 dark:text-stone-50">
+            {todaysSets}
+          </dd>
+        </div>
+        <div className="rounded-2xl bg-stone-100 px-2 py-3 text-center dark:bg-stone-800">
+          <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+            Minutes
+          </dt>
+          <dd className="mt-1 text-xl font-bold tabular-nums text-stone-900 dark:text-stone-50">
+            {minutesLabel}
+          </dd>
+        </div>
+      </dl>
+
+      <div className="mt-4">
+        <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+          Last 7 days
+        </p>
+        <div className="flex h-20 items-end justify-between gap-1.5">
+          {perDay.map((p, i) => {
+            const h = p.seconds === 0 ? 6 : Math.max(8, Math.round((p.seconds / maxSeconds) * 64));
+            const isToday = p.day === today;
+            const date = new Date(p.day);
+            return (
+              <div key={p.day} className="flex flex-1 flex-col items-center gap-1">
+                <div
+                  className={`w-full rounded-md ${
+                    p.seconds > 0
+                      ? "bg-emerald-500 dark:bg-emerald-400"
+                      : "bg-stone-200 dark:bg-stone-800"
+                  } ${isToday ? "ring-2 ring-emerald-300 dark:ring-emerald-700" : ""}`}
+                  style={{ height: `${h}px` }}
+                  title={`${date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}: ${Math.round(p.seconds / 60)} min`}
+                  aria-label={`${date.toLocaleDateString(undefined, { weekday: "short" })}: ${Math.round(p.seconds / 60)} minutes`}
+                />
+                <span
+                  className={`text-[10px] font-semibold tabular-nums ${
+                    isToday
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-stone-400 dark:text-stone-500"
+                  }`}
+                >
+                  {dayLabels[date.getDay()]}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {recent.length > 0 && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+              Recent workouts
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                if (confirmingClear) {
+                  onClear();
+                  setConfirmingClear(false);
+                } else {
+                  setConfirmingClear(true);
+                  window.setTimeout(() => setConfirmingClear(false), 3000);
+                }
+              }}
+              className="text-[10px] font-semibold uppercase tracking-widest text-stone-400 transition active:scale-95 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300"
+            >
+              {confirmingClear ? "Tap to confirm" : "Clear"}
+            </button>
+          </div>
+          <ul className="mt-2 space-y-1.5">
+            {recent.map((s) => {
+              const date = new Date(s.endedAt);
+              const isToday = startOfDay(s.endedAt) === today;
+              const isYesterday = startOfDay(s.endedAt) === today - DAY_MS;
+              const when = isToday
+                ? `Today ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+                : isYesterday
+                  ? `Yesterday ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+                  : date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+              return (
+                <li
+                  key={s.id}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-stone-50 px-3 py-2 dark:bg-stone-800/60"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-stone-900 dark:text-stone-50">
+                      {s.firstExerciseName}
+                      {s.exercises > 1 ? ` +${s.exercises - 1}` : ""}
+                    </p>
+                    <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                      {when}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-semibold tabular-nums text-stone-900 dark:text-stone-50">
+                      {Math.max(1, Math.round(s.durationSeconds / 60))}m
+                    </p>
+                    <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                      {s.sets} {s.sets === 1 ? "set" : "sets"}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function DashboardScreen({
   gender,
   onSelectExercise,
   themePref,
   onThemeChange,
   onResetProfile,
+  history,
+  onClearHistory,
 }: {
   gender: Gender | null;
   onSelectExercise: (playlist: Exercise[], index: number) => void;
   themePref: ThemePref;
   onThemeChange: (next: ThemePref) => void;
   onResetProfile: () => void;
+  history: WorkoutSession[];
+  onClearHistory: () => void;
 }) {
   const [category, setCategory] = useState<Category>("core");
   const chips = SUB_CATEGORIES[category];
@@ -4548,6 +4847,7 @@ function DashboardScreen({
         className="no-scrollbar list-fade min-h-0 flex-1 overflow-y-auto px-6 pt-2"
         style={{ paddingBottom: 100 }}
       >
+        <ProgressOverview history={history} onClear={onClearHistory} />
         {grouped ? (
           grouped.map(([sub, items]) => (
             <section key={sub} className="mb-2">
@@ -5233,6 +5533,7 @@ function WorkoutScreen({
   videoRef,
   cast,
   onOpenCastModal,
+  onLogSession,
 }: {
   playlist: Exercise[];
   index: number;
@@ -5242,6 +5543,7 @@ function WorkoutScreen({
   videoRef: React.RefObject<HTMLVideoElement | null>;
   cast: ReturnType<typeof useCast>;
   onOpenCastModal: () => void;
+  onLogSession: (s: Omit<WorkoutSession, "id" | "endedAt">) => void;
 }) {
   const exercise = playlist[index] ?? null;
   const nextExercise = playlist[index + 1] ?? null;
@@ -5346,8 +5648,18 @@ function WorkoutScreen({
         completedSets: finalSetCount,
         elapsedSeconds,
       });
+      const first = playlist[0];
+      if (first && finalSetCount > 0) {
+        onLogSession({
+          durationSeconds: elapsedSeconds,
+          exercises: finalExerciseCount,
+          sets: finalSetCount,
+          category: first.category,
+          firstExerciseName: first.name,
+        });
+      }
     },
-    [cancel],
+    [cancel, playlist, onLogSession],
   );
 
   const handleSetComplete = useCallback(() => {
@@ -5980,6 +6292,7 @@ function App() {
     initialGender ? "dashboard" : "welcome",
   );
   const [gender, setGender] = useState<Gender | null>(initialGender);
+  const { history, logSession, clearHistory } = useWorkoutHistory();
   const [playlist, setPlaylist] = useState<Exercise[]>([]);
   const [playlistIndex, setPlaylistIndex] = useState(0);
   const activeExercise = playlist[playlistIndex] ?? null;
@@ -6019,6 +6332,7 @@ function App() {
     } catch {
       /* ignore */
     }
+    clearHistory();
     setGender(null);
     setScreen("welcome");
   };
@@ -6079,6 +6393,8 @@ function App() {
           themePref={themePref}
           onThemeChange={setTheme}
           onResetProfile={handleResetProfile}
+          history={history}
+          onClearHistory={clearHistory}
         />
       </div>
 
@@ -6099,6 +6415,7 @@ function App() {
             videoRef={videoRef}
             cast={cast}
             onOpenCastModal={() => setCastModalOpen(true)}
+            onLogSession={logSession}
           />
         )}
       </div>
