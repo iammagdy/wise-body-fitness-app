@@ -336,6 +336,13 @@ function getCuesFor(ex: Exercise): ArabicCues {
 // Files placed in /public/loops must be registered here; see
 // /public/loops/README.md.
 const LOOP_MANIFEST = new Set<string>([
+  // Per-exercise AI-generated demonstration clips (pilot, Task #26)
+  "m1",   // Push-Up
+  "w4",   // Bodyweight Squat
+  "b1",   // Plank Hold
+  "pp1",  // Glute Bridge
+  "s3",   // Reverse Lunge
+  "tr1",  // Pigeon Pose
   // Sub-category fallback loops (one per sub-category)
   "strength",
   "conditioning",

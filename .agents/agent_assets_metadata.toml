@@ -1,0 +1,38 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "D8O3W0hVmmQT7zzqNE55S"
+uri = "file://artifacts/fitvision/public/loops/m1.mp4"
+type = "video"
+title = "Push-Up (m1) — pilot AI loop"
+
+[[outputs]]
+id = "RS_gdcMNgaRE90i52YFKQ"
+uri = "file://artifacts/fitvision/public/loops/w4.mp4"
+type = "video"
+title = "Bodyweight Squat (w4) — pilot AI loop"
+
+[[outputs]]
+id = "OVOkFRQRkc9VN6oeXyq1j"
+uri = "file://artifacts/fitvision/public/loops/b1.mp4"
+type = "video"
+title = "Plank Hold (b1) — pilot AI loop"
+
+[[outputs]]
+id = "tdXSzaIswRIyhqpX2iQjj"
+uri = "file://artifacts/fitvision/public/loops/pp1.mp4"
+type = "video"
+title = "Glute Bridge (pp1) — pilot AI loop"
+
+[[outputs]]
+id = "77dQs0zQndx0Dma0q0-IB"
+uri = "file://artifacts/fitvision/public/loops/s3.mp4"
+type = "video"
+title = "Reverse Lunge (s3) — pilot AI loop"
+
+[[outputs]]
+id = "-JHMAoA2jLMqRGbYgSV7H"
+uri = "file://artifacts/fitvision/public/loops/tr1.mp4"
+type = "video"
+title = "Pigeon Pose (tr1) — pilot AI loop"
