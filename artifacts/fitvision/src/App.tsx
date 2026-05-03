@@ -4141,6 +4141,90 @@ function ThemeMenu({
   );
 }
 
+function UserIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 4-7 8-7s8 3 8 7" />
+    </svg>
+  );
+}
+
+function ProfileMenu({
+  gender,
+  onReset,
+}: {
+  gender: Gender | null;
+  onReset: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const label = gender === "man" ? "Man" : gender === "woman" ? "Woman" : "Profile";
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label={`Profile: ${label}. Tap to change.`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        title={`Profile: ${label}`}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-stone-100 text-stone-700 shadow-sm transition active:scale-95 active:bg-stone-200 dark:bg-stone-800 dark:text-stone-200 dark:active:bg-stone-700"
+      >
+        <UserIcon />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          aria-label="Profile settings"
+          className="absolute right-0 top-12 z-10 w-56 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-lg dark:border-stone-800 dark:bg-stone-900"
+        >
+          <div className="px-3 py-2.5 text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+            Current profile
+          </div>
+          <div className="px-3 pb-2 text-sm font-semibold text-stone-900 dark:text-stone-50">
+            {label}
+          </div>
+          <div className="border-t border-stone-100 dark:border-stone-800" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onReset();
+            }}
+            className="flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:text-stone-300 dark:hover:bg-stone-800/60"
+          >
+            <span className="flex h-5 w-5 items-center justify-center">
+              <UserIcon />
+            </span>
+            <span className="flex-1">Change profile</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FamilyGlyph({ family }: { family: MovementFamily }) {
   // Tiny line glyph next to the exercise name. 20x20.
   const common = {
@@ -4372,11 +4456,13 @@ function DashboardScreen({
   onSelectExercise,
   themePref,
   onThemeChange,
+  onResetProfile,
 }: {
   gender: Gender | null;
   onSelectExercise: (playlist: Exercise[], index: number) => void;
   themePref: ThemePref;
   onThemeChange: (next: ThemePref) => void;
+  onResetProfile: () => void;
 }) {
   const [category, setCategory] = useState<Category>("core");
   const chips = SUB_CATEGORIES[category];
@@ -4445,7 +4531,10 @@ function DashboardScreen({
               </h1>
             </div>
           </div>
-          <ThemeMenu pref={themePref} onSelect={onThemeChange} />
+          <div className="flex items-center gap-2">
+            <ThemeMenu pref={themePref} onSelect={onThemeChange} />
+            <ProfileMenu gender={gender} onReset={onResetProfile} />
+          </div>
         </div>
       </header>
 
@@ -5872,10 +5961,25 @@ function InstallPrompt() {
   );
 }
 
+const GENDER_KEY = "fitvision.gender";
+
+function readStoredGender(): Gender | null {
+  try {
+    const v = localStorage.getItem(GENDER_KEY);
+    if (v === "man" || v === "woman") return v;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
 function App() {
   const { pref: themePref, setTheme } = useTheme();
-  const [screen, setScreen] = useState<Screen>("welcome");
-  const [gender, setGender] = useState<Gender | null>(null);
+  const initialGender = readStoredGender();
+  const [screen, setScreen] = useState<Screen>(
+    initialGender ? "dashboard" : "welcome",
+  );
+  const [gender, setGender] = useState<Gender | null>(initialGender);
   const [playlist, setPlaylist] = useState<Exercise[]>([]);
   const [playlistIndex, setPlaylistIndex] = useState(0);
   const activeExercise = playlist[playlistIndex] ?? null;
@@ -5900,8 +6004,23 @@ function App() {
   }, []);
 
   const handleSelectGender = (g: Gender) => {
+    try {
+      localStorage.setItem(GENDER_KEY, g);
+    } catch {
+      /* ignore */
+    }
     setGender(g);
     setScreen("dashboard");
+  };
+
+  const handleResetProfile = () => {
+    try {
+      localStorage.removeItem(GENDER_KEY);
+    } catch {
+      /* ignore */
+    }
+    setGender(null);
+    setScreen("welcome");
   };
 
   const handleSelectExercise = (nextPlaylist: Exercise[], index: number) => {
@@ -5959,6 +6078,7 @@ function App() {
           onSelectExercise={handleSelectExercise}
           themePref={themePref}
           onThemeChange={setTheme}
+          onResetProfile={handleResetProfile}
         />
       </div>
 
