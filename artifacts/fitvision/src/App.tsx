@@ -462,6 +462,1139 @@ function BreathingLoop() {
   );
 }
 
+// ===== Per-exercise illustrations =====
+// All SVGs share the same 200x200 viewBox, line weight 6, and head r ~9
+// so the workout screen feels like one design system.
+
+function FloorLine() {
+  return (
+    <line
+      x1="20"
+      y1="160"
+      x2="180"
+      y2="160"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      opacity="0.3"
+      strokeDasharray="3 5"
+    />
+  );
+}
+
+function WallLine() {
+  return (
+    <line
+      x1="40"
+      y1="20"
+      x2="40"
+      y2="170"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      opacity="0.3"
+      strokeDasharray="3 5"
+    />
+  );
+}
+
+function PlankIllustration() {
+  // Side plank-on-toes silhouette with subtle isometric pulse.
+  return (
+    <LoopFrame>
+      <g className="ml-anim-pulse">
+        <g
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="50" cy="108" r="9" fill="currentColor" stroke="none" />
+          <line x1="60" y1="112" x2="160" y2="124" />
+          <line x1="68" y1="114" x2="80" y2="148" />
+          <line x1="160" y1="124" x2="174" y2="148" />
+        </g>
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function PushUpIllustration() {
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-push"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <circle cx="50" cy="108" r="9" fill="currentColor" stroke="none" />
+        <line x1="60" y1="112" x2="160" y2="120" />
+        <line x1="68" y1="114" x2="80" y2="148" />
+        <line x1="160" y1="120" x2="172" y2="148" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function PikePushUpIllustration() {
+  // Inverted-V silhouette, head dips toward ground.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-push"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* hips at apex */}
+        <line x1="50" y1="148" x2="100" y2="60" />
+        <line x1="100" y1="60" x2="150" y2="148" />
+        {/* head hanging down from apex */}
+        <circle cx="100" cy="80" r="9" fill="currentColor" stroke="none" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function WallPushUpIllustration() {
+  // Standing figure leaning into a vertical wall.
+  return (
+    <LoopFrame>
+      <WallLine />
+      <g
+        className="ml-anim-push"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="60" cy="60" r="9" fill="currentColor" stroke="none" />
+        {/* torso */}
+        <line x1="60" y1="69" x2="120" y2="120" />
+        {/* arms forward to wall */}
+        <line x1="60" y1="72" x2="40" y2="76" />
+        <line x1="68" y1="78" x2="40" y2="100" />
+        {/* legs back */}
+        <line x1="120" y1="120" x2="160" y2="160" />
+        <line x1="118" y1="120" x2="140" y2="160" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function MountainClimberIllustration() {
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="108" r="9" fill="currentColor" stroke="none" />
+        <line x1="60" y1="112" x2="155" y2="122" />
+        {/* arm */}
+        <line x1="68" y1="114" x2="80" y2="148" />
+      </g>
+      {/* alternating legs */}
+      <g
+        className="ml-anim-knee-l"
+        style={{ transformOrigin: "155px 122px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="155" y1="122" x2="170" y2="148" />
+      </g>
+      <g
+        className="ml-anim-knee-r"
+        style={{ transformOrigin: "155px 122px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="155" y1="122" x2="120" y2="118" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function BurpeeIllustration() {
+  // Vertical stack: stand → squat → plank, animated by squashing.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-burpee"
+        style={{ transformOrigin: "100px 158px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="110" />
+        <line x1="100" y1="78" x2="80" y2="62" />
+        <line x1="100" y1="78" x2="120" y2="62" />
+        <line x1="100" y1="110" x2="84" y2="158" />
+        <line x1="100" y1="110" x2="116" y2="158" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function JumpIllustration() {
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-jump"
+        style={{ transformOrigin: "100px 160px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="56" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="66" x2="100" y2="116" />
+        {/* arms swinging up */}
+        <line x1="100" y1="80" x2="78" y2="62" />
+        <line x1="100" y1="80" x2="122" y2="62" />
+        {/* legs tucked */}
+        <line x1="100" y1="116" x2="86" y2="148" />
+        <line x1="100" y1="116" x2="114" y2="148" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function BearCrawlIllustration() {
+  // Quadruped with subtle alternating limb fade.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="56" cy="100" r="9" fill="currentColor" stroke="none" />
+        <line x1="64" y1="104" x2="148" y2="110" />
+      </g>
+      {/* front-left + back-right (in phase) */}
+      <g
+        className="ml-anim-fade-step"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="76" y1="106" x2="72" y2="148" />
+        <line x1="148" y1="110" x2="160" y2="148" />
+      </g>
+      {/* front-right + back-left (out of phase) */}
+      <g
+        className="ml-anim-fade-step ml-delay-half"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="84" y1="108" x2="92" y2="148" />
+        <line x1="138" y1="110" x2="132" y2="148" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function HighKneesIllustration() {
+  // Standing front view with alternating knee lifts.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="110" />
+        {/* arms bent at sides */}
+        <path d="M100 78 L82 92 L86 110" />
+        <path d="M100 78 L118 92 L114 110" />
+      </g>
+      {/* alternating legs */}
+      <g
+        className="ml-anim-knee-l"
+        style={{ transformOrigin: "100px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M100 110 L86 134 L92 158" />
+      </g>
+      <g
+        className="ml-anim-knee-r"
+        style={{ transformOrigin: "100px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M100 110 L114 134 L108 158" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function BirdDogIllustration() {
+  // Quadruped extending opposite arm + leg.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="60" cy="98" r="9" fill="currentColor" stroke="none" />
+        <line x1="68" y1="102" x2="148" y2="110" />
+        {/* support: opposite arm + leg planted */}
+        <line x1="78" y1="104" x2="84" y2="148" />
+        <line x1="148" y1="110" x2="146" y2="148" />
+      </g>
+      {/* extended arm forward */}
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "78px 104px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="78" y1="104" x2="40" y2="92" />
+      </g>
+      {/* extended leg back */}
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "148px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="148" y1="110" x2="186" y2="100" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function DeadBugIllustration() {
+  // Supine figure, opposite arm+leg lowered.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="138" r="9" fill="currentColor" stroke="none" />
+        <line x1="60" y1="138" x2="150" y2="138" />
+      </g>
+      {/* arms pointing up */}
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "80px 138px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="80" y1="138" x2="80" y2="92" />
+      </g>
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "120px 138px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="120" y1="138" x2="120" y2="92" />
+      </g>
+      {/* legs bent up */}
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "150px 138px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <path d="M150 138 L160 110 L150 90" />
+      </g>
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "150px 138px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <path d="M150 138 L172 116 L168 92" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function GluteBridgeIllustration() {
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-bridge"
+        style={{ transformOrigin: "100px 140px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="146" r="9" fill="currentColor" stroke="none" />
+        <line x1="60" y1="142" x2="120" y2="118" />
+        <path d="M120 118 L140 142 L154 154" />
+        {/* arms by sides */}
+        <line x1="62" y1="142" x2="80" y2="156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SquatIllustration() {
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-squat"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="56" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="66" x2="100" y2="106" />
+        <path d="M100 76 L80 94 M100 76 L120 94" />
+        <path d="M100 106 L82 130 L82 156" />
+        <path d="M100 106 L118 130 L118 156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SplitSquatIllustration() {
+  // Side view lunge with subtle vertical bob.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-squat"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="106" />
+        {/* arms */}
+        <line x1="100" y1="74" x2="86" y2="100" />
+        <line x1="100" y1="74" x2="114" y2="100" />
+        {/* front leg bent */}
+        <path d="M100 106 L70 130 L70 156" />
+        {/* back leg extended */}
+        <path d="M100 106 L138 138 L150 156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function CatCowIllustration() {
+  // Quadruped with spine arching up and down.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-arch"
+        style={{ transformOrigin: "100px 120px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="116" r="9" fill="currentColor" stroke="none" />
+        {/* arched spine */}
+        <path d="M58 116 Q100 86 150 118" />
+        {/* arms */}
+        <line x1="62" y1="120" x2="68" y2="156" />
+        {/* legs */}
+        <line x1="148" y1="120" x2="154" y2="156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function HeldStretchIllustration() {
+  // Forward fold silhouette with breathing pulse — used for forward
+  // folds, child's pose, seated stretches.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="120" r="9" fill="currentColor" stroke="none" />
+        {/* folded torso */}
+        <path d="M100 120 Q92 100 96 70" />
+        {/* arms reaching toward feet */}
+        <path d="M96 100 L82 132" />
+        <path d="M96 100 L116 132" />
+        {/* legs straight */}
+        <line x1="96" y1="70" x2="60" y2="60" />
+        <line x1="96" y1="70" x2="156" y2="62" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function ChildsPoseIllustration() {
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* hips high, torso forward to floor */}
+        <path d="M150 120 Q120 130 60 142" />
+        <circle cx="50" cy="146" r="9" fill="currentColor" stroke="none" />
+        {/* arms outstretched on floor */}
+        <line x1="60" y1="146" x2="36" y2="156" />
+        {/* shins on floor */}
+        <line x1="150" y1="120" x2="150" y2="156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function PigeonIllustration() {
+  // Front leg bent across, back leg extended — simplified.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="64" cy="84" r="9" fill="currentColor" stroke="none" />
+        {/* torso leaning forward over front leg */}
+        <line x1="70" y1="92" x2="100" y2="120" />
+        {/* arms forward */}
+        <line x1="74" y1="96" x2="60" y2="124" />
+        <line x1="80" y1="100" x2="84" y2="130" />
+        {/* front shin across */}
+        <path d="M100 120 L60 138 L46 150" />
+        {/* back leg extended */}
+        <line x1="100" y1="120" x2="172" y2="146" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function BoxBreathingIllustration() {
+  // Square with a glowing dot tracing each side in 4 steps.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      >
+        <rect x="60" y="60" width="80" height="80" rx="6" opacity="0.5" />
+      </g>
+      <g fill="currentColor">
+        <g className="ml-anim-fade-step">
+          <circle cx="60" cy="60" r="5" />
+        </g>
+        <g className="ml-anim-fade-step ml-delay-1">
+          <circle cx="140" cy="60" r="5" />
+        </g>
+        <g className="ml-anim-fade-step ml-delay-2">
+          <circle cx="140" cy="140" r="5" />
+        </g>
+        <g className="ml-anim-fade-step ml-delay-3">
+          <circle cx="60" cy="140" r="5" />
+        </g>
+      </g>
+      <text
+        x="100"
+        y="106"
+        textAnchor="middle"
+        fontSize="11"
+        fill="currentColor"
+        opacity="0.6"
+        fontFamily="ui-sans-serif, system-ui"
+      >
+        4 · 4 · 4 · 4
+      </text>
+    </LoopFrame>
+  );
+}
+
+function NostrilBreathingIllustration() {
+  // Face profile with alternating left/right glow over the nostrils.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* head profile */}
+        <circle cx="100" cy="100" r="50" />
+        {/* nose ridge */}
+        <path d="M100 86 L100 114" />
+      </g>
+      <g fill="currentColor">
+        <g className="ml-anim-fade-step">
+          <circle cx="92" cy="118" r="4" />
+        </g>
+        <g className="ml-anim-fade-step ml-delay-half">
+          <circle cx="108" cy="118" r="4" />
+        </g>
+      </g>
+    </LoopFrame>
+  );
+}
+
+function NeckRollIllustration() {
+  // Standing upper body with head rotating side to side.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* shoulders + spine */}
+        <line x1="100" y1="100" x2="100" y2="160" />
+        <line x1="60" y1="100" x2="140" y2="100" />
+      </g>
+      <g
+        className="ml-anim-head-roll"
+        style={{ transformOrigin: "100px 100px" }}
+      >
+        <circle cx="100" cy="76" r="14" fill="currentColor" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function ChinTuckIllustration() {
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="100" y1="110" x2="100" y2="170" />
+        <line x1="60" y1="110" x2="140" y2="110" />
+      </g>
+      <g
+        className="ml-anim-push"
+        style={{ transformOrigin: "100px 100px" }}
+      >
+        <circle cx="100" cy="84" r="14" fill="currentColor" />
+        {/* "tuck" arrow */}
+        <path
+          d="M124 84 L114 84 M118 80 L114 84 L118 88"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.55"
+        />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function WallAngelsIllustration() {
+  // Back-against-wall figure with arms sliding up.
+  return (
+    <LoopFrame>
+      <WallLine />
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="60" cy="60" r="9" fill="currentColor" stroke="none" />
+        <line x1="60" y1="69" x2="60" y2="140" />
+        {/* legs */}
+        <line x1="60" y1="140" x2="80" y2="160" />
+        <line x1="60" y1="140" x2="46" y2="160" />
+      </g>
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "60px 80px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M60 80 L100 70 L130 50" />
+      </g>
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "60px 80px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M60 80 L100 100 L130 120" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function FootCircleIllustration() {
+  // Foot in profile with rotating motion at the ankle.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* shin */}
+        <line x1="100" y1="40" x2="100" y2="110" />
+      </g>
+      <g
+        className="ml-anim-foot-flex"
+        style={{ transformOrigin: "100px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* foot */}
+        <path d="M100 110 L100 130 L150 140 L150 150 L100 150 Z" />
+      </g>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeDasharray="3 4"
+        opacity="0.45"
+      >
+        <circle cx="120" cy="130" r="20" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function FootArchIllustration() {
+  // Foot footprint with a glowing pulse over the arch.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* foot outline (top-down) */}
+        <path d="M80 50 Q60 100 70 150 Q90 162 110 150 Q140 100 120 50 Z" />
+        {/* toes */}
+        <circle cx="84" cy="44" r="5" fill="currentColor" stroke="none" />
+        <circle cx="96" cy="40" r="5" fill="currentColor" stroke="none" />
+        <circle cx="108" cy="42" r="5" fill="currentColor" stroke="none" />
+        <circle cx="118" cy="46" r="4" fill="currentColor" stroke="none" />
+      </g>
+      <g className="ml-anim-breathe" fill="currentColor" opacity="0.45">
+        <ellipse cx="92" cy="110" rx="14" ry="22" />
+      </g>
+    </LoopFrame>
+  );
+}
+
+function CalfStretchIllustration() {
+  // Lunge against a wall, back leg straight (calf stretch).
+  return (
+    <LoopFrame>
+      <WallLine />
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="80" cy="58" r="9" fill="currentColor" stroke="none" />
+        <line x1="80" y1="68" x2="120" y2="120" />
+        {/* arms to wall */}
+        <line x1="84" y1="74" x2="40" y2="86" />
+        <line x1="92" y1="86" x2="40" y2="106" />
+        {/* front leg bent (forward) */}
+        <path d="M120 120 L96 138 L96 156" />
+        {/* back leg straight (calf) */}
+        <line x1="120" y1="120" x2="170" y2="158" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function StandingHoldIllustration() {
+  // Generic standing held pose with subtle pulse — used for warriors,
+  // wall sit, modified plank-style holds.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="116" />
+        <line x1="100" y1="74" x2="78" y2="64" />
+        <line x1="100" y1="74" x2="122" y2="64" />
+        <path d="M100 116 L80 140 L80 158" />
+        <path d="M100 116 L120 140 L120 158" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SeatedTwistIllustration() {
+  // Seated figure with rotating torso.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* legs forward, hips at center */}
+        <path d="M100 130 L60 138 L40 130" />
+        <line x1="100" y1="130" x2="156" y2="138" />
+      </g>
+      <g
+        className="ml-anim-sway"
+        style={{ transformOrigin: "100px 130px" }}
+      >
+        <g
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="100" cy="60" r="9" fill="currentColor" stroke="none" />
+          <line x1="100" y1="70" x2="100" y2="124" />
+          <line x1="100" y1="80" x2="74" y2="100" />
+          <line x1="100" y1="80" x2="128" y2="92" />
+        </g>
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function WalkIllustration() {
+  // Side view of walking figure — used for cortisol-reset walk, heel walks.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="44" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="54" x2="100" y2="110" />
+      </g>
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "100px 70px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="100" y1="70" x2="120" y2="100" />
+      </g>
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "100px 70px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="100" y1="70" x2="80" y2="100" />
+      </g>
+      <g
+        className="ml-anim-knee-l"
+        style={{ transformOrigin: "100px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <path d="M100 110 L86 134 L92 158" />
+      </g>
+      <g
+        className="ml-anim-knee-r"
+        style={{ transformOrigin: "100px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <path d="M100 110 L114 134 L108 158" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function LegsUpWallIllustration() {
+  return (
+    <LoopFrame>
+      <WallLine />
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* legs vertical against wall */}
+        <line x1="48" y1="40" x2="48" y2="140" />
+        <line x1="60" y1="40" x2="60" y2="140" />
+        {/* hips */}
+        <path d="M48 140 L88 150" />
+        <path d="M60 140 L88 150" />
+        {/* torso on floor */}
+        <line x1="88" y1="150" x2="160" y2="150" />
+        {/* head */}
+        <circle cx="170" cy="150" r="9" fill="currentColor" stroke="none" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function HipCircleIllustration() {
+  // Standing figure with hips drawing a circle.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="48" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="58" x2="100" y2="100" />
+        <line x1="100" y1="74" x2="80" y2="92" />
+        <line x1="100" y1="74" x2="120" y2="92" />
+      </g>
+      <g
+        className="ml-anim-sway"
+        style={{ transformOrigin: "100px 100px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="100" y1="100" x2="80" y2="156" />
+        <line x1="100" y1="100" x2="120" y2="156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+// ===== ID → illustration map =====
+const ILLUSTRATION_BY_ID: Record<string, React.ComponentType> = {
+  // ----- Strength
+  m1: PushUpIllustration,
+  m2: GluteBridgeIllustration,
+  m3: StandingHoldIllustration, // Doorway Row
+  m4: PikePushUpIllustration,
+  w2: SplitSquatIllustration,
+  w4: SquatIllustration,
+  s1: JumpIllustration, // Jump Squat
+  s2: PlankIllustration, // Superman Hold (held isometric)
+  s3: SplitSquatIllustration, // Reverse Lunge
+  s4: WallAngelsIllustration, // Towel Pull-Down
+  s5: BirdDogIllustration, // Single-Leg Deadlift
+  s6: PlankIllustration, // Pike Shoulder Tap
+  // ----- Conditioning
+  b1: PlankIllustration,
+  b2: MountainClimberIllustration,
+  c1: JumpIllustration, // Invisible Jump Rope
+  c2: BurpeeIllustration,
+  c3: SplitSquatIllustration, // Bodyweight Hip Hinge
+  c4: JumpIllustration, // Tuck Jumps
+  c5: PlankIllustration, // Plank Shoulder Taps
+  c6: BearCrawlIllustration,
+  c7: HighKneesIllustration,
+  c8: DeadBugIllustration, // Bicycle Crunches (alt opposite limbs)
+  // ----- Pregnancy Safe
+  wh2: GluteBridgeIllustration, // Side-Lying Leg Raise
+  wh3: CatCowIllustration, // Prenatal Cat-Cow
+  wh4: GluteBridgeIllustration, // Pelvic Tilt
+  ps1: StandingHoldIllustration, // Wall Sit
+  ps2: SplitSquatIllustration, // Seated Towel Curl (held)
+  ps3: StandingHoldIllustration, // Standing Calf Raise
+  ps4: PlankIllustration, // Modified Side Plank
+  ps5: HipCircleIllustration, // Standing Pelvic Rocks
+  ps6: SquatIllustration, // Prenatal Squat Hold
+  ps7: SeatedTwistIllustration, // Seated Spinal Twist
+  // ----- Postpartum
+  w1: GluteBridgeIllustration, // Hip Thrusts
+  wh1: GluteBridgeIllustration, // Pelvic Floor Bridge
+  wh5: BoxBreathingIllustration, // Diastasis Recovery Breath
+  pp1: GluteBridgeIllustration,
+  pp2: BirdDogIllustration,
+  pp3: GluteBridgeIllustration, // Heel Slides
+  pp4: WallPushUpIllustration,
+  pp5: HipCircleIllustration, // Standing Pelvic Tilt
+  pp6: DeadBugIllustration,
+  pp7: HighKneesIllustration, // Seated March
+  // ----- Hormonal
+  w3: GluteBridgeIllustration, // Standing Donkey Kicks
+  wh6: HeldStretchIllustration, // Hormonal Yoga Flow
+  wh7: WalkIllustration, // Cortisol Reset Walk
+  h1: HeldStretchIllustration, // Slow Yin Stretch
+  h2: LegsUpWallIllustration,
+  h3: HipCircleIllustration,
+  h4: GluteBridgeIllustration, // Supported Bridge
+  h5: NostrilBreathingIllustration,
+  h6: SquatIllustration, // Goddess Pose (wide squat)
+  h7: HeldStretchIllustration, // Reclined Butterfly
+  // ----- Tech Neck
+  rn1: NeckRollIllustration,
+  rn2: ChinTuckIllustration,
+  rn3: NeckRollIllustration, // Upper Trap Stretch
+  tn1: WallAngelsIllustration, // Doorway Chest Opener
+  tn2: NeckRollIllustration, // Levator Scapulae
+  tn3: WallAngelsIllustration, // Scapular Squeezes
+  tn4: WallAngelsIllustration,
+  tn5: CatCowIllustration, // Thread the Needle
+  tn6: ChinTuckIllustration, // Suboccipital Release
+  tn7: ChinTuckIllustration, // Seated Neck Flexion
+  // ----- Foot Care
+  rf1: FootArchIllustration,
+  rf2: FootCircleIllustration, // Toe Yoga
+  rf3: CalfStretchIllustration,
+  fc1: FootArchIllustration, // Plantar Fascia Press
+  fc2: FootCircleIllustration, // Toe Splay
+  fc3: WalkIllustration, // Heel Walks
+  fc4: FootCircleIllustration, // Ankle Circles
+  fc5: FootCircleIllustration, // Towel Scrunches
+  fc6: StandingHoldIllustration, // Single-Leg Balance
+  fc7: FootCircleIllustration, // Big Toe Stretch
+  // ----- Tension Release
+  r1: SplitSquatIllustration, // Standing Quad Stretch
+  r2: HeldStretchIllustration, // Hamstring Stretch
+  r3: ChildsPoseIllustration,
+  r4: BoxBreathingIllustration,
+  tr1: PigeonIllustration,
+  tr2: HeldStretchIllustration, // Seated Forward Fold
+  tr3: CatCowIllustration,
+  tr4: CatCowIllustration, // Thoracic Extension
+  tr5: HeldStretchIllustration, // Standing Forward Fold
+  tr6: SeatedTwistIllustration, // Supine Twist
+};
+
 function MovementFamilyLoop({ family }: { family: MovementFamily }) {
   switch (family) {
     case "push":
@@ -476,6 +1609,12 @@ function MovementFamilyLoop({ family }: { family: MovementFamily }) {
   }
 }
 
+function ResolvedIllustration({ exercise }: { exercise: Exercise }) {
+  const Specific = ILLUSTRATION_BY_ID[exercise.id];
+  if (Specific) return <Specific />;
+  return <MovementFamilyLoop family={movementFamilyFor(exercise)} />;
+}
+
 function ExerciseLoop({
   exercise,
   videoRef,
@@ -487,7 +1626,7 @@ function ExerciseLoop({
   return (
     <div className="relative h-full w-full overflow-hidden rounded-3xl bg-gradient-to-br from-stone-200 to-stone-100 text-stone-600 shadow-inner ring-1 ring-stone-200/60 dark:from-stone-800 dark:to-stone-900 dark:text-stone-300 dark:ring-stone-800/60">
       <div className="absolute inset-0">
-        <MovementFamilyLoop family={movementFamilyFor(exercise)} />
+        <ResolvedIllustration exercise={exercise} />
       </div>
       {src && (
         <video
@@ -1584,7 +2723,7 @@ function DashboardScreen({
   onThemeChange,
 }: {
   gender: Gender | null;
-  onSelectExercise: (exercise: Exercise) => void;
+  onSelectExercise: (playlist: Exercise[], index: number) => void;
   themePref: ThemePref;
   onThemeChange: (next: ThemePref) => void;
 }) {
@@ -1655,11 +2794,11 @@ function DashboardScreen({
         className="no-scrollbar list-fade min-h-0 flex-1 overflow-y-auto px-6 pt-2"
         style={{ paddingBottom: 100 }}
       >
-        {filtered.map((exercise) => (
+        {filtered.map((exercise, idx) => (
           <ExerciseCard
             key={exercise.id}
             exercise={exercise}
-            onClick={() => onSelectExercise(exercise)}
+            onClick={() => onSelectExercise(filtered, idx)}
           />
         ))}
         {filtered.length === 0 && (
@@ -1731,6 +2870,244 @@ function BackIcon() {
   );
 }
 
+function PrevIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M6 6h2v12H6zM20 6 9 12l11 6V6z" />
+    </svg>
+  );
+}
+
+function NextIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M16 6h2v12h-2zM4 18l11-6L4 6v12z" />
+    </svg>
+  );
+}
+
+function MinusIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+      <line x1="6" y1="12" x2="18" y2="12" />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+      <line x1="12" y1="6" x2="12" y2="18" />
+      <line x1="6" y1="12" x2="18" y2="12" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+function ProgressBar({ value }: { value: number }) {
+  // value 0..1
+  const pct = Math.max(0, Math.min(1, value)) * 100;
+  return (
+    <div
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(pct)}
+      className="h-1.5 w-full overflow-hidden rounded-full bg-stone-200/80 dark:bg-stone-800/80"
+    >
+      <div
+        className="h-full rounded-full bg-emerald-500 transition-[width] duration-300 ease-out dark:bg-emerald-400"
+        style={{ width: `${pct}%` }}
+      />
+    </div>
+  );
+}
+
+function Stepper({
+  label,
+  value,
+  onDec,
+  onInc,
+  min,
+  max,
+}: {
+  label: string;
+  value: number | string;
+  onDec: () => void;
+  onInc: () => void;
+  min?: boolean;
+  max?: boolean;
+}) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full bg-white px-1.5 py-1 shadow-sm ring-1 ring-stone-200 dark:bg-stone-800 dark:ring-stone-700">
+      <button
+        type="button"
+        onClick={onDec}
+        disabled={min}
+        aria-label={`Decrease ${label}`}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-stone-700 transition active:scale-90 disabled:opacity-30 dark:text-stone-200"
+      >
+        <MinusIcon />
+      </button>
+      <span className="min-w-[3.5rem] text-center text-sm font-semibold tabular-nums text-stone-900 dark:text-stone-50">
+        {value}
+      </span>
+      <button
+        type="button"
+        onClick={onInc}
+        disabled={max}
+        aria-label={`Increase ${label}`}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-stone-700 transition active:scale-90 disabled:opacity-30 dark:text-stone-200"
+      >
+        <PlusIcon />
+      </button>
+    </div>
+  );
+}
+
+function CountdownIntro({
+  onDone,
+  onSkip,
+}: {
+  onDone: () => void;
+  onSkip: () => void;
+}) {
+  const [n, setN] = useState(3);
+  useEffect(() => {
+    if (n <= 0) {
+      const t = window.setTimeout(onDone, 350);
+      return () => window.clearTimeout(t);
+    }
+    const t = window.setTimeout(() => setN((v) => v - 1), 800);
+    return () => window.clearTimeout(t);
+  }, [n, onDone]);
+  return (
+    <div
+      className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-50/95 backdrop-blur-sm dark:bg-stone-950/95"
+      onClick={onSkip}
+      role="button"
+      aria-label="Skip countdown"
+    >
+      <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">
+        Get ready
+      </p>
+      <div
+        key={n}
+        className="ml-anim-pulse mt-4 font-bold tabular-nums text-stone-900 dark:text-stone-50"
+        style={{ fontSize: 144, lineHeight: 1 }}
+      >
+        {n > 0 ? n : "GO"}
+      </div>
+      <p className="mt-6 text-xs font-medium text-stone-400 dark:text-stone-500">
+        Tap anywhere to skip
+      </p>
+    </div>
+  );
+}
+
+function RestScreen({
+  initialSeconds,
+  nextLabel,
+  onComplete,
+  onSkip,
+}: {
+  initialSeconds: number;
+  nextLabel: string;
+  onComplete: () => void;
+  onSkip: () => void;
+}) {
+  const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
+  const totalRef = useRef(initialSeconds);
+
+  useEffect(() => {
+    if (secondsLeft <= 0) {
+      const t = window.setTimeout(onComplete, 250);
+      return () => window.clearTimeout(t);
+    }
+    const t = window.setInterval(() => {
+      setSecondsLeft((v) => Math.max(0, v - 1));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [secondsLeft, onComplete]);
+
+  const adjust = (delta: number) => {
+    setSecondsLeft((v) => {
+      const next = Math.max(1, v + delta);
+      totalRef.current = Math.max(totalRef.current, next);
+      return next;
+    });
+  };
+
+  const C = 2 * Math.PI * 45; // 282.74
+  const pct = Math.max(0, Math.min(1, secondsLeft / Math.max(1, totalRef.current)));
+  const dashOffset = C * (1 - pct);
+
+  return (
+    <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-stone-50/95 px-6 backdrop-blur-sm dark:bg-stone-950/95">
+      <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">
+        Rest
+      </p>
+      <div className="relative mt-5 flex h-44 w-44 items-center justify-center">
+        <svg className="absolute inset-0" viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="6" className="text-stone-200 dark:text-stone-800" />
+          <circle
+            cx="50"
+            cy="50"
+            r="45"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeDasharray={C}
+            strokeDashoffset={dashOffset}
+            style={{ transformOrigin: "50% 50%", transform: "rotate(-90deg)", transition: "stroke-dashoffset 800ms linear" }}
+            className="text-emerald-500 dark:text-emerald-400"
+          />
+        </svg>
+        <div className="font-bold tabular-nums text-stone-900 dark:text-stone-50" style={{ fontSize: 56, lineHeight: 1 }}>
+          {secondsLeft}
+        </div>
+      </div>
+      <p className="mt-5 text-center text-sm text-stone-500 dark:text-stone-400">
+        Up next
+      </p>
+      <p className="mt-1 max-w-[16rem] truncate text-center text-base font-semibold text-stone-900 dark:text-stone-50">
+        {nextLabel}
+      </p>
+      <div className="mt-6 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => adjust(-15)}
+          className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-stone-900 shadow-sm transition active:scale-95 dark:bg-stone-800 dark:text-stone-50"
+        >
+          −15s
+        </button>
+        <button
+          type="button"
+          onClick={() => adjust(15)}
+          className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-stone-900 shadow-sm transition active:scale-95 dark:bg-stone-800 dark:text-stone-50"
+        >
+          +15s
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={onSkip}
+        className="mt-5 rounded-full bg-stone-900 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition active:scale-95 dark:bg-stone-50 dark:text-stone-900"
+      >
+        Skip rest
+      </button>
+    </div>
+  );
+}
+
 function SpeakerOnIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -1785,11 +3162,17 @@ function TimedBody({
   active,
   cues,
   speak,
+  onSetComplete,
+  setNumber,
+  totalSets,
 }: {
   exercise: Exercise;
   active: boolean;
   cues: ArabicCues;
   speak: (text: string) => void;
+  onSetComplete: () => void;
+  setNumber: number;
+  totalSets: number;
 }) {
   const [secondsLeft, setSecondsLeft] = useState(exercise.durationSeconds);
   const [running, setRunning] = useState(false);
@@ -1802,7 +3185,7 @@ function TimedBody({
     }
   };
 
-  // Reset whenever a different exercise is opened
+  // Reset whenever a different exercise or set begins
   useEffect(() => {
     clearTimer();
     setSecondsLeft(exercise.durationSeconds);
@@ -1810,7 +3193,7 @@ function TimedBody({
     return () => {
       clearTimer();
     };
-  }, [exercise.id, exercise.durationSeconds]);
+  }, [exercise.id, exercise.durationSeconds, setNumber]);
 
   // Stop ticking immediately when the workout layer is no longer active
   useEffect(() => {
@@ -1820,13 +3203,11 @@ function TimedBody({
     }
   }, [active]);
 
-  // Reset mid-cue gate when the exercise changes
   const midCueFiredRef = useRef(false);
   useEffect(() => {
     midCueFiredRef.current = false;
-  }, [exercise.id]);
+  }, [exercise.id, setNumber]);
 
-  // Drive the interval based on `running` (only while active)
   useEffect(() => {
     if (!running || !active) {
       clearTimer();
@@ -1840,12 +3221,12 @@ function TimedBody({
         if (prev <= 1) {
           clearTimer();
           setRunning(false);
-          // End cue
           speak(cues.end);
+          // Defer so the cue isn't cancelled by transition cleanup
+          window.setTimeout(() => onSetComplete(), 500);
           return 0;
         }
         const next = prev - 1;
-        // Mid cue: fire once when we cross the midpoint
         if (!midCueFiredRef.current && next <= midpoint) {
           midCueFiredRef.current = true;
           speak(cues.mid);
@@ -1856,7 +3237,7 @@ function TimedBody({
     return () => {
       clearTimer();
     };
-  }, [running, active, exercise.durationSeconds, cues, speak]);
+  }, [running, active, exercise.durationSeconds, cues, speak, onSetComplete]);
 
   const toggle = () => {
     if (secondsLeft === 0) {
@@ -1867,64 +3248,100 @@ function TimedBody({
     setRunning((r) => !r);
   };
 
+  const elapsed = exercise.durationSeconds - secondsLeft;
+  const progress = elapsed / Math.max(1, exercise.durationSeconds);
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6">
-      <div
-        className="text-center font-mono font-bold tabular-nums text-stone-900 dark:text-stone-50"
-        style={{ fontSize: 72, lineHeight: 1 }}
-      >
-        {formatTime(secondsLeft)}
+    <div className="flex flex-1 flex-col px-6">
+      <div className="mt-2">
+        <ProgressBar value={progress} />
+        <div className="mt-1.5 flex items-center justify-between text-[11px] font-medium uppercase tracking-widest text-stone-400 dark:text-stone-500">
+          <span>Set {setNumber} of {totalSets}</span>
+          <span>{formatTime(exercise.durationSeconds - secondsLeft)} / {formatTime(exercise.durationSeconds)}</span>
+        </div>
       </div>
-      <button
-        type="button"
-        onClick={toggle}
-        aria-label={running ? "Pause" : "Play"}
-        className="mt-10 flex items-center justify-center rounded-full bg-stone-900 text-white shadow-lg transition active:scale-95 active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
-        style={{ width: 80, height: 80 }}
-      >
-        {running ? <PauseIcon /> : <PlayIcon />}
-      </button>
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <div
+          className="text-center font-mono font-bold tabular-nums text-stone-900 dark:text-stone-50"
+          style={{ fontSize: 80, lineHeight: 1 }}
+        >
+          {formatTime(secondsLeft)}
+        </div>
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={running ? "Pause" : "Play"}
+          className={`mt-8 flex items-center justify-center rounded-full bg-emerald-500 text-white shadow-xl transition active:scale-95 active:bg-emerald-600 dark:bg-emerald-500 dark:text-white ${running ? "cta-pulse" : ""}`}
+          style={{ width: 92, height: 92 }}
+        >
+          {running ? <PauseIcon /> : <PlayIcon />}
+        </button>
+      </div>
     </div>
   );
 }
 
 function RepsBody({
   exercise,
-  onDone,
+  onSetComplete,
   cues,
   speak,
+  setNumber,
+  totalSets,
 }: {
   exercise: Exercise;
-  onDone: () => void;
+  onSetComplete: (repsLogged: number) => void;
   cues: ArabicCues;
   speak: (text: string) => void;
+  setNumber: number;
+  totalSets: number;
 }) {
+  const [reps, setReps] = useState(exercise.reps);
+  useEffect(() => {
+    setReps(exercise.reps);
+  }, [exercise.id, exercise.reps, setNumber]);
+
   return (
     <div className="flex flex-1 flex-col px-6">
+      <div className="mt-2">
+        <ProgressBar value={Math.min(1, reps / Math.max(1, exercise.reps))} />
+        <div className="mt-1.5 flex items-center justify-between text-[11px] font-medium uppercase tracking-widest text-stone-400 dark:text-stone-500">
+          <span>Set {setNumber} of {totalSets}</span>
+          <span>Target {exercise.reps} reps</span>
+        </div>
+      </div>
       <div className="flex flex-1 flex-col items-center justify-center">
         <p className="text-xs font-medium uppercase tracking-widest text-stone-400 dark:text-stone-500">
           Reps
         </p>
         <div
-          className="mt-2 text-center font-bold tabular-nums text-stone-900 dark:text-stone-50"
-          style={{ fontSize: 120, lineHeight: 1 }}
+          className="mt-1 text-center font-bold tabular-nums text-stone-900 dark:text-stone-50"
+          style={{ fontSize: 112, lineHeight: 1 }}
         >
-          {exercise.reps}
+          {reps}
+        </div>
+        <div className="mt-4">
+          <Stepper
+            label="reps"
+            value={reps}
+            onDec={() => setReps((r) => Math.max(0, r - 1))}
+            onInc={() => setReps((r) => r + 1)}
+            min={reps <= 0}
+          />
         </div>
       </div>
       <button
         type="button"
         onClick={() => {
-          // Speak the end cue, then defer navigation slightly so the
-          // utterance isn't immediately cancelled by the workout
-          // screen's unmount cleanup.
           speak(cues.end);
-          window.setTimeout(onDone, 700);
+          window.setTimeout(() => onSetComplete(reps), 500);
         }}
-        className="mb-6 w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
-        style={{ minHeight: 60 }}
+        aria-label="Complete set"
+        className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 text-lg font-semibold text-white shadow-md transition active:scale-[0.98] active:bg-emerald-600"
+        style={{ minHeight: 64 }}
       >
-        Done
+        <CheckIcon />
+        Complete set
       </button>
     </div>
   );
@@ -1998,20 +3415,29 @@ function CastInstructionsModal({
 }
 
 function WorkoutScreen({
-  exercise,
+  playlist,
+  index,
   active,
   onBack,
+  onChangeIndex,
   videoRef,
   cast,
   onOpenCastModal,
 }: {
-  exercise: Exercise | null;
+  playlist: Exercise[];
+  index: number;
   active: boolean;
   onBack: () => void;
+  onChangeIndex: (next: number) => void;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   cast: ReturnType<typeof useCast>;
   onOpenCastModal: () => void;
 }) {
+  const exercise = playlist[index] ?? null;
+  const nextExercise = playlist[index + 1] ?? null;
+  const hasPrev = index > 0;
+  const hasNext = index + 1 < playlist.length;
+
   const [mutedStr, setMutedStr] = useLocalStorage<"1" | "0">(
     VOICE_MUTED_KEY,
     "1",
@@ -2022,18 +3448,79 @@ function WorkoutScreen({
 
   const cues = exercise ? getCuesFor(exercise) : DEFAULT_CUES;
 
-  // Speak the start cue shortly after the screen becomes active for
-  // this exercise. Cancel any in-flight speech when we leave.
+  // ===== Per-exercise session state =====
+  const [totalSets, setTotalSets] = useState(1);
+  const [setNumber, setSetNumber] = useState(1);
+  const [phase, setPhase] = useState<"intro" | "exercise" | "rest">("intro");
+  const REST_SECONDS = 20;
+
+  // Reset session whenever the exercise changes
   useEffect(() => {
-    if (!exercise || !active) return;
+    if (!exercise) return;
+    setSetNumber(1);
+    setPhase("intro");
+  }, [exercise?.id]);
+
+  // Stop intro/rest if the screen becomes inactive
+  useEffect(() => {
+    if (!active) {
+      cancel();
+    }
+  }, [active, cancel]);
+
+  const handleSetComplete = useCallback(() => {
+    if (setNumber < totalSets) {
+      setPhase("rest");
+      return;
+    }
+    // Last set finished — auto-advance if there's a next exercise,
+    // otherwise drop back to dashboard.
+    if (hasNext) {
+      setPhase("rest");
+    } else {
+      window.setTimeout(onBack, 350);
+    }
+  }, [setNumber, totalSets, hasNext, onBack]);
+
+  const handleRestComplete = useCallback(() => {
+    if (setNumber < totalSets) {
+      setSetNumber((n) => n + 1);
+      setPhase("exercise");
+      return;
+    }
+    // Move to next exercise
+    if (hasNext) {
+      onChangeIndex(index + 1);
+      // Resetting via the index-change effect above will re-init phase.
+    } else {
+      window.setTimeout(onBack, 200);
+    }
+  }, [setNumber, totalSets, hasNext, onChangeIndex, index, onBack]);
+
+  const goPrev = useCallback(() => {
+    if (!hasPrev) return;
+    cancel();
+    onChangeIndex(index - 1);
+  }, [hasPrev, cancel, onChangeIndex, index]);
+
+  const goNext = useCallback(() => {
+    if (!hasNext) return;
+    cancel();
+    onChangeIndex(index + 1);
+  }, [hasNext, cancel, onChangeIndex, index]);
+
+  // Speak the start cue when the user transitions into the actual
+  // exercise phase (after the 3-2-1 countdown / between-set rest).
+  useEffect(() => {
+    if (!exercise || !active || phase !== "exercise") return;
     const t = window.setTimeout(() => {
       speak(cues.start);
-    }, 800);
+    }, 250);
     return () => {
       window.clearTimeout(t);
       cancel();
     };
-  }, [exercise?.id, active, cues, speak, cancel]);
+  }, [exercise?.id, setNumber, phase, active, cues, speak, cancel]);
 
   // Always cancel speech on unmount
   useEffect(() => {
@@ -2126,8 +3613,17 @@ function WorkoutScreen({
         </div>
       </div>
 
-      {/* Top 40% looping animation slot */}
-      <div className="shrink-0 px-4 pt-3" style={{ height: "40%" }}>
+      {/* Top progress (exercise position in the playlist) */}
+      <div className="shrink-0 px-4 pt-2">
+        <ProgressBar value={(index + 1) / Math.max(1, playlist.length)} />
+        <div className="mt-1 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+          <span>Exercise {index + 1} / {playlist.length}</span>
+          <span>{exercise.sub_category}</span>
+        </div>
+      </div>
+
+      {/* Looping animation */}
+      <div className="shrink-0 px-4 pt-2" style={{ height: "34%" }}>
         <ExerciseLoop exercise={exercise} videoRef={videoRef} />
       </div>
 
@@ -2140,34 +3636,125 @@ function WorkoutScreen({
         </div>
       )}
 
-      {/* Exercise name */}
-      <div className="shrink-0 px-6 pt-4 pb-2 text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+      {/* Exercise name + sets stepper */}
+      <div className="shrink-0 px-6 pt-3 pb-1 text-center">
+        <h2 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
           {exercise.name}
         </h2>
-        <div className="mt-2 flex items-center justify-center gap-2">
-          <p className="text-sm text-stone-500 dark:text-stone-400">
+        <div className="mt-1 flex items-center justify-center gap-2">
+          <p className="text-xs text-stone-500 dark:text-stone-400">
             {exercise.targetMuscle}
           </p>
           <span aria-hidden="true" className="text-stone-300 dark:text-stone-600">·</span>
           <NoEquipmentBadge />
+        </div>
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+            Sets
+          </span>
+          <Stepper
+            label="sets"
+            value={totalSets}
+            onDec={() => {
+              setTotalSets((s) => {
+                const next = Math.max(1, s - 1);
+                if (setNumber > next) setSetNumber(next);
+                return next;
+              });
+            }}
+            onInc={() => setTotalSets((s) => Math.min(10, s + 1))}
+            min={totalSets <= 1}
+            max={totalSets >= 10}
+          />
         </div>
       </div>
 
       {/* Mode-conditional body */}
       {exercise.mode === "timed" ? (
         <TimedBody
+          key={`${exercise.id}-${setNumber}`}
           exercise={exercise}
-          active={active}
+          active={active && phase === "exercise"}
           cues={cues}
           speak={speak}
+          onSetComplete={handleSetComplete}
+          setNumber={setNumber}
+          totalSets={totalSets}
         />
       ) : (
         <RepsBody
+          key={`${exercise.id}-${setNumber}`}
           exercise={exercise}
-          onDone={onBack}
+          onSetComplete={() => handleSetComplete()}
           cues={cues}
           speak={speak}
+          setNumber={setNumber}
+          totalSets={totalSets}
+        />
+      )}
+
+      {/* Up-next strip + prev/next buttons */}
+      <div className="shrink-0 px-4 pb-safe" style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)" }}>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={goPrev}
+            disabled={!hasPrev}
+            aria-label="Previous exercise"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50"
+          >
+            <PrevIcon />
+          </button>
+          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm dark:bg-stone-800">
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+              Up next
+            </span>
+            <div className="min-w-0 flex-1">
+              {nextExercise ? (
+                <>
+                  <p className="truncate text-sm font-semibold text-stone-900 dark:text-stone-50">
+                    {nextExercise.name}
+                  </p>
+                  <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
+                    {nextExercise.targetMuscle} · {nextExercise.mode === "timed" ? `${nextExercise.durationSeconds}s` : `${nextExercise.reps} reps`}
+                  </p>
+                </>
+              ) : (
+                <p className="truncate text-sm font-medium text-stone-500 dark:text-stone-400">
+                  Last one — finish strong
+                </p>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={!hasNext}
+            aria-label="Next exercise"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50"
+          >
+            <NextIcon />
+          </button>
+        </div>
+      </div>
+
+      {/* Phase overlays */}
+      {active && phase === "intro" && (
+        <CountdownIntro
+          onDone={() => setPhase("exercise")}
+          onSkip={() => setPhase("exercise")}
+        />
+      )}
+      {active && phase === "rest" && (
+        <RestScreen
+          initialSeconds={REST_SECONDS}
+          nextLabel={
+            setNumber < totalSets
+              ? `${exercise.name} · Set ${setNumber + 1}`
+              : nextExercise?.name ?? "Workout complete"
+          }
+          onComplete={handleRestComplete}
+          onSkip={handleRestComplete}
         />
       )}
     </div>
@@ -2178,7 +3765,9 @@ function App() {
   const { pref: themePref, setTheme } = useTheme();
   const [screen, setScreen] = useState<Screen>("welcome");
   const [gender, setGender] = useState<Gender | null>(null);
-  const [activeExercise, setActiveExercise] = useState<Exercise | null>(null);
+  const [playlist, setPlaylist] = useState<Exercise[]>([]);
+  const [playlistIndex, setPlaylistIndex] = useState(0);
+  const activeExercise = playlist[playlistIndex] ?? null;
   const [castModalOpen, setCastModalOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   // attachKey re-binds cast listeners whenever the underlying video
@@ -2204,9 +3793,10 @@ function App() {
     setScreen("dashboard");
   };
 
-  const handleSelectExercise = (exercise: Exercise) => {
+  const handleSelectExercise = (nextPlaylist: Exercise[], index: number) => {
     cancelPendingUnmount();
-    setActiveExercise(exercise);
+    setPlaylist(nextPlaylist);
+    setPlaylistIndex(index);
     setScreen("workout");
   };
 
@@ -2219,7 +3809,8 @@ function App() {
     if (cast.state === "casting" || cast.state === "connecting") return;
     unmountTimeoutRef.current = window.setTimeout(() => {
       unmountTimeoutRef.current = null;
-      setActiveExercise(null);
+      setPlaylist([]);
+      setPlaylistIndex(0);
     }, 350);
   };
 
@@ -2231,7 +3822,8 @@ function App() {
       cancelPendingUnmount();
       unmountTimeoutRef.current = window.setTimeout(() => {
         unmountTimeoutRef.current = null;
-        setActiveExercise(null);
+        setPlaylist([]);
+        setPlaylistIndex(0);
       }, 350);
     }
   };
@@ -2264,11 +3856,15 @@ function App() {
           screen === "workout" ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        {activeExercise && (
+        {activeExercise && playlist.length > 0 && (
           <WorkoutScreen
-            exercise={activeExercise}
+            playlist={playlist}
+            index={playlistIndex}
             active={screen === "workout"}
             onBack={handleBackFromWorkout}
+            onChangeIndex={(next) =>
+              setPlaylistIndex(Math.max(0, Math.min(playlist.length - 1, next)))
+            }
             videoRef={videoRef}
             cast={cast}
             onOpenCastModal={() => setCastModalOpen(true)}
