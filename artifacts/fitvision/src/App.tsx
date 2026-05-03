@@ -1417,6 +1417,2100 @@ function neonJointsFor(family: NeonFamily, t: number, body: NeonBody): Joints {
   }
 }
 
+// ===== Per-exercise neon animation system (Task #35) =====
+// Each exercise in EXERCISES gets its own (pose, props) animation,
+// so two different movements never look the same on screen. Built
+// entirely on the Task #34 neon silhouette primitives — no new
+// renderer, no GIFs, no extra deps.
+
+type NeonAnimation = {
+  // Stable per-exercise animation key (e.g. "pikePushUp", "wallSit").
+  // Used for behavioral-uniqueness checks at dev-load time and exposed
+  // to e2e tests via the `data-anim-sig` SVG attribute. This is the
+  // contract that guarantees no two exercises share an underlying
+  // animation implementation, independent of `Function.toString()`
+  // formatting / minification.
+  key: string;
+  pose: (body: NeonBody, t: number) => Joints;
+  props?: (body: NeonBody, j: Joints, t: number) => ReactNode;
+  periodMs: number;
+};
+
+// ---------- New pose primitives (mechanics not covered by families) ----------
+
+function quadrupedPose(
+  body: NeonBody,
+  t: number,
+  opts: {
+    arch?: number; // -1 cat (round), 0 flat, +1 cow (arch)
+    armLift?: -1 | 0 | 1; // -1 left arm extends fwd, +1 right arm extends fwd
+    legLift?: -1 | 0 | 1; // -1 left leg extends back, +1 right leg extends back
+    threadSide?: -1 | 0 | 1; // thread-the-needle: arm woven under torso
+  } = {},
+): Joints {
+  const e = easeCos(t);
+  const arch = (opts.arch ?? 0) * e;
+  const groundY = 248;
+  const handsX = 38;
+  const kneesX = 158;
+  const torsoMidX = 98;
+  const torsoY = groundY - 60 + arch * 6;
+  const headX = handsX - 6;
+  const headY = torsoY - 6 + arch * 4;
+  // Default support
+  const sL = { x: handsX + 18, y: torsoY + 2 };
+  const sR = { x: handsX + 18, y: torsoY + 5 };
+  let eLp = { x: handsX + 8, y: torsoY + 26 };
+  let eRp = { x: handsX + 8, y: torsoY + 29 };
+  let hLp = { x: handsX, y: groundY };
+  let hRp = { x: handsX + 4, y: groundY + 2 };
+  if (opts.armLift === -1) {
+    eLp = { x: handsX - 8, y: torsoY + 4 };
+    hLp = { x: handsX - 30, y: torsoY - 4 };
+  } else if (opts.armLift === 1) {
+    eRp = { x: handsX - 8, y: torsoY + 7 };
+    hRp = { x: handsX - 30, y: torsoY };
+  }
+  if (opts.threadSide === -1) {
+    // Left arm woven under torso, head turned to side
+    eLp = { x: torsoMidX - 6, y: torsoY + 14 };
+    hLp = { x: torsoMidX + 30, y: torsoY + 22 };
+  } else if (opts.threadSide === 1) {
+    eRp = { x: torsoMidX - 6, y: torsoY + 18 };
+    hRp = { x: torsoMidX + 30, y: torsoY + 26 };
+  }
+  const hipL = { x: kneesX - 16, y: torsoY + 10 - arch * 4 };
+  const hipR = { x: kneesX - 16, y: torsoY + 13 - arch * 4 };
+  let kL = { x: kneesX, y: groundY - 18 };
+  let kR = { x: kneesX, y: groundY - 15 };
+  let fL = { x: kneesX + 12, y: groundY };
+  let fR = { x: kneesX + 12, y: groundY + 2 };
+  if (opts.legLift === -1) {
+    kL = { x: kneesX + 4, y: torsoY + 10 };
+    fL = { x: kneesX + 38, y: torsoY };
+  } else if (opts.legLift === 1) {
+    kR = { x: kneesX + 4, y: torsoY + 13 };
+    fR = { x: kneesX + 38, y: torsoY + 4 };
+  }
+  return {
+    head: { x: headX, y: headY },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: handsX + 10, y: torsoY - 2 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: eLp,
+    elbowR: eRp,
+    handL: hLp,
+    handR: hRp,
+    pelvis: { x: kneesX - 22, y: torsoY + 6 - arch * 3 },
+    hipL,
+    hipR,
+    kneeL: kL,
+    kneeR: kR,
+    footL: fL,
+    footR: fR,
+  };
+}
+
+function bearCrawlPose(body: NeonBody, t: number): Joints {
+  // Quadruped on hands and toes (knees off the floor).
+  const e = easeCos(t);
+  const phase = t < 0.5 ? -1 : 1;
+  const groundY = 250;
+  const handsX = 40;
+  const feetX = 160;
+  const torsoY = groundY - 48;
+  const sL = { x: handsX + 20, y: torsoY };
+  const sR = { x: handsX + 20, y: torsoY + 3 };
+  // Diagonal limbs swap based on phase
+  const lhX = phase < 0 ? handsX + 10 : handsX - 6;
+  const rhX = phase < 0 ? handsX - 6 : handsX + 10;
+  const eLp = { x: handsX + 8, y: torsoY + 18 };
+  const eRp = { x: handsX + 8, y: torsoY + 21 };
+  const hipL = { x: feetX - 22, y: torsoY + 6 };
+  const hipR = { x: feetX - 22, y: torsoY + 9 };
+  const lfX = phase < 0 ? feetX - 14 : feetX + 4;
+  const rfX = phase < 0 ? feetX + 4 : feetX - 14;
+  const kL = { x: feetX - 6, y: torsoY + 26 + e * 2 };
+  const kR = { x: feetX - 6, y: torsoY + 29 + e * 2 };
+  return {
+    head: { x: handsX - 6, y: torsoY - 4 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: handsX + 10, y: torsoY - 1 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: eLp,
+    elbowR: eRp,
+    handL: { x: lhX, y: groundY },
+    handR: { x: rhX, y: groundY + 2 },
+    pelvis: { x: feetX - 28, y: torsoY + 5 },
+    hipL,
+    hipR,
+    kneeL: kL,
+    kneeR: kR,
+    footL: { x: lfX, y: groundY },
+    footR: { x: rfX, y: groundY + 2 },
+  };
+}
+
+function mountainClimberPose(body: NeonBody, t: number): Joints {
+  // Plank with one knee driven toward chest, alternating quickly.
+  const phase = (t * 2) % 1;
+  const drive = easeCos(phase);
+  const phaseSide = t < 0.5;
+  const groundY = 250;
+  const handsX = 40;
+  const torsoY = groundY - 50;
+  const sL = { x: handsX + 18, y: torsoY };
+  const sR = { x: handsX + 18, y: torsoY + 3 };
+  const hipL = { x: 140, y: torsoY + 8 };
+  const hipR = { x: 140, y: torsoY + 11 };
+  // Driven knee
+  const dKnee = { x: 110 - drive * 30, y: torsoY + 10 - drive * 4 };
+  const dFoot = { x: 96 - drive * 24, y: torsoY + 26 - drive * 4 };
+  // Extended leg
+  const xKnee = { x: 162, y: groundY - 20 };
+  const xFoot = { x: 184, y: groundY };
+  return {
+    head: { x: handsX - 6, y: torsoY - 4 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: handsX + 10, y: torsoY - 1 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: { x: handsX + 6, y: torsoY + 22 },
+    elbowR: { x: handsX + 6, y: torsoY + 25 },
+    handL: { x: handsX, y: groundY },
+    handR: { x: handsX + 4, y: groundY + 2 },
+    pelvis: { x: 130, y: torsoY + 5 },
+    hipL,
+    hipR,
+    kneeL: phaseSide ? dKnee : xKnee,
+    kneeR: phaseSide ? xKnee : dKnee,
+    footL: phaseSide ? dFoot : xFoot,
+    footR: phaseSide ? xFoot : dFoot,
+  };
+}
+
+function plankShoulderTapPose(body: NeonBody, t: number): Joints {
+  // Plank with one hand reaching up to opposite shoulder.
+  const phase = (t * 2) % 1;
+  const e = easeCos(phase);
+  const liftLeft = t < 0.5;
+  const groundY = 250;
+  const handsX = 40;
+  const torsoY = groundY - 50;
+  const sL = { x: handsX + 18, y: torsoY };
+  const sR = { x: handsX + 18, y: torsoY + 3 };
+  const planted = { elbow: { x: handsX + 6, y: torsoY + 24 }, hand: { x: handsX, y: groundY } };
+  const tap = {
+    elbow: { x: handsX + 14, y: torsoY + 4 },
+    hand: { x: handsX + 28 - e * 6, y: torsoY + 8 - e * 4 },
+  };
+  return {
+    head: { x: handsX - 6, y: torsoY - 4 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: handsX + 10, y: torsoY - 1 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: liftLeft ? tap.elbow : planted.elbow,
+    elbowR: liftLeft ? planted.elbow : tap.elbow,
+    handL: liftLeft ? tap.hand : planted.hand,
+    handR: liftLeft ? planted.hand : tap.hand,
+    pelvis: { x: 122, y: torsoY + 5 },
+    hipL: { x: 130, y: torsoY + 8 },
+    hipR: { x: 130, y: torsoY + 11 },
+    kneeL: { x: 158, y: torsoY + 18 },
+    kneeR: { x: 158, y: torsoY + 21 },
+    footL: { x: 184, y: groundY },
+    footR: { x: 184, y: groundY + 2 },
+  };
+}
+
+function pikeShoulderTapPose(body: NeonBody, t: number): Joints {
+  // Inverted-V hold with alternating shoulder taps.
+  const phase = (t * 2) % 1;
+  const e = easeCos(phase);
+  const tapLeft = t < 0.5;
+  const apexX = 100;
+  const apexY = 110;
+  const groundY = 252;
+  const lFootX = 56;
+  const rFootX = 144;
+  const sL = { x: apexX - 6, y: apexY + 22 };
+  const sR = { x: apexX + 6, y: apexY + 25 };
+  const planted = {
+    elbow: { x: apexX - 14, y: apexY + 50 },
+    hand: { x: apexX - 18, y: groundY - 4 },
+  };
+  const tap = {
+    elbow: { x: apexX + 6, y: apexY + 32 },
+    hand: { x: apexX - 4 - e * 4, y: apexY + 38 - e * 4 },
+  };
+  return {
+    head: { x: apexX - 14, y: apexY + 10 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: apexX - 6, y: apexY + 16 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: tapLeft ? tap.elbow : planted.elbow,
+    elbowR: tapLeft
+      ? planted.elbow
+      : { x: apexX + 14, y: apexY + 50 },
+    handL: tapLeft ? tap.hand : planted.hand,
+    handR: tapLeft
+      ? { x: apexX + 18, y: groundY - 2 }
+      : tap.hand,
+    pelvis: { x: apexX, y: apexY - 4 },
+    hipL: { x: apexX - 4, y: apexY },
+    hipR: { x: apexX + 4, y: apexY + 3 },
+    kneeL: { x: apexX - 22, y: (apexY + groundY) / 2 },
+    kneeR: { x: apexX + 22, y: (apexY + groundY) / 2 + 3 },
+    footL: { x: lFootX, y: groundY },
+    footR: { x: rFootX, y: groundY + 2 },
+  };
+}
+
+function sidePlankPose(body: NeonBody, e: number): Joints {
+  // Body on its side, supported on one elbow; opposite arm reaching up.
+  const sway = (e - 0.5) * 3;
+  const groundY = 252;
+  const elbowX = 50;
+  const torsoTopY = 150 + sway;
+  const torsoBotY = groundY - 12;
+  return {
+    head: { x: elbowX - 14, y: torsoTopY - 18 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: elbowX - 4, y: torsoTopY - 6 },
+    shoulderL: { x: elbowX + 8, y: torsoTopY },
+    shoulderR: { x: elbowX + 4, y: torsoTopY + 4 },
+    elbowL: { x: elbowX + 24, y: torsoTopY - 12 },
+    elbowR: { x: elbowX, y: torsoTopY + 24 },
+    handL: { x: elbowX + 30, y: torsoTopY - 38 },
+    handR: { x: elbowX - 4, y: groundY },
+    pelvis: { x: 110, y: torsoTopY + (torsoBotY - torsoTopY) * 0.45 },
+    hipL: { x: 124, y: torsoTopY + 50 },
+    hipR: { x: 122, y: torsoTopY + 53 },
+    kneeL: { x: 158, y: groundY - 18 },
+    kneeR: { x: 156, y: groundY - 14 },
+    footL: { x: 188, y: groundY - 4 },
+    footR: { x: 184, y: groundY - 2 },
+  };
+}
+
+function wallLeanPose(body: NeonBody, e: number): Joints {
+  // Standing lean toward a wall on the left edge of the canvas;
+  // arms angled forward to wall, body angled at ~70°.
+  const dip = e * 16;
+  const cx = 130;
+  const wallX = 38;
+  const headX = wallX + 22;
+  const headY = 80 + dip * 0.4;
+  const shoulderY = 110 + dip * 0.4;
+  const sL = { x: headX, y: shoulderY };
+  const sR = { x: headX + 6, y: shoulderY + 4 };
+  const handY = 132;
+  return {
+    head: { x: headX, y: headY },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: headX + 2, y: shoulderY - 12 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: { x: headX - 8 - dip * 0.2, y: handY - 12 },
+    elbowR: { x: headX - 4 - dip * 0.2, y: handY - 8 },
+    handL: { x: wallX + 4, y: handY - 4 - dip * 0.3 },
+    handR: { x: wallX + 4, y: handY + 8 - dip * 0.3 },
+    pelvis: { x: cx, y: 188 },
+    hipL: { x: cx - body.hipW / 2, y: 196 },
+    hipR: { x: cx + body.hipW / 2, y: 196 },
+    kneeL: { x: cx - body.hipW / 2 + 4, y: 196 + body.thighL },
+    kneeR: { x: cx + body.hipW / 2 + 4, y: 196 + body.thighL },
+    footL: { x: cx - body.hipW / 2 + 6, y: 196 + body.thighL + body.shinL },
+    footR: { x: cx + body.hipW / 2 + 8, y: 196 + body.thighL + body.shinL },
+  };
+}
+
+function deadBugPose(body: NeonBody, t: number): Joints {
+  // Supine with arms straight up; opposite arm + leg lower toward floor.
+  const phase = (t * 2) % 1;
+  const e = easeCos(phase);
+  const sideLeft = t < 0.5;
+  const groundY = 252;
+  const torsoY = groundY - 6;
+  const sX = 70;
+  const armUp = { x: sX + 8, y: torsoY - 60 };
+  const armLowered = { x: sX + 26, y: torsoY - 24 };
+  const armL = sideLeft ? armLowered : armUp;
+  const armR = sideLeft ? armUp : armLowered;
+  const legUp = { knee: { x: 122, y: torsoY - 38 }, foot: { x: 122, y: torsoY - 70 } };
+  const legLowered = { knee: { x: 152, y: torsoY - 14 }, foot: { x: 184, y: torsoY - 4 } };
+  const lL = sideLeft ? legUp : legLowered;
+  const lR = sideLeft ? legLowered : legUp;
+  const headX = sX - 16;
+  const aLowerL = { x: armL.x + 4, y: armL.y + 18 - e * 8 };
+  const aLowerR = { x: armR.x + 4, y: armR.y + 18 - e * 8 };
+  return {
+    head: { x: headX, y: torsoY - 10 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: headX + 14, y: torsoY - 4 },
+    shoulderL: { x: sX, y: torsoY - 4 },
+    shoulderR: { x: sX, y: torsoY - 1 },
+    elbowL: aLowerL,
+    elbowR: aLowerR,
+    handL: armL,
+    handR: armR,
+    pelvis: { x: 110, y: torsoY - 2 },
+    hipL: { x: 118, y: torsoY - 4 },
+    hipR: { x: 118, y: torsoY - 1 },
+    kneeL: lL.knee,
+    kneeR: lR.knee,
+    footL: lL.foot,
+    footR: lR.foot,
+  };
+}
+
+function bicycleCrunchPose(body: NeonBody, t: number): Joints {
+  // Supine alternating elbow-to-knee.
+  const phase = (t * 2) % 1;
+  const e = easeCos(phase);
+  const sideLeft = t < 0.5;
+  const groundY = 252;
+  const torsoY = groundY - 8;
+  const sX = 64;
+  const headX = sX - 16 + e * 14;
+  const headY = torsoY - 14 - e * 18;
+  const elbowDriveL = { x: 96, y: torsoY - 24 - e * 10 };
+  const elbowDriveR = { x: 96, y: torsoY - 22 - e * 10 };
+  const elbowFlatL = { x: sX + 14, y: torsoY - 16 };
+  const elbowFlatR = { x: sX + 14, y: torsoY - 13 };
+  const kneeUp = { x: 110 - e * 10, y: torsoY - 30 };
+  const kneeOut = { x: 168 + e * 6, y: torsoY - 14 };
+  const footUp = { x: 100, y: torsoY - 50 };
+  const footOut = { x: 188, y: torsoY };
+  return {
+    head: { x: headX, y: headY },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: sX, y: torsoY - 6 - e * 8 },
+    shoulderL: { x: sX, y: torsoY - 4 },
+    shoulderR: { x: sX, y: torsoY - 1 },
+    elbowL: sideLeft ? elbowDriveL : elbowFlatL,
+    elbowR: sideLeft ? elbowFlatR : elbowDriveR,
+    handL: sideLeft ? { x: 100, y: torsoY - 32 } : { x: sX + 28, y: torsoY - 16 },
+    handR: sideLeft ? { x: sX + 28, y: torsoY - 13 } : { x: 100, y: torsoY - 30 },
+    pelvis: { x: 110, y: torsoY - 2 },
+    hipL: { x: 118, y: torsoY - 4 },
+    hipR: { x: 118, y: torsoY - 1 },
+    kneeL: sideLeft ? kneeUp : kneeOut,
+    kneeR: sideLeft ? kneeOut : kneeUp,
+    footL: sideLeft ? footUp : footOut,
+    footR: sideLeft ? footOut : footUp,
+  };
+}
+
+function sideLyingPose(body: NeonBody, e: number, opts: { topLegLift?: number } = {}): Joints {
+  // Lying on left side; top (right) leg lifts upward.
+  const lift = (opts.topLegLift ?? 1) * e * 28;
+  const groundY = 252;
+  const torsoY = groundY - 12;
+  const headX = 40;
+  return {
+    head: { x: headX, y: torsoY - 8 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: headX + 14, y: torsoY - 2 },
+    shoulderL: { x: headX + 26, y: torsoY - 4 },
+    shoulderR: { x: headX + 26, y: torsoY - 1 },
+    elbowL: { x: headX + 12, y: torsoY + 14 },
+    elbowR: { x: headX + 50, y: torsoY + 4 },
+    handL: { x: headX, y: torsoY + 28 },
+    handR: { x: headX + 70, y: torsoY + 18 },
+    pelvis: { x: 130, y: torsoY + 6 },
+    hipL: { x: 138, y: torsoY + 12 },
+    hipR: { x: 138, y: torsoY + 9 },
+    kneeL: { x: 162, y: groundY - 8 },
+    kneeR: { x: 162, y: groundY - 8 - lift },
+    footL: { x: 188, y: groundY - 2 },
+    footR: { x: 188, y: groundY - 2 - lift * 1.2 },
+  };
+}
+
+function legsUpWallPose(body: NeonBody, e: number): Joints {
+  // Supine with hips at the wall (left edge), legs straight up.
+  const breath = e * 2;
+  const groundY = 250;
+  const torsoY = groundY - 10;
+  const headX = 170;
+  const sX = 130;
+  const wallX = 36;
+  return {
+    head: { x: headX, y: torsoY - 4 + breath },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: headX - 14, y: torsoY - 1 },
+    shoulderL: { x: sX, y: torsoY - 2 },
+    shoulderR: { x: sX, y: torsoY + 1 },
+    elbowL: { x: sX - 12, y: torsoY + 18 },
+    elbowR: { x: sX - 12, y: torsoY + 21 },
+    handL: { x: sX - 28, y: torsoY + 10 },
+    handR: { x: sX - 28, y: torsoY + 14 },
+    pelvis: { x: 70, y: torsoY - 6 },
+    hipL: { x: 56, y: torsoY - 4 },
+    hipR: { x: 56, y: torsoY - 1 },
+    kneeL: { x: wallX + 8, y: 130 - breath },
+    kneeR: { x: wallX + 8, y: 134 - breath },
+    footL: { x: wallX + 6, y: 60 - breath },
+    footR: { x: wallX + 10, y: 64 - breath },
+  };
+}
+
+function pigeonPose(body: NeonBody, e: number): Joints {
+  // Front leg folded forward, back leg extended, torso hinged forward.
+  const breath = e * 2;
+  const groundY = 250;
+  const cx = 100;
+  const torsoY = 150 - breath;
+  return {
+    head: { x: cx - 24, y: torsoY - 6 - breath },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx - 10, y: torsoY + 4 },
+    shoulderL: { x: cx, y: torsoY + 12 },
+    shoulderR: { x: cx, y: torsoY + 15 },
+    elbowL: { x: cx - 18, y: torsoY + 36 },
+    elbowR: { x: cx - 14, y: torsoY + 38 },
+    handL: { x: cx - 26, y: groundY - 6 },
+    handR: { x: cx - 22, y: groundY - 4 },
+    pelvis: { x: cx + 14, y: torsoY + 32 },
+    hipL: { x: cx + 16, y: groundY - 14 },
+    hipR: { x: cx + 14, y: groundY - 11 },
+    kneeL: { x: cx - 24, y: groundY - 6 },
+    kneeR: { x: cx + 60, y: groundY - 4 },
+    footL: { x: cx + 14, y: groundY - 4 },
+    footR: { x: cx + 90, y: groundY },
+  };
+}
+
+function supineTwistPose(body: NeonBody, e: number): Joints {
+  // Lying on back, knees rotated to one side; arms out wide T-shape.
+  const tilt = e * 12;
+  const groundY = 250;
+  const torsoY = groundY - 10;
+  return {
+    head: { x: 32, y: torsoY - 8 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: 46, y: torsoY - 2 },
+    shoulderL: { x: 60, y: torsoY - 2 },
+    shoulderR: { x: 60, y: torsoY + 1 },
+    elbowL: { x: 60, y: torsoY - 28 },
+    elbowR: { x: 60, y: torsoY + 28 },
+    handL: { x: 60, y: torsoY - 56 },
+    handR: { x: 60, y: torsoY + 56 },
+    pelvis: { x: 110, y: torsoY - 4 },
+    hipL: { x: 122, y: torsoY - 2 },
+    hipR: { x: 122, y: torsoY + 1 },
+    kneeL: { x: 146, y: torsoY - 18 - tilt },
+    kneeR: { x: 146, y: torsoY - 22 - tilt },
+    footL: { x: 168, y: torsoY - 38 - tilt },
+    footR: { x: 168, y: torsoY - 42 - tilt },
+  };
+}
+
+function reclinedButterflyPose(body: NeonBody, e: number): Joints {
+  // Supine, soles of feet together, knees splayed wide.
+  const breath = e * 2;
+  const groundY = 250;
+  const torsoY = groundY - 10 + breath;
+  return {
+    head: { x: 28, y: torsoY - 8 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: 42, y: torsoY - 2 },
+    shoulderL: { x: 56, y: torsoY - 2 },
+    shoulderR: { x: 56, y: torsoY + 1 },
+    elbowL: { x: 70, y: torsoY - 16 },
+    elbowR: { x: 70, y: torsoY + 16 },
+    handL: { x: 88, y: torsoY - 28 },
+    handR: { x: 88, y: torsoY + 28 },
+    pelvis: { x: 116, y: torsoY - 4 },
+    hipL: { x: 130, y: torsoY - 14 },
+    hipR: { x: 130, y: torsoY + 10 },
+    kneeL: { x: 168, y: torsoY - 36 - breath },
+    kneeR: { x: 168, y: torsoY + 32 + breath },
+    footL: { x: 178, y: torsoY - 4 },
+    footR: { x: 178, y: torsoY - 1 },
+  };
+}
+
+function chairSeatedPose(body: NeonBody, t: number, opts: { march?: boolean } = {}): Joints {
+  // Sitting upright on a chair (chair drawn via props).
+  const e = easeCos(t);
+  const phase = (t * 2) % 1;
+  const liftLeft = t < 0.5;
+  const cx = 100;
+  const seatY = 200;
+  const torsoTopY = 110;
+  const sw = body.shoulderW;
+  const hw = body.hipW;
+  const sL = { x: cx - sw / 2, y: torsoTopY };
+  const sR = { x: cx + sw / 2, y: torsoTopY };
+  const hipL = { x: cx - hw / 2, y: seatY - 4 };
+  const hipR = { x: cx + hw / 2, y: seatY - 4 };
+  // Default feet flat
+  let kL = { x: cx - 14, y: 240 };
+  let kR = { x: cx + 14, y: 240 };
+  let fL = { x: cx - 16, y: 280 };
+  let fR = { x: cx + 18, y: 280 };
+  if (opts.march) {
+    const drive = easeCos(phase) * 26;
+    if (liftLeft) {
+      kL = { x: cx - 10, y: 224 - drive * 0.6 };
+      fL = { x: cx - 4, y: 244 - drive };
+    } else {
+      kR = { x: cx + 10, y: 224 - drive * 0.6 };
+      fR = { x: cx + 6, y: 244 - drive };
+    }
+  }
+  return {
+    head: { x: cx, y: 60 - e * 1 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 96 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: { x: sL.x - 2, y: torsoTopY + body.armUpL * 0.7 },
+    elbowR: { x: sR.x + 2, y: torsoTopY + body.armUpL * 0.7 },
+    handL: { x: hipL.x + 6, y: hipL.y - 8 },
+    handR: { x: hipR.x - 6, y: hipR.y - 8 },
+    pelvis: { x: cx, y: seatY - 10 },
+    hipL,
+    hipR,
+    kneeL: kL,
+    kneeR: kR,
+    footL: fL,
+    footR: fR,
+  };
+}
+
+function seatedTwistPose(body: NeonBody, e: number): Joints {
+  // Seated cross-legged on floor, torso rotated to one side.
+  const turn = e * 18;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const groundY = 256;
+  const seatY = groundY - 4;
+  const torsoTopY = 122;
+  return {
+    head: { x: cx + turn, y: 64 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx + turn * 0.6, y: 96 },
+    shoulderL: { x: cx - sw / 2 + turn * 0.5, y: torsoTopY },
+    shoulderR: { x: cx + sw / 2 + turn * 0.5, y: torsoTopY },
+    elbowL: { x: cx + turn + 14, y: torsoTopY + 12 },
+    elbowR: { x: cx - 30, y: torsoTopY + 8 },
+    handL: { x: cx + turn + 30, y: torsoTopY + 18 },
+    handR: { x: cx - 36, y: torsoTopY + 22 },
+    pelvis: { x: cx, y: seatY - 8 },
+    hipL: { x: cx - 14, y: seatY },
+    hipR: { x: cx + 14, y: seatY },
+    kneeL: { x: cx - 38, y: groundY - 6 },
+    kneeR: { x: cx + 38, y: groundY - 6 },
+    footL: { x: cx - 6, y: groundY - 2 },
+    footR: { x: cx + 6, y: groundY - 2 },
+  };
+}
+
+function seatedFoldPose(body: NeonBody, e: number): Joints {
+  // Sitting, legs out front, torso folded forward toward toes.
+  const fold = e;
+  const cx = 100;
+  const groundY = 256;
+  const seatY = groundY - 4;
+  const sw = body.shoulderW;
+  const torsoTopY = lerpN(120, 178, fold);
+  const headForward = lerpN(0, 50, fold);
+  return {
+    head: { x: cx - 8 + headForward, y: lerpN(60, 196, fold) },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx + headForward * 0.5, y: lerpN(94, 188, fold) },
+    shoulderL: { x: cx - sw / 2 + headForward * 0.4, y: torsoTopY },
+    shoulderR: { x: cx + sw / 2 + headForward * 0.4, y: torsoTopY },
+    elbowL: { x: cx - 18 + headForward * 0.6, y: torsoTopY + 18 },
+    elbowR: { x: cx + 18 + headForward * 0.6, y: torsoTopY + 18 },
+    handL: { x: cx - 8 + headForward, y: torsoTopY + 36 + fold * 8 },
+    handR: { x: cx + 8 + headForward, y: torsoTopY + 36 + fold * 8 },
+    pelvis: { x: cx - 12, y: seatY - 4 },
+    hipL: { x: cx - 16, y: seatY },
+    hipR: { x: cx - 12, y: seatY + 3 },
+    kneeL: { x: cx + 28, y: groundY - 6 },
+    kneeR: { x: cx + 32, y: groundY - 4 },
+    footL: { x: cx + 70, y: groundY - 2 },
+    footR: { x: cx + 74, y: groundY - 2 },
+  };
+}
+
+function butterflyFloorPose(body: NeonBody, e: number): Joints {
+  // Sitting upright, soles together, knees splayed wide (floor pose).
+  const breath = e * 2;
+  const cx = 100;
+  const groundY = 256;
+  const seatY = groundY - 4;
+  const torsoTopY = 122 - breath;
+  const sw = body.shoulderW;
+  return {
+    head: { x: cx, y: 60 - breath },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 94 - breath },
+    shoulderL: { x: cx - sw / 2, y: torsoTopY },
+    shoulderR: { x: cx + sw / 2, y: torsoTopY },
+    elbowL: { x: cx - 30, y: torsoTopY + 24 },
+    elbowR: { x: cx + 30, y: torsoTopY + 24 },
+    handL: { x: cx - 22, y: seatY - 4 },
+    handR: { x: cx + 22, y: seatY - 4 },
+    pelvis: { x: cx, y: seatY - 6 },
+    hipL: { x: cx - 14, y: seatY },
+    hipR: { x: cx + 14, y: seatY },
+    kneeL: { x: cx - 50, y: groundY - 4 },
+    kneeR: { x: cx + 50, y: groundY - 4 },
+    footL: { x: cx - 4, y: groundY - 2 },
+    footR: { x: cx + 4, y: groundY - 2 },
+  };
+}
+
+function childsPosePose(body: NeonBody, e: number): Joints {
+  // Kneeling, hips on heels, torso folded forward, arms extended.
+  const breath = e * 2;
+  const groundY = 252;
+  const cx = 80;
+  return {
+    head: { x: cx + 16, y: groundY - 6 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx + 28, y: groundY - 10 - breath },
+    shoulderL: { x: cx + 38, y: groundY - 16 - breath },
+    shoulderR: { x: cx + 38, y: groundY - 13 - breath },
+    elbowL: { x: cx + 6, y: groundY - 6 },
+    elbowR: { x: cx + 6, y: groundY - 4 },
+    handL: { x: cx - 36, y: groundY - 4 },
+    handR: { x: cx - 36, y: groundY - 1 },
+    pelvis: { x: cx + 78, y: groundY - 18 - breath },
+    hipL: { x: cx + 86, y: groundY - 14 - breath },
+    hipR: { x: cx + 86, y: groundY - 11 - breath },
+    kneeL: { x: cx + 100, y: groundY - 4 },
+    kneeR: { x: cx + 100, y: groundY - 1 },
+    footL: { x: cx + 116, y: groundY - 2 },
+    footR: { x: cx + 116, y: groundY + 1 },
+  };
+}
+
+function goddessPose(body: NeonBody, e: number): Joints {
+  // Wide squat with arms in cactus (elbows bent, hands up).
+  const cx = 100;
+  const sw = body.shoulderW;
+  const sit = e * 22;
+  const shoulderY = 110;
+  const sL = { x: cx - sw / 2, y: shoulderY };
+  const sR = { x: cx + sw / 2, y: shoulderY };
+  const pelvisY = 200 + sit * 0.4;
+  return {
+    head: { x: cx, y: 60 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 94 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: { x: sL.x - 26, y: shoulderY + 4 },
+    elbowR: { x: sR.x + 26, y: shoulderY + 8 },
+    handL: { x: sL.x - 24, y: shoulderY - 28 },
+    handR: { x: sR.x + 24, y: shoulderY - 24 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - 22, y: pelvisY },
+    hipR: { x: cx + 22, y: pelvisY },
+    kneeL: { x: cx - 50, y: pelvisY + 36 },
+    kneeR: { x: cx + 50, y: pelvisY + 36 },
+    footL: { x: cx - 60, y: pelvisY + 70 },
+    footR: { x: cx + 60, y: pelvisY + 70 },
+  };
+}
+
+function singleLegBalancePose(body: NeonBody, t: number): Joints {
+  // Standing on one foot, opposite knee lifted; subtle lateral sway.
+  const sway = Math.sin(t * Math.PI * 2) * 4;
+  const cx = 100 + sway * 0.4;
+  const sw = body.shoulderW;
+  const shoulderY = 102;
+  const pelvisY = 188;
+  return {
+    head: { x: cx, y: 56 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 90 },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 18, y: shoulderY + 20 },
+    elbowR: { x: cx + sw / 2 + 18, y: shoulderY + 20 },
+    handL: { x: cx - sw / 2 - 32, y: shoulderY + 32 },
+    handR: { x: cx + sw / 2 + 32, y: shoulderY + 32 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    // Standing leg
+    kneeL: { x: cx - 6 + sway * 0.3, y: pelvisY + body.thighL },
+    footL: { x: cx - 6 + sway * 0.4, y: pelvisY + body.thighL + body.shinL },
+    // Lifted leg
+    kneeR: { x: cx + 18, y: pelvisY + 18 },
+    footR: { x: cx + 8, y: pelvisY + 50 },
+  };
+}
+
+function quadStretchPose(body: NeonBody, e: number): Joints {
+  // Standing quad stretch: one heel pulled to glute, hand grasps foot.
+  const breath = e * 2;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 102;
+  const pelvisY = 188;
+  return {
+    head: { x: cx, y: 56 - breath * 0.5 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 90 },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 16, y: shoulderY + 24 },
+    elbowR: { x: cx + sw / 2 - 4, y: shoulderY + 36 },
+    handL: { x: cx - sw / 2 - 28, y: shoulderY + 36 },
+    // Right hand reaches behind to grasp lifted foot
+    handR: { x: cx + 26, y: pelvisY + 16 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    kneeL: { x: cx - 6, y: pelvisY + body.thighL },
+    footL: { x: cx - 6, y: pelvisY + body.thighL + body.shinL },
+    kneeR: { x: cx + body.hipW / 2 + 4, y: pelvisY + 24 },
+    footR: { x: cx + 30, y: pelvisY + 12 },
+  };
+}
+
+function calfRaisePose(body: NeonBody, e: number): Joints {
+  // Standing, heels lifted off ground at peak.
+  const lift = e * 14;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 102 - lift;
+  const pelvisY = 188 - lift;
+  return {
+    head: { x: cx, y: 56 - lift },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 90 - lift },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 1, y: shoulderY + body.armUpL * 0.7 },
+    elbowR: { x: cx + sw / 2 + 1, y: shoulderY + body.armUpL * 0.7 },
+    handL: { x: cx - sw / 2 - 2, y: shoulderY + body.armUpL + body.armLoL * 0.95 },
+    handR: { x: cx + sw / 2 + 2, y: shoulderY + body.armUpL + body.armLoL * 0.95 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    kneeL: { x: cx - body.hipW / 2, y: pelvisY + body.thighL },
+    kneeR: { x: cx + body.hipW / 2, y: pelvisY + body.thighL },
+    // Tiptoe — feet pivot forward, heel up
+    footL: { x: cx - body.hipW / 2 + 6, y: pelvisY + body.thighL + body.shinL - 2 },
+    footR: { x: cx + body.hipW / 2 + 8, y: pelvisY + body.thighL + body.shinL - 2 },
+  };
+}
+
+function donkeyKickPose(body: NeonBody, t: number): Joints {
+  // Standing, one leg kicked back-and-up; trunk hinged slightly.
+  const e = easeCos(t);
+  const cx = 110;
+  const sw = body.shoulderW;
+  const lean = Math.PI * 0.18;
+  const torsoLen = 72;
+  const pelvisY = 196;
+  const sx = cx - Math.sin(lean) * torsoLen * 0.4;
+  const sy = pelvisY - Math.cos(lean) * torsoLen;
+  const headX = sx - Math.sin(lean) * 18;
+  const headY = sy - Math.cos(lean) * 18;
+  return {
+    head: { x: headX, y: headY },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: lerpN(sx, headX, 0.5), y: lerpN(sy, headY, 0.5) },
+    shoulderL: { x: sx - sw / 2 * 0.6, y: sy },
+    shoulderR: { x: sx + sw / 2 * 0.6, y: sy + 2 },
+    elbowL: { x: sx - 8, y: sy + 22 },
+    elbowR: { x: sx + 8, y: sy + 22 },
+    handL: { x: sx - 12, y: sy + 44 },
+    handR: { x: sx + 12, y: sy + 44 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    // Standing leg
+    kneeL: { x: cx - 4, y: pelvisY + body.thighL },
+    footL: { x: cx - 4, y: pelvisY + body.thighL + body.shinL },
+    // Kicking leg
+    kneeR: { x: cx + 30 + e * 14, y: pelvisY - 4 - e * 8 },
+    footR: { x: cx + 64 + e * 24, y: pelvisY - 12 - e * 26 },
+  };
+}
+
+function standArmsPose(
+  body: NeonBody,
+  t: number,
+  cfg: {
+    armPose:
+      | "down"
+      | "behindBack"
+      | "elbowsUpW"
+      | "armsOutT"
+      | "handsOnHips"
+      | "headTiltPullL"
+      | "headTiltPullR"
+      | "neckPalmFront"
+      | "noseHand"
+      | "stretchOverhead"
+      | "rowPullback"
+      | "doorwayOpener"
+      | "handsOnBelly";
+    breathe?: boolean;
+    headTilt?: number;
+    headRoll?: boolean;
+    chinTuck?: boolean;
+    pelvicTilt?: boolean;
+    hipCircle?: boolean;
+    pelvicRock?: boolean;
+  },
+): Joints {
+  const e = easeCos(t);
+  const breath = cfg.breathe ? e * 3 : 0;
+  let headXOff = 0;
+  let headYOff = 0;
+  if (cfg.headTilt) headXOff = Math.sin(t * Math.PI * 2) * cfg.headTilt;
+  if (cfg.headRoll) {
+    headXOff = Math.cos(t * Math.PI * 2) * 6;
+    headYOff = -Math.sin(t * Math.PI * 2) * 4;
+  }
+  if (cfg.chinTuck) headXOff = -e * 5;
+  let pelvisOffsetX = 0;
+  let pelvisOffsetY = 0;
+  if (cfg.pelvicTilt) pelvisOffsetY = (e - 0.5) * 4;
+  if (cfg.pelvicRock) pelvisOffsetX = Math.sin(t * Math.PI * 2) * 6;
+  if (cfg.hipCircle) {
+    pelvisOffsetX = Math.cos(t * Math.PI * 2) * 5;
+    pelvisOffsetY = Math.sin(t * Math.PI * 2) * 3;
+  }
+  const cx = 100;
+  const sw = body.shoulderW;
+  const hw = body.hipW;
+  const shoulderY = 102 - breath;
+  const sL = { x: cx - sw / 2, y: shoulderY };
+  const sR = { x: cx + sw / 2, y: shoulderY };
+  let eL = { x: sL.x - 1, y: sL.y + body.armUpL * 0.7 };
+  let eR = { x: sR.x + 1, y: sR.y + body.armUpL * 0.7 };
+  let hL = { x: eL.x - 1, y: eL.y + body.armLoL * 0.95 };
+  let hR = { x: eR.x + 1, y: eR.y + body.armLoL * 0.95 };
+  switch (cfg.armPose) {
+    case "behindBack":
+      eL = { x: sL.x + 6, y: sL.y + body.armUpL * 0.6 };
+      eR = { x: sR.x - 6, y: sR.y + body.armUpL * 0.6 };
+      hL = { x: cx - 6, y: sL.y + body.armUpL + body.armLoL * 0.8 };
+      hR = { x: cx + 6, y: sR.y + body.armUpL + body.armLoL * 0.8 };
+      break;
+    case "elbowsUpW":
+      eL = { x: sL.x - 18, y: sL.y + 6 };
+      eR = { x: sR.x + 18, y: sR.y + 8 };
+      hL = { x: sL.x - 14, y: sL.y - 28 };
+      hR = { x: sR.x + 14, y: sR.y - 26 };
+      break;
+    case "armsOutT":
+      eL = { x: sL.x - 22, y: shoulderY };
+      eR = { x: sR.x + 22, y: shoulderY + 2 };
+      hL = { x: sL.x - 44, y: shoulderY };
+      hR = { x: sR.x + 44, y: shoulderY + 2 };
+      break;
+    case "handsOnHips":
+      eL = { x: sL.x - 4, y: sL.y + body.armUpL * 0.7 };
+      eR = { x: sR.x + 4, y: sR.y + body.armUpL * 0.7 };
+      hL = { x: cx - hw / 2 + 4, y: 184 };
+      hR = { x: cx + hw / 2 - 4, y: 184 };
+      break;
+    case "headTiltPullL":
+      // Right hand pulls head down to right shoulder
+      eL = { x: sL.x - 1, y: sL.y + body.armUpL * 0.7 };
+      eR = { x: sR.x + 4, y: 70 };
+      hL = { x: eL.x - 1, y: eL.y + body.armLoL * 0.95 };
+      hR = { x: cx - 4, y: 56 };
+      headXOff = -10;
+      break;
+    case "headTiltPullR":
+      eR = { x: sR.x + 1, y: sR.y + body.armUpL * 0.7 };
+      eL = { x: sL.x - 4, y: 70 };
+      hR = { x: eR.x + 1, y: eR.y + body.armLoL * 0.95 };
+      hL = { x: cx + 4, y: 56 };
+      headXOff = 10;
+      break;
+    case "neckPalmFront":
+      // Both palms cradle base of skull
+      eL = { x: sL.x - 4, y: 76 };
+      eR = { x: sR.x + 4, y: 76 };
+      hL = { x: cx - 4, y: 56 };
+      hR = { x: cx + 4, y: 56 };
+      break;
+    case "noseHand":
+      // One hand to nose (alternate nostril breathing)
+      eL = { x: sL.x - 1, y: sL.y + body.armUpL * 0.95 };
+      eR = { x: sR.x - 4, y: 78 };
+      hL = { x: eL.x - 1, y: eL.y + body.armLoL * 0.95 };
+      hR = { x: cx + 2, y: 56 };
+      break;
+    case "stretchOverhead":
+      eL = { x: sL.x - 4, y: sL.y - body.armUpL * 0.55 };
+      eR = { x: sR.x + 4, y: sR.y - body.armUpL * 0.55 };
+      hL = { x: cx - 4, y: sL.y - body.armUpL - body.armLoL * 0.95 };
+      hR = { x: cx + 4, y: sR.y - body.armUpL - body.armLoL * 0.95 };
+      break;
+    case "rowPullback": {
+      // Standing scapular squeeze: elbows pull straight back behind ribs
+      const pull = e * 12;
+      eL = { x: sL.x - 2, y: sL.y + body.armUpL * 0.5 };
+      eR = { x: sR.x + 2, y: sR.y + body.armUpL * 0.5 };
+      hL = { x: sL.x + 4 + pull, y: sL.y + body.armUpL * 0.85 };
+      hR = { x: sR.x - 4 - pull, y: sR.y + body.armUpL * 0.85 };
+      break;
+    }
+    case "doorwayOpener":
+      // Both forearms vertical against doorframes (palms forward)
+      eL = { x: sL.x - 22, y: sL.y - 2 };
+      eR = { x: sR.x + 22, y: sR.y };
+      hL = { x: sL.x - 24, y: sL.y - 32 };
+      hR = { x: sR.x + 24, y: sR.y - 30 };
+      break;
+    case "handsOnBelly":
+      // Both palms cradle the lower belly — diastasis recovery breath.
+      eL = { x: sL.x + 4, y: sL.y + body.armUpL * 0.85 };
+      eR = { x: sR.x - 4, y: sR.y + body.armUpL * 0.85 };
+      hL = { x: cx - 8, y: 174 - breath };
+      hR = { x: cx + 8, y: 176 - breath };
+      break;
+    case "down":
+    default:
+      break;
+  }
+  const pelvisY = 188 + pelvisOffsetY;
+  const pelvisX = cx + pelvisOffsetX;
+  const hipL = { x: pelvisX - hw / 2, y: pelvisY };
+  const hipR = { x: pelvisX + hw / 2, y: pelvisY };
+  const kL = { x: hipL.x, y: pelvisY + body.thighL };
+  const kR = { x: hipR.x, y: pelvisY + body.thighL };
+  const fL = { x: kL.x - 3, y: kL.y + body.shinL };
+  const fR = { x: kR.x + 3, y: kR.y + body.shinL };
+  return {
+    head: { x: cx + headXOff, y: 56 - breath + headYOff },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx + headXOff * 0.5, y: 90 - breath },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: eL,
+    elbowR: eR,
+    handL: hL,
+    handR: hR,
+    pelvis: { x: pelvisX, y: pelvisY - 6 },
+    hipL,
+    hipR,
+    kneeL: kL,
+    kneeR: kR,
+    footL: fL,
+    footR: fR,
+  };
+}
+
+function jumpSquatPose(body: NeonBody, t: number): Joints {
+  // Squat that explodes upward at the top of the cycle.
+  if (t < 0.6) return squatPose(body, easeCos(t / 0.6));
+  const air = (t - 0.6) / 0.4; // 0..1
+  const lift = Math.sin(air * Math.PI) * 28;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const hw = body.hipW;
+  const shoulderY = 92 - lift;
+  const pelvisY = 178 - lift;
+  return {
+    head: { x: cx, y: 46 - lift },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 80 - lift },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 14, y: shoulderY - 18 },
+    elbowR: { x: cx + sw / 2 + 14, y: shoulderY - 18 },
+    handL: { x: cx - sw / 2 - 22, y: shoulderY - 38 },
+    handR: { x: cx + sw / 2 + 22, y: shoulderY - 38 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - hw / 2, y: pelvisY },
+    hipR: { x: cx + hw / 2, y: pelvisY },
+    kneeL: { x: cx - hw / 2 - 4, y: pelvisY + body.thighL - 6 },
+    kneeR: { x: cx + hw / 2 + 4, y: pelvisY + body.thighL - 6 },
+    footL: { x: cx - hw / 2 - 4, y: pelvisY + body.thighL + body.shinL - 8 },
+    footR: { x: cx + hw / 2 + 4, y: pelvisY + body.thighL + body.shinL - 8 },
+  };
+}
+
+function tuckJumpPose(body: NeonBody, t: number): Joints {
+  // Vertical jump with knees tucked toward chest at peak.
+  if (t < 0.4) return squatPose(body, easeCos(t / 0.4) * 0.6);
+  const air = (t - 0.4) / 0.6;
+  const lift = Math.sin(air * Math.PI) * 32;
+  const tuck = Math.sin(air * Math.PI);
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 90 - lift;
+  const pelvisY = 170 - lift;
+  return {
+    head: { x: cx, y: 44 - lift },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 78 - lift },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 8, y: shoulderY + 18 },
+    elbowR: { x: cx + sw / 2 + 8, y: shoulderY + 18 },
+    handL: { x: cx - 18, y: pelvisY + 6 },
+    handR: { x: cx + 18, y: pelvisY + 6 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    kneeL: { x: cx - 14, y: pelvisY + 14 - tuck * 6 },
+    kneeR: { x: cx + 14, y: pelvisY + 14 - tuck * 6 },
+    footL: { x: cx - 8, y: pelvisY + 38 - tuck * 14 },
+    footR: { x: cx + 8, y: pelvisY + 38 - tuck * 14 },
+  };
+}
+
+function jumpRopePose(body: NeonBody, t: number): Joints {
+  // Small repeated bounce on the balls of the feet, wrists rotating.
+  const e = easeCos(t);
+  const lift = e * 6;
+  const wrist = Math.sin(t * Math.PI * 2) * 4;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 102 - lift;
+  const pelvisY = 188 - lift;
+  return {
+    head: { x: cx, y: 56 - lift },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 90 - lift },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 6, y: shoulderY + 24 },
+    elbowR: { x: cx + sw / 2 + 6, y: shoulderY + 24 },
+    handL: { x: cx - sw / 2 - 12 + wrist, y: shoulderY + 42 },
+    handR: { x: cx + sw / 2 + 12 - wrist, y: shoulderY + 42 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    kneeL: { x: cx - body.hipW / 2, y: pelvisY + body.thighL - lift * 0.5 },
+    kneeR: { x: cx + body.hipW / 2, y: pelvisY + body.thighL - lift * 0.5 },
+    footL: { x: cx - body.hipW / 2 + 4, y: pelvisY + body.thighL + body.shinL - lift },
+    footR: { x: cx + body.hipW / 2 + 6, y: pelvisY + body.thighL + body.shinL - lift },
+  };
+}
+
+function highKneesPose(body: NeonBody, t: number): Joints {
+  // Standing with alternating knees driven up to hip height.
+  const phase = (t * 2) % 1;
+  const e = easeCos(phase);
+  const liftLeft = t < 0.5;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 102;
+  const pelvisY = 188;
+  const upKnee = { x: cx - 14, y: pelvisY - 18 + (1 - e) * 12 };
+  const upFoot = { x: cx - 4, y: pelvisY + 8 - e * 14 };
+  const downKnee = { x: cx + 6, y: pelvisY + body.thighL };
+  const downFoot = { x: cx + 6, y: pelvisY + body.thighL + body.shinL };
+  const oppArmFwd = { x: cx + 14, y: shoulderY + 32 };
+  const oppArmFwdElbow = { x: cx + 14, y: shoulderY + 14 };
+  const sameArmBack = { x: cx - 22, y: shoulderY + 38 };
+  const sameArmBackElbow = { x: cx - 14, y: shoulderY + 22 };
+  return {
+    head: { x: cx, y: 56 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 90 },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: liftLeft ? oppArmFwdElbow : sameArmBackElbow,
+    elbowR: liftLeft ? sameArmBackElbow : oppArmFwdElbow,
+    handL: liftLeft ? oppArmFwd : sameArmBack,
+    handR: liftLeft ? sameArmBack : oppArmFwd,
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    kneeL: liftLeft ? upKnee : downKnee,
+    kneeR: liftLeft ? downKnee : upKnee,
+    footL: liftLeft ? upFoot : downFoot,
+    footR: liftLeft ? downFoot : upFoot,
+  };
+}
+
+function reverseLungePose(body: NeonBody, t: number): Joints {
+  // Lunge stepped backward (mirrored direction vs. lungePose).
+  // Reuse lungePose but invert the timing so leg patterns differ.
+  return lungePose(body, (t + 0.5) % 1);
+}
+
+function singleLegDeadliftPose(body: NeonBody, t: number): Joints {
+  // Hinge with one leg straight back, parallel to the ground.
+  const e = easeCos(t);
+  const cx = 100;
+  const hipY = 200;
+  const hinge = lerpN(Math.PI * 0.05, Math.PI * 0.5, e);
+  const torsoLen = 72;
+  const sx = cx + Math.sin(hinge) * torsoLen * 0.45;
+  const sy = hipY - Math.cos(hinge) * torsoLen;
+  const headX = sx + Math.sin(hinge) * 18;
+  const headY = sy - Math.cos(hinge) * 18;
+  return {
+    head: { x: headX, y: headY },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: lerpN(sx, headX, 0.5), y: lerpN(sy, headY, 0.5) },
+    shoulderL: { x: sx - 2, y: sy },
+    shoulderR: { x: sx + 2, y: sy + 4 },
+    elbowL: { x: sx - 4, y: sy + 22 },
+    elbowR: { x: sx + 4, y: sy + 22 },
+    handL: { x: sx - 6, y: sy + 44 },
+    handR: { x: sx + 6, y: sy + 44 },
+    pelvis: { x: cx, y: hipY - 6 },
+    hipL: { x: cx - body.hipW / 2 + 2, y: hipY },
+    hipR: { x: cx + body.hipW / 2 - 2, y: hipY + 3 },
+    // Standing leg
+    kneeL: { x: cx - 4, y: hipY + body.thighL - 4 },
+    footL: { x: cx - 4, y: hipY + body.thighL + body.shinL - 4 },
+    // Lifted back leg, extends nearly horizontal at full hinge
+    kneeR: { x: cx - Math.sin(hinge) * body.thighL * 0.5, y: hipY - Math.cos(hinge) * body.thighL * 0.3 },
+    footR: { x: cx - Math.sin(hinge) * (body.thighL + body.shinL) * 0.7, y: hipY - Math.cos(hinge) * (body.thighL + body.shinL) * 0.4 - 8 },
+  };
+}
+
+function pullDownPose(body: NeonBody, t: number): Joints {
+  // Standing pull-down: hands overhead, pulled down past the head.
+  const e = easeCos(t);
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 110;
+  const sL = { x: cx - sw / 2, y: shoulderY };
+  const sR = { x: cx + sw / 2, y: shoulderY };
+  const armUp = body.armUpL;
+  const armLo = body.armLoL;
+  // Hands move from high overhead to ear level
+  const handY = lerpN(shoulderY - armUp - armLo + 4, shoulderY - 6, e);
+  const elbowY = lerpN(shoulderY - armUp + 4, shoulderY + 14, e);
+  return {
+    head: { x: cx, y: 60 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 96 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: { x: sL.x - 8 - e * 14, y: elbowY },
+    elbowR: { x: sR.x + 8 + e * 14, y: elbowY },
+    handL: { x: sL.x - 4 - e * 24, y: handY },
+    handR: { x: sR.x + 4 + e * 24, y: handY },
+    pelvis: { x: cx, y: 188 },
+    hipL: { x: cx - body.hipW / 2, y: 196 },
+    hipR: { x: cx + body.hipW / 2, y: 196 },
+    kneeL: { x: cx - body.hipW / 2, y: 196 + body.thighL },
+    kneeR: { x: cx + body.hipW / 2, y: 196 + body.thighL },
+    footL: { x: cx - body.hipW / 2 + 3, y: 196 + body.thighL + body.shinL },
+    footR: { x: cx + body.hipW / 2 + 5, y: 196 + body.thighL + body.shinL },
+  };
+}
+
+function burpeeCyclePose(body: NeonBody, t: number): Joints {
+  // Cycle: stand → squat → plank → squat → jump.
+  if (t < 0.2) return standPose(body, easeCos(t / 0.2));
+  if (t < 0.4) return squatPose(body, easeCos((t - 0.2) / 0.2));
+  if (t < 0.6) return plankPose(body, easeCos((t - 0.4) / 0.2));
+  if (t < 0.8) return squatPose(body, 1 - easeCos((t - 0.6) / 0.2));
+  return jumpSquatPose(body, 0.6 + (t - 0.8) * 2); // explode upward
+}
+
+function heelSlidePose(body: NeonBody, t: number): Joints {
+  // Supine, knee bent, heel slides toward then away from glute.
+  const e = easeCos(t);
+  const groundY = 252;
+  const torsoY = groundY - 10;
+  return {
+    head: { x: 28, y: torsoY - 8 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: 42, y: torsoY - 2 },
+    shoulderL: { x: 56, y: torsoY - 2 },
+    shoulderR: { x: 56, y: torsoY + 1 },
+    elbowL: { x: 70, y: torsoY + 16 },
+    elbowR: { x: 70, y: torsoY + 19 },
+    handL: { x: 84, y: torsoY + 26 },
+    handR: { x: 84, y: torsoY + 29 },
+    pelvis: { x: 110, y: torsoY - 4 },
+    hipL: { x: 122, y: torsoY - 2 },
+    hipR: { x: 122, y: torsoY + 1 },
+    // Sliding leg: knee rises and falls; foot stays on ground sliding toward hip
+    kneeL: { x: 142, y: torsoY - 2 - e * 24 },
+    kneeR: { x: 158, y: torsoY - 18 },
+    footL: { x: 168 - e * 26, y: groundY - 4 },
+    footR: { x: 188, y: groundY - 4 },
+  };
+}
+
+function plantarFasciaPressPose(body: NeonBody, e: number): Joints {
+  // Seated cross-legged, both hands pressing into one foot's arch.
+  const breath = e * 1.5;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const groundY = 256;
+  const seatY = groundY - 4;
+  const torsoTopY = 130 - breath;
+  return {
+    head: { x: cx - 12, y: 70 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx - 6, y: 100 },
+    shoulderL: { x: cx - sw / 2, y: torsoTopY },
+    shoulderR: { x: cx + sw / 2, y: torsoTopY },
+    elbowL: { x: cx - 10, y: torsoTopY + 30 },
+    elbowR: { x: cx + 10, y: torsoTopY + 30 },
+    handL: { x: cx + 4, y: torsoTopY + 60 },
+    handR: { x: cx + 14, y: torsoTopY + 60 },
+    pelvis: { x: cx, y: seatY - 6 },
+    hipL: { x: cx - 14, y: seatY },
+    hipR: { x: cx + 14, y: seatY },
+    // One foot folded across the other thigh
+    kneeL: { x: cx - 38, y: groundY - 4 },
+    footL: { x: cx + 4, y: torsoTopY + 70 },
+    kneeR: { x: cx + 32, y: groundY - 4 },
+    footR: { x: cx - 14, y: groundY - 6 },
+  };
+}
+
+function toeSplayPose(body: NeonBody, t: number): Joints {
+  // Standing, toes spreading on ground (feet very close together).
+  const e = easeCos(t);
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 102;
+  const pelvisY = 188;
+  return {
+    head: { x: cx, y: 56 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 90 },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 1, y: shoulderY + body.armUpL * 0.7 },
+    elbowR: { x: cx + sw / 2 + 1, y: shoulderY + body.armUpL * 0.7 },
+    handL: { x: cx - sw / 2 - 2, y: shoulderY + body.armUpL + body.armLoL * 0.95 },
+    handR: { x: cx + sw / 2 + 2, y: shoulderY + body.armUpL + body.armLoL * 0.95 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    kneeL: { x: cx - body.hipW / 2, y: pelvisY + body.thighL },
+    kneeR: { x: cx + body.hipW / 2, y: pelvisY + body.thighL },
+    footL: { x: cx - 12 - e * 4, y: pelvisY + body.thighL + body.shinL },
+    footR: { x: cx + 12 + e * 4, y: pelvisY + body.thighL + body.shinL },
+  };
+}
+
+function heelWalkPose(body: NeonBody, t: number): Joints {
+  // Walking gait with toes pulled up (visible by foot pivot); slight bob.
+  const e = easeCos(t);
+  const liftLeft = t < 0.5;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 102 - e * 2;
+  const pelvisY = 188 - e * 2;
+  const stride = e * 12;
+  return {
+    head: { x: cx, y: 56 - e * 2 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 90 - e * 2 },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 6, y: shoulderY + 18 + (liftLeft ? -10 : 8) },
+    elbowR: { x: cx + sw / 2 + 6, y: shoulderY + 18 + (liftLeft ? 8 : -10) },
+    handL: { x: cx - sw / 2 - 10, y: shoulderY + 38 + (liftLeft ? -14 : 10) },
+    handR: { x: cx + sw / 2 + 10, y: shoulderY + 38 + (liftLeft ? 10 : -14) },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    kneeL: { x: cx - body.hipW / 2 - (liftLeft ? stride : 0), y: pelvisY + body.thighL - (liftLeft ? 6 : 0) },
+    kneeR: { x: cx + body.hipW / 2 + (liftLeft ? 0 : stride), y: pelvisY + body.thighL - (liftLeft ? 0 : 6) },
+    // Heel-down feet: toes drawn upward via reduced foot extension
+    footL: { x: cx - body.hipW / 2 - 4 - (liftLeft ? stride : 0), y: pelvisY + body.thighL + body.shinL - 8 },
+    footR: { x: cx + body.hipW / 2 + 4 + (liftLeft ? 0 : stride), y: pelvisY + body.thighL + body.shinL - 8 },
+  };
+}
+
+function seatedFootCarePose(body: NeonBody, e: number, opts: { type: "arch" | "toeYoga" | "scrunch" | "bigToe" } = { type: "arch" }): Joints {
+  // Seated on floor, one leg crossed over the other, hand at foot.
+  const breath = e * 1.5;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const groundY = 256;
+  const seatY = groundY - 4;
+  const torsoTopY = 130 - breath;
+  // Foot position varies subtly per type so each renders distinctly.
+  const offsetMap = { arch: 0, toeYoga: 6, scrunch: -8, bigToe: 14 };
+  const off = offsetMap[opts.type];
+  return {
+    head: { x: cx - 10, y: 70 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx - 4, y: 100 },
+    shoulderL: { x: cx - sw / 2, y: torsoTopY },
+    shoulderR: { x: cx + sw / 2, y: torsoTopY },
+    elbowL: { x: cx - 4, y: torsoTopY + 28 },
+    elbowR: { x: cx + 14, y: torsoTopY + 28 },
+    handL: { x: cx + 14 + off * 0.4, y: torsoTopY + 60 },
+    handR: { x: cx + 26 + off * 0.4, y: torsoTopY + 60 },
+    pelvis: { x: cx - 4, y: seatY - 6 },
+    hipL: { x: cx - 18, y: seatY },
+    hipR: { x: cx + 10, y: seatY },
+    kneeL: { x: cx - 44, y: groundY - 6 },
+    footL: { x: cx + 18 + off, y: torsoTopY + 70 },
+    kneeR: { x: cx + 36, y: groundY - 6 },
+    footR: { x: cx + 60, y: groundY - 4 },
+  };
+}
+
+function ankleCirclesPose(body: NeonBody, t: number): Joints {
+  // Standing on one foot; the other foot draws a circle in the air.
+  const angle = t * Math.PI * 2;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 102;
+  const pelvisY = 188;
+  return {
+    head: { x: cx, y: 56 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 90 },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 12, y: shoulderY + 20 },
+    elbowR: { x: cx + sw / 2 + 12, y: shoulderY + 20 },
+    handL: { x: cx - sw / 2 - 22, y: shoulderY + 32 },
+    handR: { x: cx + sw / 2 + 22, y: shoulderY + 32 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    kneeL: { x: cx - body.hipW / 2, y: pelvisY + body.thighL },
+    footL: { x: cx - body.hipW / 2 + 3, y: pelvisY + body.thighL + body.shinL },
+    // Lifted foot circles in 2D
+    kneeR: { x: cx + body.hipW / 2 + 8, y: pelvisY + 24 },
+    footR: { x: cx + body.hipW / 2 + 16 + Math.cos(angle) * 14, y: pelvisY + 50 + Math.sin(angle) * 12 },
+  };
+}
+
+// ---------- Additional dedicated poses (Task #35 review fixes) ----------
+
+function pikePushUpPose(body: NeonBody, t: number): Joints {
+  // Inverted-V hold; head dips to floor between the hands as the elbows bend.
+  const e = easeCos(t);
+  const apexX = 100;
+  const apexY = 110 + e * 6;
+  const groundY = 252;
+  const lFootX = 56;
+  const rFootX = 144;
+  const headY = apexY + 30 + e * 26; // head dips toward floor at peak
+  const headX = apexX - 16;
+  return {
+    head: { x: headX, y: headY },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: apexX - 8, y: apexY + 18 + e * 14 },
+    shoulderL: { x: apexX - 6, y: apexY + 22 },
+    shoulderR: { x: apexX + 6, y: apexY + 25 },
+    elbowL: { x: apexX - 22, y: apexY + 36 + e * 8 },
+    elbowR: { x: apexX + 10, y: apexY + 38 + e * 8 },
+    handL: { x: apexX - 18, y: groundY - 4 },
+    handR: { x: apexX + 18, y: groundY - 2 },
+    pelvis: { x: apexX, y: apexY - 4 },
+    hipL: { x: apexX - 4, y: apexY },
+    hipR: { x: apexX + 4, y: apexY + 3 },
+    kneeL: { x: apexX - 22, y: (apexY + groundY) / 2 },
+    kneeR: { x: apexX + 22, y: (apexY + groundY) / 2 + 3 },
+    footL: { x: lFootX, y: groundY },
+    footR: { x: rFootX, y: groundY + 2 },
+  };
+}
+
+function calfWallStretchPose(body: NeonBody, e: number): Joints {
+  // Standing lean to wall on the left, one leg planted back with heel down.
+  const press = e * 6;
+  const cx = 130;
+  const wallX = 38;
+  const headX = wallX + 28;
+  return {
+    head: { x: headX, y: 78 + press * 0.2 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: headX + 2, y: 110 },
+    shoulderL: { x: headX + 4, y: 116 },
+    shoulderR: { x: headX + 8, y: 120 },
+    elbowL: { x: headX - 10, y: 130 },
+    elbowR: { x: headX - 6, y: 134 },
+    handL: { x: wallX + 4, y: 132 },
+    handR: { x: wallX + 4, y: 142 },
+    pelvis: { x: cx + 8, y: 188 },
+    hipL: { x: cx, y: 196 },
+    hipR: { x: cx + 14, y: 198 },
+    // Front leg (closer to wall): bent
+    kneeL: { x: cx - 8, y: 232 },
+    footL: { x: cx - 10, y: 268 },
+    // Back leg (extended): straight, heel down on floor far from wall
+    kneeR: { x: cx + 38, y: 244 },
+    footR: { x: cx + 60 + press, y: 286 },
+  };
+}
+
+function prenatalCatCowPose(body: NeonBody, t: number): Joints {
+  // Quadruped with a deliberately small, slow arch — pregnancy-safe.
+  return quadrupedPose(body, t, { arch: Math.sin(t * Math.PI * 2) * 0.35 });
+}
+
+function pregnancyPelvicTiltPose(body: NeonBody, t: number): Joints {
+  // Quadruped on hands and knees with a tiny pelvic tilt + breath rise.
+  const e = easeCos(t);
+  const j = quadrupedPose(body, t, { arch: 0 });
+  // Slightly tuck the pelvis under and let the head/neck stay neutral.
+  j.pelvis.y -= e * 3;
+  j.hipL.y -= e * 2;
+  j.hipR.y -= e * 2;
+  return j;
+}
+
+function pelvicFloorBridgePose(body: NeonBody, t: number): Joints {
+  // Bridge with a smaller lift than a standard glute bridge plus a
+  // visible "kegel" pulse: hips rise + tiny squeeze pulse.
+  const lift = easeCos(t) * 0.55;
+  const pulse = Math.sin(t * Math.PI * 6) * 1.2;
+  const j = bridgePose(body, lift);
+  j.pelvis.y -= pulse;
+  j.hipL.y -= pulse;
+  j.hipR.y -= pulse;
+  // Hands rest gently on lower belly to cue the contraction.
+  j.handL = { x: 96, y: j.pelvis.y - 4 };
+  j.handR = { x: 110, y: j.pelvis.y - 2 };
+  j.elbowL = { x: 80, y: j.pelvis.y + 2 };
+  j.elbowR = { x: 124, y: j.pelvis.y + 4 };
+  return j;
+}
+
+function footArchMassagePose(body: NeonBody, e: number): Joints {
+  // Seated, both thumbs press into the arch of the lifted foot.
+  const j = seatedFootCarePose(body, e, { type: "arch" });
+  // Bring both hands tightly together at the arch.
+  j.handL = { x: j.footL.x - 2, y: j.footL.y - 4 };
+  j.handR = { x: j.footL.x + 6, y: j.footL.y - 4 };
+  j.elbowL = { x: j.handL.x - 14, y: j.handL.y - 16 };
+  j.elbowR = { x: j.handR.x + 4, y: j.handR.y - 16 };
+  return j;
+}
+
+function toeYogaPose(body: NeonBody, e: number): Joints {
+  // Seated with one foot lifted — toes fan out; hand demonstrates a "fan"
+  // gesture in the air rather than gripping the foot.
+  const fan = e;
+  const j = seatedFootCarePose(body, e, { type: "toeYoga" });
+  // Lift the foot higher so the splayed toes are visible.
+  j.footL = { x: j.footL.x + 6, y: j.footL.y - 18 - fan * 4 };
+  // Right hand floats above the foot with fingers spread (single dot here).
+  j.handR = { x: j.footL.x + 18, y: j.footL.y - 4 };
+  j.elbowR = { x: j.handR.x - 12, y: j.handR.y - 18 };
+  return j;
+}
+
+function towelScrunchPose(body: NeonBody, t: number): Joints {
+  // Standing on one foot; the working foot scrunches a towel on the floor.
+  // Knee stays fairly bent; toes curl rhythmically (modeled by foot moving
+  // backward as the towel "scrunches" inward).
+  const e = easeCos(t);
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 102;
+  const pelvisY = 188;
+  const scrunch = e * 8;
+  return {
+    head: { x: cx, y: 56 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 90 },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 4, y: shoulderY + body.armUpL * 0.7 },
+    elbowR: { x: cx + sw / 2 + 4, y: shoulderY + body.armUpL * 0.7 },
+    handL: { x: cx - sw / 2 - 6, y: 184 },
+    handR: { x: cx + sw / 2 + 6, y: 184 },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    // Standing leg
+    kneeL: { x: cx - body.hipW / 2, y: pelvisY + body.thighL },
+    footL: { x: cx - body.hipW / 2 + 3, y: pelvisY + body.thighL + body.shinL },
+    // Working leg: knee bent forward, toes pulling towel
+    kneeR: { x: cx + body.hipW / 2 + 6, y: pelvisY + body.thighL - 4 },
+    footR: { x: cx + body.hipW / 2 + 24 - scrunch, y: pelvisY + body.thighL + body.shinL - 2 },
+  };
+}
+
+function bigToeStretchPose(body: NeonBody, e: number): Joints {
+  // Seated with one foot pulled toward the body; hand grips the big toe
+  // and pulls it back gently.
+  const j = seatedFootCarePose(body, e, { type: "bigToe" });
+  // Hand pinches the big toe (close to the foot, slightly above it).
+  j.handR = { x: j.footL.x - 4, y: j.footL.y - 2 - e * 2 };
+  j.handL = { x: j.footL.x + 4, y: j.footL.y + 2 };
+  j.elbowR = { x: j.handR.x + 8, y: j.handR.y - 18 };
+  j.elbowL = { x: j.handL.x - 6, y: j.handL.y - 14 };
+  return j;
+}
+
+function slowWalkPose(body: NeonBody, t: number): Joints {
+  // Slow walking gait used for the cortisol-reset walk — smaller stride
+  // and an emphasized chest-open arm swing compared with heelWalkPose.
+  const e = easeCos(t);
+  const liftLeft = t < 0.5;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const shoulderY = 100 - e * 2;
+  const pelvisY = 188 - e * 2;
+  const stride = e * 8;
+  return {
+    head: { x: cx, y: 54 - e * 2 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 88 - e * 2 },
+    shoulderL: { x: cx - sw / 2, y: shoulderY },
+    shoulderR: { x: cx + sw / 2, y: shoulderY },
+    elbowL: { x: cx - sw / 2 - 14, y: shoulderY + 18 + (liftLeft ? -10 : 14) },
+    elbowR: { x: cx + sw / 2 + 14, y: shoulderY + 18 + (liftLeft ? 14 : -10) },
+    handL: { x: cx - sw / 2 - 22, y: shoulderY + 38 + (liftLeft ? -18 : 14) },
+    handR: { x: cx + sw / 2 + 22, y: shoulderY + 38 + (liftLeft ? 14 : -18) },
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL: { x: cx - body.hipW / 2, y: pelvisY },
+    hipR: { x: cx + body.hipW / 2, y: pelvisY },
+    kneeL: { x: cx - body.hipW / 2 - (liftLeft ? stride : 0), y: pelvisY + body.thighL - (liftLeft ? 4 : 0) },
+    kneeR: { x: cx + body.hipW / 2 + (liftLeft ? 0 : stride), y: pelvisY + body.thighL - (liftLeft ? 0 : 4) },
+    // Toes pointed forward (no heel-tap exaggeration)
+    footL: { x: cx - body.hipW / 2 - (liftLeft ? stride : 0), y: pelvisY + body.thighL + body.shinL },
+    footR: { x: cx + body.hipW / 2 + (liftLeft ? 0 : stride), y: pelvisY + body.thighL + body.shinL },
+  };
+}
+
+function chairSeatedTowelCurlPose(body: NeonBody, t: number): Joints {
+  // Sitting on a chair, both hands curl a towel from thighs to chest.
+  const e = easeCos(t);
+  const j = chairSeatedPose(body, t);
+  j.elbowL = { x: 86, y: 138 };
+  j.elbowR = { x: 114, y: 138 };
+  j.handL = { x: 92, y: 124 - e * 28 };
+  j.handR = { x: 108, y: 124 - e * 28 };
+  return j;
+}
+
+function chairSeatedMarchPose(body: NeonBody, t: number): Joints {
+  return chairSeatedPose(body, t, { march: true });
+}
+
+function chairSeatedNeckFlexionPose(body: NeonBody, t: number): Joints {
+  // Sitting on a chair, head nods slowly forward and back.
+  const j = chairSeatedPose(body, t);
+  const nod = easeCos(t) * 6;
+  j.head.y += nod;
+  return j;
+}
+
+// ---------- Prop drawing helpers ----------
+
+function MatProp() {
+  return (
+    <g>
+      <line x1="20" y1="252" x2="180" y2="252" stroke="#a78bfa" strokeWidth="3" strokeOpacity="0.55" strokeLinecap="round" />
+      <line x1="20" y1="256" x2="180" y2="256" stroke="#22d3ee" strokeWidth="1.5" strokeOpacity="0.35" strokeLinecap="round" />
+    </g>
+  );
+}
+
+function WallPropLeft() {
+  return (
+    <line x1="36" y1="40" x2="36" y2="280" stroke="#a78bfa" strokeWidth="2.5" strokeOpacity="0.55" strokeLinecap="round" />
+  );
+}
+
+function ChairProp() {
+  return (
+    <g stroke="#22d3ee" strokeOpacity="0.6" strokeWidth="2" fill="none" strokeLinecap="round">
+      <line x1="74" y1="200" x2="126" y2="200" />
+      <line x1="74" y1="200" x2="74" y2="288" />
+      <line x1="126" y1="200" x2="126" y2="288" />
+      <line x1="126" y1="146" x2="126" y2="200" />
+    </g>
+  );
+}
+
+function DoorwayProp() {
+  return (
+    <g stroke="#22d3ee" strokeOpacity="0.55" strokeWidth="2.5" strokeLinecap="round" fill="none">
+      <line x1="34" y1="40" x2="34" y2="280" />
+      <line x1="166" y1="40" x2="166" y2="280" />
+      <line x1="34" y1="40" x2="166" y2="40" />
+    </g>
+  );
+}
+
+function BenchProp() {
+  return (
+    <g stroke="#22d3ee" strokeOpacity="0.55" strokeWidth="2.5" fill="none" strokeLinecap="round">
+      <rect x="50" y="220" width="100" height="6" rx="3" />
+      <line x1="60" y1="226" x2="60" y2="252" />
+      <line x1="140" y1="226" x2="140" y2="252" />
+    </g>
+  );
+}
+
+function CushionProp() {
+  return (
+    <ellipse cx="100" cy="226" rx="40" ry="6" stroke="#22d3ee" strokeOpacity="0.55" strokeWidth="2" fill="none" />
+  );
+}
+
+function TowelBetweenHands({ a, b }: { a: Pt; b: Pt }) {
+  return (
+    <g>
+      <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#fbbf24" strokeWidth="3" strokeOpacity="0.9" strokeLinecap="round" />
+      <line x1={a.x} y1={a.y + 4} x2={b.x} y2={b.y + 4} stroke="#fbbf24" strokeWidth="1.5" strokeOpacity="0.5" strokeLinecap="round" />
+    </g>
+  );
+}
+
+function Dumbbell({ at, vertical = false }: { at: Pt; vertical?: boolean }) {
+  if (vertical) {
+    return (
+      <g fill="#facc15" stroke="#facc15" strokeOpacity="0.9">
+        <rect x={at.x - 3} y={at.y - 8} width="6" height="16" rx="1.5" />
+        <rect x={at.x - 6} y={at.y - 12} width="12" height="4" rx="1" />
+        <rect x={at.x - 6} y={at.y + 8} width="12" height="4" rx="1" />
+      </g>
+    );
+  }
+  return (
+    <g fill="#facc15" stroke="#facc15" strokeOpacity="0.9">
+      <rect x={at.x - 8} y={at.y - 3} width="16" height="6" rx="1.5" />
+      <rect x={at.x - 12} y={at.y - 6} width="4" height="12" rx="1" />
+      <rect x={at.x + 8} y={at.y - 6} width="4" height="12" rx="1" />
+    </g>
+  );
+}
+
+function Kettlebell({ at }: { at: Pt }) {
+  return (
+    <g fill="#facc15" stroke="#facc15" strokeOpacity="0.95">
+      <path d={`M ${at.x - 4} ${at.y - 6} Q ${at.x - 4} ${at.y - 14} ${at.x} ${at.y - 14} Q ${at.x + 4} ${at.y - 14} ${at.x + 4} ${at.y - 6}`} fill="none" strokeWidth="2" />
+      <ellipse cx={at.x} cy={at.y + 4} rx="10" ry="9" />
+    </g>
+  );
+}
+
+function BandBetweenHands({ a, b }: { a: Pt; b: Pt }) {
+  return (
+    <path
+      d={`M ${a.x} ${a.y} Q ${(a.x + b.x) / 2} ${(a.y + b.y) / 2 + 6} ${b.x} ${b.y}`}
+      stroke="#fb7185"
+      strokeWidth="3"
+      strokeOpacity="0.85"
+      fill="none"
+      strokeLinecap="round"
+    />
+  );
+}
+
+function JumpRopeArc({ j }: { j: Joints }) {
+  return (
+    <path
+      d={`M ${j.handL.x} ${j.handL.y} Q 100 ${j.handL.y - 60} ${j.handR.x} ${j.handR.y}`}
+      stroke="#facc15"
+      strokeWidth="2"
+      strokeOpacity="0.7"
+      fill="none"
+    />
+  );
+}
+
+function SmallTowelOnFloor() {
+  return (
+    <path
+      d="M 80 254 Q 100 246 120 254 Q 140 262 160 254"
+      stroke="#fbbf24"
+      strokeWidth="2.5"
+      strokeOpacity="0.7"
+      fill="none"
+      strokeLinecap="round"
+    />
+  );
+}
+
+// ---------- Animation map: every exercise in EXERCISES ----------
+
+// Uniqueness contract for this registry:
+//   * Each entry MUST have a `key` distinct from every other entry.
+//   * Each entry's `pose(body, t)` MUST produce a distinct sampled
+//     joint trajectory from every other entry's pose.
+// Both invariants are enforced by hard-throw asserts in the dev
+// guard at the bottom of this file. The contract is intentionally
+// behavioral (key + motion), not React component identity — two
+// entries are allowed to share the same primitive (e.g. bridgePose)
+// as long as one of them wraps it with offsets/timing that produce
+// a different trajectory (see h4 vs pp1 for the canonical example).
+const NEON_ANIM_BY_ID: Record<string, NeonAnimation> = {
+  // ===== Strength (men starters) =====
+  m1: { key: "pushUp", pose: pushPose, periodMs: 1800 }, // Push-Up
+  m2: { key: "singleLegBridge",
+    pose: (b, t) => {
+      const j = bridgePose(b, easeCos(t));
+      // Lift one leg straight: replace right knee/foot with a higher angle
+      j.kneeR = { x: 178, y: j.kneeR.y - 26 };
+      j.footR = { x: 184, y: j.footR.y - 50 };
+      return j;
+    },
+    props: () => <MatProp />,
+    periodMs: 3200,
+  }, // Single-Leg Glute Bridge
+  m3: { key: "doorwayRow", pose: rowPose, props: () => <DoorwayProp />, periodMs: 2200 }, // Doorway Row
+  m4: { key: "pikePushUp", pose: pikePushUpPose, periodMs: 2400 }, // Pike Push-Up (head dips between hands)
+  // ===== Weight loss / women starters =====
+  w1: { key: "hipThrust",
+    pose: (b, t) => bridgePose(b, easeCos(t)),
+    props: () => <BenchProp />,
+    periodMs: 2400,
+  }, // Hip Thrusts (bench under shoulders)
+  w2: { key: "splitSquat", pose: lungePose, periodMs: 4200 }, // Split Squat
+  w3: { key: "donkeyKick", pose: donkeyKickPose, periodMs: 1600 }, // Standing Donkey Kicks
+  w4: { key: "squat", pose: squatPose, periodMs: 2200 }, // Bodyweight Squat (no implement)
+  // ===== Beginner core =====
+  b1: { key: "plankHold", pose: plankPose, props: () => <MatProp />, periodMs: 5000 }, // Plank Hold
+  b2: { key: "mountainClimber", pose: mountainClimberPose, periodMs: 1100 }, // Mountain Climbers
+  // ===== Women's Health: Pregnancy Safe =====
+  wh2: { key: "sideLyingLegRaise", pose: (b, t) => sideLyingPose(b, easeCos(t)), props: () => <MatProp />, periodMs: 2600 },
+  wh3: { key: "prenatalCatCow", pose: prenatalCatCowPose, props: () => <MatProp />, periodMs: 3800 },
+  wh4: { key: "pregnancyPelvicTilt", pose: pregnancyPelvicTiltPose, props: () => <MatProp />, periodMs: 3000 },
+  // ===== Postpartum =====
+  wh1: { key: "pelvicFloorBridge", pose: pelvicFloorBridgePose, props: () => <MatProp />, periodMs: 3000 },
+  wh5: { key: "diastasisBreath",
+    pose: (b, t) => standArmsPose(b, t, { armPose: "handsOnBelly", breathe: true }),
+    periodMs: 4500,
+  }, // Diastasis Recovery Breath (palms on lower belly)
+  // ===== Hormonal =====
+  wh6: { key: "hormonalYogaFlow", pose: sideStretchPose, periodMs: 4000 }, // Hormonal Yoga Flow
+  wh7: { key: "cortisolResetWalk", pose: slowWalkPose, periodMs: 1800 }, // Cortisol Reset Walk (slow stride, big arm swing)
+  // ===== Recovery: Tech Neck =====
+  rn1: { key: "neckRolls", pose: (b, t) => standArmsPose(b, t, { armPose: "down", headRoll: true }), periodMs: 3600 }, // Neck Rolls
+  rn2: { key: "chinTucks", pose: (b, t) => standArmsPose(b, t, { armPose: "down", chinTuck: true }), periodMs: 2400 }, // Chin Tucks
+  rn3: { key: "upperTrapStretch", pose: (b, t) => standArmsPose(b, t, { armPose: "headTiltPullL" }), periodMs: 4500 }, // Upper Trap Stretch
+  // ===== Recovery: Foot Care =====
+  rf1: { key: "footArchMassage", pose: footArchMassagePose, periodMs: 4000 }, // Foot Arch Massage
+  rf2: { key: "toeYoga", pose: toeYogaPose, periodMs: 3500 }, // Toe Yoga
+  rf3: { key: "calfWallStretch", pose: calfWallStretchPose, props: () => <WallPropLeft />, periodMs: 4200 }, // Calf Wall Stretch
+  // ===== Recovery: Tension Release =====
+  r1: { key: "standingQuadStretch", pose: quadStretchPose, periodMs: 4000 }, // Standing Quad Stretch
+  r2: { key: "supineHamstring",
+    pose: (b, e) => {
+      const j = supineTwistPose(b, easeCos(e) * 0.4);
+      // Hamstring stretch: one leg straight up
+      j.kneeR = { x: 122, y: 180 };
+      j.footR = { x: 122, y: 100 };
+      j.handR = { x: 130, y: 130 };
+      j.elbowR = { x: 110, y: 180 };
+      j.kneeL = { x: 156, y: 240 };
+      j.footL = { x: 188, y: 248 };
+      return j;
+    },
+    props: () => <MatProp />,
+    periodMs: 4200,
+  }, // Hamstring Stretch (supine, one leg up)
+  r3: { key: "childsPose", pose: childsPosePose, props: () => <MatProp />, periodMs: 4500 }, // Child's Pose
+  r4: { key: "boxBreathing", pose: (b, t) => standArmsPose(b, t, { armPose: "handsOnHips", breathe: true }), periodMs: 6000 }, // Box Breathing
+  // ===== Strength (advanced) =====
+  s1: { key: "jumpSquat", pose: jumpSquatPose, periodMs: 1600 }, // Jump Squat
+  s2: { key: "supermanHold",
+    pose: (b, e) => {
+      // Superman: prone, arms+legs lifted
+      const j = bridgePose(b, easeCos(e) * 0.2);
+      j.head = { x: 22, y: 232 - easeCos(e) * 6 };
+      j.shoulderL = { x: 50, y: 234 };
+      j.shoulderR = { x: 50, y: 237 };
+      j.elbowL = { x: 24, y: 232 - easeCos(e) * 8 };
+      j.elbowR = { x: 24, y: 235 - easeCos(e) * 8 };
+      j.handL = { x: 4, y: 230 - easeCos(e) * 14 };
+      j.handR = { x: 4, y: 233 - easeCos(e) * 14 };
+      j.kneeL = { x: 165, y: 240 - easeCos(e) * 6 };
+      j.kneeR = { x: 165, y: 243 - easeCos(e) * 6 };
+      j.footL = { x: 188, y: 230 - easeCos(e) * 14 };
+      j.footR = { x: 188, y: 233 - easeCos(e) * 14 };
+      return j;
+    },
+    props: () => <MatProp />,
+    periodMs: 4000,
+  }, // Superman Hold
+  s3: { key: "reverseLunge", pose: reverseLungePose, periodMs: 4200 }, // Reverse Lunge
+  s4: { key: "towelPullDown",
+    pose: pullDownPose,
+    props: (_b, j) => <TowelBetweenHands a={j.handL} b={j.handR} />,
+    periodMs: 2400,
+  }, // Towel Pull-Down
+  s5: { key: "singleLegDeadlift", pose: singleLegDeadliftPose, periodMs: 3400 }, // Single-Leg Deadlift
+  s6: { key: "pikeShoulderTap", pose: pikeShoulderTapPose, periodMs: 1800 }, // Pike Shoulder Tap (faster than m4 hold)
+  // ===== Conditioning =====
+  c1: { key: "jumpRope",
+    pose: jumpRopePose,
+    props: (_b, j) => <JumpRopeArc j={j} />,
+    periodMs: 700,
+  }, // Invisible Jump Rope
+  c2: { key: "burpee", pose: burpeeCyclePose, periodMs: 2000 }, // Burpees
+  c3: { key: "hipHinge", pose: swingPose, periodMs: 1800 }, // Bodyweight Hip Hinge
+  c4: { key: "tuckJump", pose: tuckJumpPose, periodMs: 1400 }, // Tuck Jumps
+  c5: { key: "plankShoulderTap", pose: plankShoulderTapPose, props: () => <MatProp />, periodMs: 1600 }, // Plank Shoulder Taps
+  c6: { key: "bearCrawl", pose: bearCrawlPose, props: () => <MatProp />, periodMs: 1400 }, // Bear Crawl
+  c7: { key: "highKnees", pose: highKneesPose, periodMs: 900 }, // High Knees
+  c8: { key: "bicycleCrunch", pose: bicycleCrunchPose, props: () => <MatProp />, periodMs: 1600 }, // Bicycle Crunches
+  // ===== Pregnancy Safe (additions) =====
+  ps1: { key: "wallSit",
+    pose: (b, e) => {
+      const j = squatPose(b, 0.95);
+      // Anchor torso flat against the wall on the left
+      return j;
+    },
+    props: () => <WallPropLeft />,
+    periodMs: 4500,
+  }, // Wall Sit
+  ps2: { key: "chairTowelCurl",
+    pose: chairSeatedTowelCurlPose,
+    props: (_b, j) => (
+      <>
+        <ChairProp />
+        <TowelBetweenHands a={j.handL} b={j.handR} />
+      </>
+    ),
+    periodMs: 2400,
+  }, // Seated Towel Curl
+  ps3: { key: "calfRaise", pose: calfRaisePose, periodMs: 1800 }, // Standing Calf Raise
+  ps4: { key: "sidePlank", pose: sidePlankPose, props: () => <MatProp />, periodMs: 5000 }, // Modified Side Plank
+  ps5: { key: "pelvicRock", pose: (b, t) => standArmsPose(b, t, { armPose: "handsOnHips", pelvicRock: true }), periodMs: 2800 }, // Standing Pelvic Rocks
+  ps6: { key: "prenatalSquatHold",
+    pose: (b, e) => {
+      // Wide deep squat hold (lower than standard squat) with hands at heart
+      const j = squatPose(b, 0.92);
+      j.handL = { x: 96, y: 168 };
+      j.handR = { x: 104, y: 168 };
+      j.elbowL = { x: 80, y: 162 };
+      j.elbowR = { x: 120, y: 162 };
+      return j;
+    },
+    periodMs: 4500,
+  }, // Prenatal Squat Hold
+  ps7: { key: "seatedSpinalTwist", pose: seatedTwistPose, props: () => <MatProp />, periodMs: 4500 }, // Seated Spinal Twist
+  // ===== Postpartum (additions) =====
+  pp1: { key: "gluteBridge", pose: bridgePose, props: () => <MatProp />, periodMs: 2800 }, // Glute Bridge
+  pp2: { key: "birdDog", pose: (b, t) => quadrupedPose(b, t, { armLift: -1, legLift: 1 }), props: () => <MatProp />, periodMs: 3600 }, // Bird Dog
+  pp3: { key: "heelSlide", pose: heelSlidePose, props: () => <MatProp />, periodMs: 2800 }, // Heel Slides
+  pp4: { key: "wallPushUp", pose: wallLeanPose, props: () => <WallPropLeft />, periodMs: 2400 }, // Wall Push-Up
+  pp5: { key: "standingPelvicTilt", pose: (b, t) => standArmsPose(b, t, { armPose: "handsOnHips", pelvicTilt: true }), periodMs: 2800 }, // Standing Pelvic Tilt
+  pp6: { key: "deadBug", pose: deadBugPose, props: () => <MatProp />, periodMs: 1800 }, // Dead Bug
+  pp7: { key: "chairMarch", pose: chairSeatedMarchPose, props: () => <ChairProp />, periodMs: 1800 }, // Seated March
+  // ===== Hormonal (additions) =====
+  h1: { key: "yinButterflyHold", pose: butterflyFloorPose, props: () => <MatProp />, periodMs: 5500 }, // Slow Yin Stretch (seated butterfly hold)
+  h2: { key: "legsUpWall", pose: legsUpWallPose, props: () => <><MatProp /><WallPropLeft /></>, periodMs: 6000 }, // Legs-Up-The-Wall
+  h3: { key: "hipCircles", pose: (b, t) => standArmsPose(b, t, { armPose: "handsOnHips", hipCircle: true }), periodMs: 3000 }, // Gentle Hip Circles
+  h4: {
+    key: "supportedBridge",
+    // Supported Bridge: a cushion under the sacrum holds the hips
+    // higher than an active glute bridge (pp1) and the pose is held
+    // statically with only a faint breathing rise rather than a
+    // pulse, so trajectory is genuinely distinct from pp1.
+    pose: (b, t) => {
+      const breath = easeCos(t) * 1.2;
+      const j = bridgePose(b, 1);
+      j.pelvis = { x: j.pelvis.x, y: j.pelvis.y - 10 - breath };
+      j.hipL = { x: j.hipL.x, y: j.hipL.y - 10 - breath };
+      j.hipR = { x: j.hipR.x, y: j.hipR.y - 10 - breath };
+      j.kneeL = { x: j.kneeL.x, y: j.kneeL.y - 4 - breath };
+      j.kneeR = { x: j.kneeR.x, y: j.kneeR.y - 4 - breath };
+      return j;
+    },
+    props: () => <><MatProp /><CushionProp /></>,
+    periodMs: 6000,
+  }, // Supported Bridge (cushion under sacrum lifts hips)
+  h5: { key: "alternateNostril", pose: (b, t) => standArmsPose(b, t, { armPose: "noseHand", breathe: true }), periodMs: 6000 }, // Alternate Nostril Breathing
+  h6: { key: "goddessPose", pose: goddessPose, periodMs: 3500 }, // Goddess Pose
+  h7: { key: "reclinedButterfly", pose: reclinedButterflyPose, props: () => <MatProp />, periodMs: 5500 }, // Reclined Butterfly
+  // ===== Tech Neck (additions) =====
+  tn1: { key: "doorwayChestOpener", pose: (b, t) => standArmsPose(b, t, { armPose: "doorwayOpener" }), props: () => <DoorwayProp />, periodMs: 4500 },
+  tn2: { key: "levatorScapulae", pose: (b, t) => standArmsPose(b, t, { armPose: "headTiltPullR" }), periodMs: 4500 },
+  tn3: { key: "scapularSqueeze", pose: (b, t) => standArmsPose(b, t, { armPose: "rowPullback" }), periodMs: 2400 },
+  tn4: { key: "wallAngels", pose: (b, t) => standArmsPose(b, t, { armPose: "elbowsUpW" }), props: () => <WallPropLeft />, periodMs: 3500 },
+  tn5: { key: "threadTheNeedle", pose: (b, t) => quadrupedPose(b, t, { threadSide: -1 }), props: () => <MatProp />, periodMs: 5000 },
+  tn6: { key: "suboccipitalRelease",
+    pose: (b, e) => {
+      // Supine, hands cradling base of skull; subtle breath
+      const breath = easeCos(e) * 2;
+      const j = bridgePose(b, 0);
+      j.elbowL = { x: 60, y: 222 - breath };
+      j.elbowR = { x: 60, y: 225 - breath };
+      j.handL = { x: 30, y: 232 - breath };
+      j.handR = { x: 30, y: 235 - breath };
+      return j;
+    },
+    props: () => <MatProp />,
+    periodMs: 5500,
+  },
+  tn7: { key: "chairNeckFlexion", pose: chairSeatedNeckFlexionPose, props: () => <ChairProp />, periodMs: 3500 },
+  // ===== Foot Care (additions) =====
+  fc1: { key: "plantarFasciaPress", pose: plantarFasciaPressPose, periodMs: 4500 },
+  fc2: { key: "toeSplay", pose: toeSplayPose, periodMs: 2200 },
+  fc3: { key: "heelWalk", pose: heelWalkPose, periodMs: 1400 },
+  fc4: { key: "ankleCircles", pose: ankleCirclesPose, periodMs: 2400 },
+  fc5: { key: "towelScrunch", pose: towelScrunchPose, props: () => <SmallTowelOnFloor />, periodMs: 2400 },
+  fc6: { key: "singleLegBalance", pose: singleLegBalancePose, periodMs: 3200 },
+  fc7: { key: "bigToeStretch", pose: bigToeStretchPose, periodMs: 4500 },
+  // ===== Tension Release (additions) =====
+  tr1: { key: "pigeon", pose: pigeonPose, props: () => <MatProp />, periodMs: 5500 }, // Pigeon Pose (mat-only differentiates from h1)
+  tr2: { key: "seatedFold", pose: seatedFoldPose, props: () => <MatProp />, periodMs: 4500 },
+  tr3: { key: "catCowFlow", pose: (b, t) => quadrupedPose(b, t, { arch: Math.sin(t * Math.PI * 2) }), props: () => <MatProp />, periodMs: 3000 },
+  tr4: { key: "thoracicExtension",
+    pose: (b, e) => {
+      // Supine over foam-roller-like prop, arms overhead reaching back
+      const j = bridgePose(b, easeCos(e) * 0.15);
+      j.handL = { x: 4, y: 226 };
+      j.handR = { x: 4, y: 229 };
+      j.elbowL = { x: 30, y: 230 };
+      j.elbowR = { x: 30, y: 233 };
+      return j;
+    },
+    props: () => (
+      <>
+        <MatProp />
+        <ellipse cx="100" cy="234" rx="14" ry="6" stroke="#fb7185" strokeWidth="2" strokeOpacity="0.7" fill="none" />
+      </>
+    ),
+    periodMs: 5500,
+  },
+  tr5: { key: "standingFold", pose: foldPose, periodMs: 4500 },
+  tr6: { key: "supineTwist", pose: supineTwistPose, props: () => <MatProp />, periodMs: 5500 },
+};
+
+// Coverage table — every exercise ID maps to a unique animation.
+// Kept in sync with NEON_ANIM_BY_ID above; the dev-load assert below
+// (search for "NEON_ANIM_BY_ID entries collide") will throw if any
+// entry drifts away from being unique.
+//   m1  Push-Up                      → pushPose                       (chest dips toward floor)
+//   m2  Single-Leg Glute Bridge      → bridgePose w/ top leg lifted, mat
+//   m3  Doorway Row                  → rowPose w/ doorway frame
+//   m4  Pike Push-Up                 → pikePushUpPose                  (head dips between hands)
+//   w1  Hip Thrusts                  → bridgePose w/ bench
+//   w2  Split Squat                  → lungePose
+//   w3  Standing Donkey Kicks        → donkeyKickPose
+//   w4  Bodyweight Squat             → squatPose                       (no prop)
+//   b1  Plank Hold                   → plankPose w/ mat
+//   b2  Mountain Climbers            → mountainClimberPose
+//   wh1 Pelvic Floor Bridge          → pelvicFloorBridgePose           (small lift + kegel pulse, mat)
+//   wh2 Side-Lying Leg Raise         → sideLyingPose w/ mat
+//   wh3 Prenatal Cat-Cow             → prenatalCatCowPose              (small slow arch, mat)
+//   wh4 Pregnancy Pelvic Tilt        → pregnancyPelvicTiltPose         (quadruped pelvic tuck, mat)
+//   wh5 Diastasis Recovery Breath    → standArmsPose handsOnBelly      (palms cradle lower belly)
+//   wh6 Hormonal Yoga Flow           → sideStretchPose
+//   wh7 Cortisol Reset Walk          → slowWalkPose                    (slow stride, big arm swing)
+//   rn1 Neck Rolls                   → standArmsPose down + headRoll
+//   rn2 Chin Tucks                   → standArmsPose down + chinTuck
+//   rn3 Upper Trap Stretch           → standArmsPose headTiltPullL
+//   rf1 Foot Arch Massage            → footArchMassagePose             (thumbs press the arch)
+//   rf2 Toe Yoga                     → toeYogaPose                     (lifted foot, fan gesture)
+//   rf3 Calf Wall Stretch            → calfWallStretchPose w/ wall
+//   r1  Standing Quad Stretch        → quadStretchPose                 (heel to glute)
+//   r2  Hamstring Stretch            → supine one-leg-up (inline)
+//   r3  Child's Pose                 → childsPosePose w/ mat
+//   r4  Box Breathing                → standArmsPose handsOnHips, slow breath
+//   s1  Jump Squat                   → jumpSquatPose
+//   s2  Superman Hold                → prone superman (inline) w/ mat
+//   s3  Reverse Lunge                → reverseLungePose
+//   s4  Towel Pull-Down              → pullDownPose w/ towel
+//   s5  Single-Leg Deadlift          → singleLegDeadliftPose
+//   s6  Pike Shoulder Tap            → pikeShoulderTapPose             (alternating taps)
+//   c1  Invisible Jump Rope          → jumpRopePose w/ rope arc
+//   c2  Burpees                      → burpeeCyclePose
+//   c3  Bodyweight Hip Hinge         → swingPose
+//   c4  Tuck Jumps                   → tuckJumpPose
+//   c5  Plank Shoulder Taps          → plankShoulderTapPose w/ mat
+//   c6  Bear Crawl                   → bearCrawlPose w/ mat
+//   c7  High Knees                   → highKneesPose
+//   c8  Bicycle Crunches             → bicycleCrunchPose w/ mat
+//   ps1 Wall Sit                     → squatPose held, w/ wall
+//   ps2 Seated Towel Curl            → chairSeatedTowelCurlPose w/ chair + towel
+//   ps3 Standing Calf Raise          → calfRaisePose                   (heels lift)
+//   ps4 Modified Side Plank          → sidePlankPose w/ mat
+//   ps5 Standing Pelvic Rocks        → standArmsPose handsOnHips + pelvicRock
+//   ps6 Prenatal Squat Hold          → deep squat held, hands at heart (inline)
+//   ps7 Seated Spinal Twist          → seatedTwistPose w/ mat
+//   pp1 Glute Bridge                 → bridgePose w/ mat
+//   pp2 Bird Dog                     → quadrupedPose opp arm+leg, mat
+//   pp3 Heel Slides                  → heelSlidePose w/ mat
+//   pp4 Wall Push-Up                 → wallLeanPose w/ wall
+//   pp5 Standing Pelvic Tilt         → standArmsPose handsOnHips + pelvicTilt
+//   pp6 Dead Bug                     → deadBugPose w/ mat
+//   pp7 Seated March                 → chairSeatedMarchPose w/ chair
+//   h1  Slow Yin Stretch             → butterflyFloorPose w/ mat       (seated butterfly hold)
+//   h2  Legs-Up-The-Wall             → legsUpWallPose w/ mat + wall
+//   h3  Gentle Hip Circles           → standArmsPose handsOnHips + hipCircle
+//   h4  Supported Bridge             → bridgePose w/ cushion + mat
+//   h5  Alternate Nostril Breathing  → standArmsPose noseHand, slow breath
+//   h6  Goddess Pose                 → goddessPose                     (wide squat, arms cactus)
+//   h7  Reclined Butterfly           → reclinedButterflyPose w/ mat
+//   tn1 Doorway Chest Opener         → standArmsPose doorwayOpener w/ doorway
+//   tn2 Levator Scapulae Stretch     → standArmsPose headTiltPullR
+//   tn3 Scapular Squeezes            → standArmsPose rowPullback
+//   tn4 Wall Angels                  → standArmsPose elbowsUpW w/ wall (arms in W)
+//   tn5 Thread the Needle            → quadrupedPose threaded arm, mat
+//   tn6 Suboccipital Release         → supine, hands cradle skull, mat (inline)
+//   tn7 Seated Neck Flexion          → chairSeatedNeckFlexionPose w/ chair
+//   fc1 Plantar Fascia Press         → plantarFasciaPressPose
+//   fc2 Toe Splay                    → toeSplayPose
+//   fc3 Heel Walks                   → heelWalkPose                    (heel-tap walking)
+//   fc4 Ankle Circles                → ankleCirclesPose
+//   fc5 Towel Scrunches              → towelScrunchPose w/ towel       (standing, toes pull)
+//   fc6 Single-Leg Balance           → singleLegBalancePose
+//   fc7 Big Toe Stretch              → bigToeStretchPose               (seated, hand pinches big toe)
+//   tr1 Pigeon Pose                  → pigeonPose w/ mat
+//   tr2 Seated Forward Fold          → seatedFoldPose w/ mat
+//   tr3 Cat-Cow Flow                 → quadrupedPose arching (faster than wh3)
+//   tr4 Thoracic Extension           → supine over roller, arms back, mat
+//   tr5 Standing Forward Fold        → foldPose
+//   tr6 Supine Twist                 → supineTwistPose w/ mat
+
 function useLoopClock(periodMs: number, paused: boolean): number {
   const [t, setT] = useState(0);
   useEffect(() => {
@@ -1641,19 +3735,46 @@ function NeonBodyShape({
 }
 
 function NeonSilhouette({
-  family,
+  exerciseId,
   gender,
   paused,
 }: {
-  family: NeonFamily;
+  // Per-exercise unique animation (Task #35). Required — there is no
+  // family fallback. Every exercise must declare its own entry in
+  // NEON_ANIM_BY_ID, otherwise the dev assert below throws.
+  exerciseId: string;
   gender: NeonGender;
   paused: boolean;
 }) {
   const body = gender === "woman" ? WOMAN_BODY : MAN_BODY;
   const widths = widthsFor(body);
-  const period = neonPeriodMs(family);
+  const anim = NEON_ANIM_BY_ID[exerciseId];
+  if (!anim) {
+    if (import.meta.env.DEV) {
+      throw new Error(
+        `[neon] No NEON_ANIM_BY_ID entry for exercise "${exerciseId}". ` +
+          `Every exercise must declare its own animation.`,
+      );
+    }
+    // In production, render a deliberately empty SVG rather than a
+    // misleading generic pose; this is unreachable when the dev
+    // assert is satisfied (which guards every release build).
+    return <svg viewBox="0 0 200 320" className="h-full w-full" aria-hidden="true" data-anim-id={`missing-${exerciseId}`} />;
+  }
+  const period = anim.periodMs;
   const t = useLoopClock(period, paused);
-  const j = neonJointsFor(family, paused ? 0 : t, body);
+  const time = paused ? 0 : t;
+  const j = anim.pose(body, time);
+  const propsNode = anim.props ? anim.props(body, j, time) : null;
+  // Stable identifier for e2e tests to confirm two exercises render
+  // distinct animations.
+  const animId = exerciseId;
+  // Behavioral identity for e2e tests: the explicit per-entry
+  // animation key declared in NEON_ANIM_BY_ID. Two exercises that
+  // accidentally share the same key fail the dev-load assert below,
+  // so this attribute carries a true uniqueness guarantee independent
+  // of `data-anim-id` (which is just the exercise id).
+  const animSig = anim.key;
   // Per-instance ids so multiple silhouettes can coexist without
   // their <defs> stomping on each other.
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
@@ -1669,6 +3790,8 @@ function NeonSilhouette({
       preserveAspectRatio="xMidYMid meet"
       className="h-full w-full"
       aria-hidden="true"
+      data-anim-id={animId}
+      data-anim-sig={animSig}
     >
       <defs>
         <radialGradient id={idBg} cx="50%" cy="55%" r="70%">
@@ -1719,6 +3842,10 @@ function NeonSilhouette({
 
       {/* Subtle ground shadow under the figure */}
       <ellipse cx="100" cy="298" rx="55" ry="6" fill={`url(#${idShadow})`} />
+
+      {/* Per-exercise props (wall, mat, doorway, dumbbell, etc.) drawn
+          behind the silhouette so they peek out around it. */}
+      {propsNode}
 
       {/* Wide soft outer halo */}
       <g filter={`url(#${idBigBlur})`} opacity="0.85">
@@ -4738,7 +6865,6 @@ function ExerciseLoop({
   gender: Gender | null;
 }) {
   const reducedMotion = useReducedMotion();
-  const family = neonFamilyFor(exercise);
   // Default the silhouette to a woman if the user hasn't picked yet.
   // In practice gender is always set by the time WorkoutScreen mounts.
   const neonGender: NeonGender = gender === "man" ? "man" : "woman";
@@ -4747,11 +6873,12 @@ function ExerciseLoop({
   // so the rounded corners stay clean across browsers.
   return (
     <div
+      data-testid="workout-illustration"
       className="relative h-full w-full overflow-hidden rounded-3xl bg-black shadow-inner ring-1 ring-stone-800/60"
       style={{ isolation: "isolate", transform: "translateZ(0)" }}
     >
       <NeonSilhouette
-        family={family}
+        exerciseId={exercise.id}
         gender={neonGender}
         paused={reducedMotion}
       />
@@ -5528,6 +7655,76 @@ if (import.meta.env.DEV) {
     console.warn(
       "[neon] EXERCISES missing NEON_FAMILY_OVERRIDES entry:",
       missing.map((ex) => `${ex.id} (${ex.name})`).join(", "),
+    );
+  }
+}
+
+// Dev-only safety net (Task #35): every exercise MUST have a dedicated
+// per-exercise neon animation, AND every exercise's animation must be
+// uniquely identifiable (no two exercises share the same pose+props
+// signature). We throw — rather than warn — so a missing or duplicated
+// entry crashes the dev build immediately and cannot ship.
+if (import.meta.env.DEV) {
+  const missing = EXERCISES.filter((ex) => !(ex.id in NEON_ANIM_BY_ID));
+  if (missing.length > 0) {
+    throw new Error(
+      "[neon] EXERCISES missing NEON_ANIM_BY_ID entry: " +
+        missing.map((ex) => `${ex.id} (${ex.name})`).join(", "),
+    );
+  }
+  // Each exercise must declare a unique animation `key`.
+  const keyToId = new Map<string, string>();
+  const keyDupes: string[] = [];
+  for (const ex of EXERCISES) {
+    const a = NEON_ANIM_BY_ID[ex.id];
+    const prev = keyToId.get(a.key);
+    if (prev) keyDupes.push(`${ex.id} == ${prev} (key="${a.key}")`);
+    else keyToId.set(a.key, ex.id);
+  }
+  if (keyDupes.length > 0) {
+    throw new Error(
+      "[neon] NEON_ANIM_BY_ID entries share an animation key: " +
+        keyDupes.join("; "),
+    );
+  }
+  // Behavioral uniqueness: sample each pose at several phases of its
+  // loop and hash the resulting joint trajectory. Two exercises that
+  // produce identical motion (even with different keys) collide here
+  // and crash the dev build. This is the actual "no two exercises
+  // animate the same" guarantee — the key check above is the cheap
+  // first line of defence; this is the deep one.
+  const SAMPLE_TS = [0, 0.17, 0.33, 0.5, 0.67, 0.83];
+  const trajById = new Map<string, string>();
+  const trajDupes: string[] = [];
+  for (const ex of EXERCISES) {
+    const a = NEON_ANIM_BY_ID[ex.id];
+    const samples: string[] = [];
+    for (const t of SAMPLE_TS) {
+      const j = a.pose(WOMAN_BODY, t);
+      // Round to 1px so floating-point jitter doesn't fragment the hash.
+      const fmt = (p: { x: number; y: number }) => `${Math.round(p.x)},${Math.round(p.y)}`;
+      samples.push(
+        [
+          j.head, j.neck,
+          j.shoulderL, j.shoulderR,
+          j.elbowL, j.elbowR, j.handL, j.handR,
+          j.pelvis, j.hipL, j.hipR,
+          j.kneeL, j.kneeR, j.footL, j.footR,
+        ].map(fmt).join("|"),
+      );
+    }
+    const traj = samples.join(";");
+    for (const [otherId, otherTraj] of trajById) {
+      if (otherTraj === traj) {
+        trajDupes.push(`${ex.id} (${a.key}) == ${otherId} (${NEON_ANIM_BY_ID[otherId].key})`);
+      }
+    }
+    trajById.set(ex.id, traj);
+  }
+  if (trajDupes.length > 0) {
+    throw new Error(
+      "[neon] NEON_ANIM_BY_ID entries produce identical joint trajectories: " +
+        trajDupes.join("; "),
     );
   }
 }
@@ -7163,6 +9360,9 @@ function WorkoutScreen({
   const nextExercise = playlist[index + 1] ?? null;
   const hasPrev = index > 0;
   const hasNext = index + 1 < playlist.length;
+  // Up-next preview honours OS reduced-motion just like the active
+  // illustration; otherwise the thumbnail animates live.
+  const upNextReducedMotion = useReducedMotion();
 
   const [mutedStr, setMutedStr] = useLocalStorage<"1" | "0">(
     VOICE_MUTED_KEY,
@@ -7533,8 +9733,15 @@ function WorkoutScreen({
           </span>
           {nextExercise ? (
             <>
-              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-stone-100 text-stone-500 dark:bg-stone-900 dark:text-stone-400">
-                <ResolvedIllustration exercise={nextExercise} />
+              <div
+                data-testid="up-next-illustration"
+                className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-black text-stone-500 dark:bg-stone-900 dark:text-stone-400"
+              >
+                <NeonSilhouette
+                  exerciseId={nextExercise.id}
+                  gender={gender === "man" ? "man" : "woman"}
+                  paused={upNextReducedMotion}
+                />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-stone-900 dark:text-stone-50">
