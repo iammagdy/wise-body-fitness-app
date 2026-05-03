@@ -7953,21 +7953,23 @@ if (import.meta.env.DEV) {
 }
 
 function WiseBodyMark({ size = 64 }: { size?: number }) {
-  // Design language:
-  //   - Rounded crimson badge with a warm coral gradient and a soft
-  //     golden glow at the top (premium, energetic, fitness-coded).
-  //   - A meditative figure standing tall: head + torso + legs as a
-  //     single ivory silhouette (the "Body").
-  //   - Arms reach up overhead and curve inward to cradle a small
-  //     gold orb above the head — a halo arcs over the orb. The
-  //     cradled orb + halo evoke wisdom / mindfulness (the "Wise").
-  //   - A faint ground line anchors the figure.
-  // The mark reads cleanly at 40px (top bar) and at 156px (welcome
-  // hero) because the silhouette is bold and the gold accents land
-  // on a clear vertical axis.
+  // Design language (v3 — full pivot):
+  //   - Deep teal-midnight badge ("wise" night sky, calm, premium).
+  //   - A warm gold sun rising at the horizon (enlightenment, dawn,
+  //     the start of a workout, "rise and grind").
+  //   - Three layered mountain ranges in cream — peak performance,
+  //     the mountain you climb every day, ancient strength.
+  //   - Tiny stars in the upper sky for depth at large sizes; they
+  //     vanish gracefully at favicon size.
+  //   - Snow cap on the tallest central peak.
+  // The shape is bold, geometric, and instantly readable from a tab
+  // favicon all the way up to the 156px hero. Completely abstract /
+  // landscape — no human figure, no monogram.
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
-  const idBg = `wbm-bg-${uid}`;
-  const idGlow = `wbm-glow-${uid}`;
+  const idBg = `wbm-sky-${uid}`;
+  const idSun = `wbm-sun-${uid}`;
+  const idGlow = `wbm-sunglow-${uid}`;
+  const idClip = `wbm-clip-${uid}`;
   return (
     <svg
       width={size}
@@ -7978,20 +7980,74 @@ function WiseBodyMark({ size = 64 }: { size?: number }) {
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id={idBg} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#5C0D14" />
-          <stop offset="55%" stopColor="#A8121A" />
-          <stop offset="100%" stopColor="#FF6A4D" />
+        <linearGradient id={idBg} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#0A1B26" />
+          <stop offset="55%" stopColor="#163E50" />
+          <stop offset="100%" stopColor="#2C6B7E" />
         </linearGradient>
-        <radialGradient id={idGlow} cx="50%" cy="0%" r="65%">
-          <stop offset="0%" stopColor="#FFE0B0" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#FFE0B0" stopOpacity="0" />
+        <radialGradient id={idSun} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#FFF1C2" />
+          <stop offset="55%" stopColor="#F5B45A" />
+          <stop offset="100%" stopColor="#E0863A" />
         </radialGradient>
+        <radialGradient id={idGlow} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#F5B45A" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#F5B45A" stopOpacity="0" />
+        </radialGradient>
+        <clipPath id={idClip}>
+          <rect width="180" height="180" rx="40" />
+        </clipPath>
       </defs>
 
-      {/* Badge */}
+      {/* Badge sky */}
       <rect width="180" height="180" rx="40" fill={`url(#${idBg})`} />
-      <rect width="180" height="180" rx="40" fill={`url(#${idGlow})`} />
+
+      <g clipPath={`url(#${idClip})`}>
+        {/* Stars (decorative — disappear cleanly at small sizes) */}
+        <circle cx="32" cy="34" r="1.1" fill="#FFFFFF" opacity="0.55" />
+        <circle cx="60" cy="20" r="0.9" fill="#FFFFFF" opacity="0.45" />
+        <circle cx="124" cy="22" r="1.1" fill="#FFFFFF" opacity="0.55" />
+        <circle cx="150" cy="40" r="1.3" fill="#FFFFFF" opacity="0.65" />
+        <circle cx="158" cy="68" r="0.9" fill="#FFFFFF" opacity="0.4" />
+        <circle cx="22" cy="62" r="0.9" fill="#FFFFFF" opacity="0.4" />
+
+        {/* Sun glow halo */}
+        <circle cx="90" cy="108" r="58" fill={`url(#${idGlow})`} />
+
+        {/* Sun */}
+        <circle cx="90" cy="108" r="30" fill={`url(#${idSun})`} />
+
+        {/* Distant back range — desaturated, behind the sun */}
+        <path
+          d="M -5 150 L 28 110 L 52 132 L 80 96 L 112 124 L 142 100 L 185 132 L 185 185 L -5 185 Z"
+          fill="#6FA4B6"
+          opacity="0.55"
+        />
+
+        {/* Foreground range — bold cream peaks */}
+        <path
+          d="M -5 168
+             L 28 138
+             L 50 158
+             L 70 132
+             L 92 92
+             L 116 138
+             L 138 122
+             L 162 146
+             L 185 134
+             L 185 185
+             L -5 185 Z"
+          fill="#F4EFE2"
+        />
+
+        {/* Snow cap on the tallest central peak */}
+        <path
+          d="M 84 110 L 92 92 L 100 110 L 96 114 L 88 114 Z"
+          fill="#FFFFFF"
+        />
+      </g>
+
+      {/* Subtle inner highlight ring for depth */}
       <rect
         x="3"
         y="3"
@@ -8002,72 +8058,6 @@ function WiseBodyMark({ size = 64 }: { size?: number }) {
         stroke="#FFFFFF"
         strokeOpacity="0.10"
         strokeWidth="1.5"
-      />
-
-      {/* Wisdom halo arc above the cradled orb */}
-      <path
-        d="M 56 52 Q 90 12 124 52"
-        fill="none"
-        stroke="#FFD89B"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        opacity="0.95"
-      />
-
-      {/* Cradled wisdom orb (sun / third eye) */}
-      <circle cx="90" cy="42" r="7" fill="#FFD89B" />
-      <circle cx="88.5" cy="40" r="2.4" fill="#FFF6E2" opacity="0.75" />
-
-      {/* Arms reaching up to cradle the orb (forms a chalice shape) */}
-      <path
-        d="M 74 84 Q 46 78 50 50 Q 56 38 82 44"
-        fill="none"
-        stroke="#FFFAF1"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M 106 84 Q 134 78 130 50 Q 124 38 98 44"
-        fill="none"
-        stroke="#FFFAF1"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* Head */}
-      <circle cx="90" cy="70" r="11" fill="#FFFAF1" />
-
-      {/* Body — torso flowing into legs as one strong silhouette */}
-      <path
-        d="M 74 84
-           Q 70 100 76 114
-           Q 72 134 76 156
-           Q 76 162 82 162
-           L 87 162
-           Q 88 148 88 132
-           L 88 118
-           L 92 118
-           L 92 132
-           Q 92 148 93 162
-           L 98 162
-           Q 104 162 104 156
-           Q 108 134 104 114
-           Q 110 100 106 84
-           Z"
-        fill="#FFFAF1"
-      />
-
-      {/* Ground / foundation */}
-      <rect
-        x="58"
-        y="168"
-        width="64"
-        height="3"
-        rx="1.5"
-        fill="#FFFAF1"
-        opacity="0.35"
       />
     </svg>
   );
@@ -8082,7 +8072,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
           className="absolute inset-0 mx-auto h-56 w-56 rounded-full opacity-70 blur-3xl"
           style={{
             background:
-              "radial-gradient(circle, rgba(168,18,26,0.30) 0%, rgba(168,18,26,0) 70%)",
+              "radial-gradient(circle, rgba(245,180,90,0.28) 0%, rgba(245,180,90,0) 70%)",
           }}
         />
         <div className="relative z-10">
