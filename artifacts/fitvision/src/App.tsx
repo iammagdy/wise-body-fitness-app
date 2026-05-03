@@ -3176,6 +3176,132 @@ function SmallTowelOnFloor() {
   );
 }
 
+// ---------- Distinguishing accessory props (Task #37) ----------
+// Small visual cues that disambiguate exercises whose silhouettes would
+// otherwise read alike (e.g. wh1 vs pp1, wh3 vs tr3, the seated foot-care
+// quartet rf1/rf2/fc1/fc7). Each helper draws a tiny annotation only —
+// they intentionally do not alter joint trajectories so the dev-only
+// uniqueness assertions for NEON_ANIM_BY_ID remain satisfied.
+
+function KegelPulseDot({ at, t }: { at: Pt; t: number }) {
+  // Pulsing cyan ring over the lower belly that visualizes the
+  // pelvic-floor "kegel" squeeze cue used in wh1.
+  const pulse = 0.7 + (Math.sin(t * Math.PI * 6) + 1) * 0.35;
+  return (
+    <g>
+      <circle cx={at.x} cy={at.y} r={5 * pulse} stroke="#22d3ee" strokeOpacity="0.85" strokeWidth="1.5" fill="none" />
+      <circle cx={at.x} cy={at.y} r="1.6" fill="#22d3ee" fillOpacity="0.95" />
+    </g>
+  );
+}
+
+function PrenatalBellyArc({ j }: { j: Joints }) {
+  // Soft pink curve under the torso that reads as a pregnancy bump,
+  // distinguishing wh3 (Prenatal Cat-Cow) from tr3 (Cat-Cow Flow).
+  const cx = (j.shoulderL.x + j.hipL.x) / 2 + 6;
+  const cy = (j.shoulderL.y + j.hipL.y) / 2 + 10;
+  return (
+    <path
+      d={`M ${cx - 16} ${cy - 2} Q ${cx} ${cy + 12} ${cx + 16} ${cy - 2}`}
+      stroke="#f0abfc"
+      strokeWidth="2.2"
+      strokeOpacity="0.85"
+      fill="none"
+      strokeLinecap="round"
+    />
+  );
+}
+
+function YinKneeBolsters({ j }: { j: Joints }) {
+  // Pair of soft purple ovals under each butterfly knee — the prop
+  // signature of a yin/restorative hold (h1) vs an active pigeon (tr1).
+  return (
+    <g stroke="#a78bfa" strokeOpacity="0.7" strokeWidth="2" fill="none">
+      <ellipse cx={j.kneeL.x} cy={j.kneeL.y + 4} rx="12" ry="4" />
+      <ellipse cx={j.kneeR.x} cy={j.kneeR.y + 4} rx="12" ry="4" />
+    </g>
+  );
+}
+
+function YogaBlockUnderShin({ j }: { j: Joints }) {
+  // Coral block under the front shin of pigeon (tr1) — a classic
+  // pigeon prop that immediately separates it from h1's butterfly.
+  const cx = (j.kneeL.x + j.footL.x) / 2;
+  const cy = Math.min(j.kneeL.y, j.footL.y) + 6;
+  return (
+    <rect
+      x={cx - 12}
+      y={cy - 2}
+      width="24"
+      height="9"
+      rx="2"
+      stroke="#fb7185"
+      strokeOpacity="0.9"
+      strokeWidth="2"
+      fill="none"
+    />
+  );
+}
+
+function PressDot({ at }: { at: Pt }) {
+  // Single rose-colored "pressure point" ring used by fc1 (Plantar
+  // Fascia Press) — finger-pressure dot at the arch.
+  return (
+    <g>
+      <circle cx={at.x} cy={at.y} r="5" stroke="#fb7185" strokeOpacity="0.9" strokeWidth="1.6" fill="none" />
+      <circle cx={at.x} cy={at.y} r="1.6" fill="#fb7185" />
+    </g>
+  );
+}
+
+function ToePullArrow({ from, to }: { from: Pt; to: Pt }) {
+  // Amber arrow pulling the big toe back — distinguishes fc7 (Big Toe
+  // Stretch) from the surrounding seated foot-care poses.
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const tipX = to.x;
+  const tipY = to.y;
+  const head1x = tipX - ux * 5 - uy * 4;
+  const head1y = tipY - uy * 5 + ux * 4;
+  const head2x = tipX - ux * 5 + uy * 4;
+  const head2y = tipY - uy * 5 - ux * 4;
+  return (
+    <g stroke="#facc15" strokeOpacity="0.95" strokeWidth="2" fill="none" strokeLinecap="round">
+      <line x1={from.x} y1={from.y} x2={tipX} y2={tipY} />
+      <line x1={head1x} y1={head1y} x2={tipX} y2={tipY} />
+      <line x1={head2x} y1={head2y} x2={tipX} y2={tipY} />
+    </g>
+  );
+}
+
+function ThumbCircle({ at, t }: { at: Pt; t: number }) {
+  // Tiny rotating circle traced by the thumb of rf1 (Foot Arch Massage),
+  // visualizing the rolling massage motion.
+  const a = t * Math.PI * 2;
+  const r = 4;
+  return (
+    <g>
+      <circle cx={at.x} cy={at.y} r="6" stroke="#22d3ee" strokeOpacity="0.55" strokeWidth="1.2" fill="none" />
+      <circle cx={at.x + Math.cos(a) * r} cy={at.y + Math.sin(a) * r} r="1.6" fill="#22d3ee" />
+    </g>
+  );
+}
+
+function ToeFanLines({ at }: { at: Pt }) {
+  // Three fanning rays out of the foot to convey the toe-spread of
+  // rf2 (Toe Yoga). Static — only the joint that owns the foot moves.
+  return (
+    <g stroke="#f0abfc" strokeOpacity="0.9" strokeWidth="1.5" strokeLinecap="round">
+      <line x1={at.x} y1={at.y} x2={at.x + 10} y2={at.y - 8} />
+      <line x1={at.x} y1={at.y} x2={at.x + 12} y2={at.y} />
+      <line x1={at.x} y1={at.y} x2={at.x + 10} y2={at.y + 8} />
+    </g>
+  );
+}
+
 // ---------- Animation map: every exercise in EXERCISES ----------
 
 // Uniqueness contract for this registry:
@@ -3218,10 +3344,34 @@ const NEON_ANIM_BY_ID: Record<string, NeonAnimation> = {
   b2: { key: "mountainClimber", pose: mountainClimberPose, periodMs: 1100 }, // Mountain Climbers
   // ===== Women's Health: Pregnancy Safe =====
   wh2: { key: "sideLyingLegRaise", pose: (b, t) => sideLyingPose(b, easeCos(t)), props: () => <MatProp />, periodMs: 2600 },
-  wh3: { key: "prenatalCatCow", pose: prenatalCatCowPose, props: () => <MatProp />, periodMs: 3800 },
+  wh3: {
+    key: "prenatalCatCow",
+    pose: prenatalCatCowPose,
+    // The belly-bump arc + slower cycle make wh3 read clearly as
+    // a prenatal pose vs tr3's fuller-amplitude Cat-Cow Flow.
+    props: (_b, j) => (
+      <>
+        <MatProp />
+        <PrenatalBellyArc j={j} />
+      </>
+    ),
+    periodMs: 4400,
+  },
   wh4: { key: "pregnancyPelvicTilt", pose: pregnancyPelvicTiltPose, props: () => <MatProp />, periodMs: 3000 },
   // ===== Postpartum =====
-  wh1: { key: "pelvicFloorBridge", pose: pelvicFloorBridgePose, props: () => <MatProp />, periodMs: 3000 },
+  wh1: {
+    key: "pelvicFloorBridge",
+    pose: pelvicFloorBridgePose,
+    // Pulsing kegel dot over the lower belly distinguishes wh1's
+    // pelvic-floor squeeze from pp1's plain glute bridge.
+    props: (_b, j, t) => (
+      <>
+        <MatProp />
+        <KegelPulseDot at={{ x: 103, y: j.pelvis.y + 2 }} t={t} />
+      </>
+    ),
+    periodMs: 3000,
+  },
   wh5: { key: "diastasisBreath",
     pose: (b, t) => standArmsPose(b, t, { armPose: "handsOnBelly", breathe: true }),
     periodMs: 4500,
@@ -3234,8 +3384,22 @@ const NEON_ANIM_BY_ID: Record<string, NeonAnimation> = {
   rn2: { key: "chinTucks", pose: (b, t) => standArmsPose(b, t, { armPose: "down", chinTuck: true }), periodMs: 2400 }, // Chin Tucks
   rn3: { key: "upperTrapStretch", pose: (b, t) => standArmsPose(b, t, { armPose: "headTiltPullL" }), periodMs: 4500 }, // Upper Trap Stretch
   // ===== Recovery: Foot Care =====
-  rf1: { key: "footArchMassage", pose: footArchMassagePose, periodMs: 4000 }, // Foot Arch Massage
-  rf2: { key: "toeYoga", pose: toeYogaPose, periodMs: 3500 }, // Toe Yoga
+  rf1: {
+    key: "footArchMassage",
+    pose: footArchMassagePose,
+    // Rotating thumb-circle at the working hand reads as a rolling
+    // massage — separates rf1 from the static-hand seated foot poses.
+    props: (_b, j, t) => <ThumbCircle at={j.handR} t={t} />,
+    periodMs: 4000,
+  }, // Foot Arch Massage
+  rf2: {
+    key: "toeYoga",
+    pose: toeYogaPose,
+    // Pink fanning rays out of the lifted foot communicate the
+    // toe-spreading cue, distinct from the other seated foot poses.
+    props: (_b, j) => <ToeFanLines at={j.footL} />,
+    periodMs: 3500,
+  }, // Toe Yoga
   rf3: { key: "calfWallStretch", pose: calfWallStretchPose, props: () => <WallPropLeft />, periodMs: 4200 }, // Calf Wall Stretch
   // ===== Recovery: Tension Release =====
   r1: { key: "standingQuadStretch", pose: quadStretchPose, periodMs: 4000 }, // Standing Quad Stretch
@@ -3344,7 +3508,19 @@ const NEON_ANIM_BY_ID: Record<string, NeonAnimation> = {
   pp6: { key: "deadBug", pose: deadBugPose, props: () => <MatProp />, periodMs: 1800 }, // Dead Bug
   pp7: { key: "chairMarch", pose: chairSeatedMarchPose, props: () => <ChairProp />, periodMs: 1800 }, // Seated March
   // ===== Hormonal (additions) =====
-  h1: { key: "yinButterflyHold", pose: butterflyFloorPose, props: () => <MatProp />, periodMs: 5500 }, // Slow Yin Stretch (seated butterfly hold)
+  h1: {
+    key: "yinButterflyHold",
+    pose: butterflyFloorPose,
+    // Soft bolsters under each splayed knee mark this as a restorative
+    // yin hold and keep its silhouette unmistakable next to tr1's pigeon.
+    props: (_b, j) => (
+      <>
+        <MatProp />
+        <YinKneeBolsters j={j} />
+      </>
+    ),
+    periodMs: 5500,
+  }, // Slow Yin Stretch (seated butterfly hold)
   h2: { key: "legsUpWall", pose: legsUpWallPose, props: () => <><MatProp /><WallPropLeft /></>, periodMs: 6000 }, // Legs-Up-The-Wall
   h3: { key: "hipCircles", pose: (b, t) => standArmsPose(b, t, { armPose: "handsOnHips", hipCircle: true }), periodMs: 3000 }, // Gentle Hip Circles
   h4: {
@@ -3391,15 +3567,41 @@ const NEON_ANIM_BY_ID: Record<string, NeonAnimation> = {
   },
   tn7: { key: "chairNeckFlexion", pose: chairSeatedNeckFlexionPose, props: () => <ChairProp />, periodMs: 3500 },
   // ===== Foot Care (additions) =====
-  fc1: { key: "plantarFasciaPress", pose: plantarFasciaPressPose, periodMs: 4500 },
+  fc1: {
+    key: "plantarFasciaPress",
+    pose: plantarFasciaPressPose,
+    // A single pressure-point ring at the working hand reads as a
+    // direct fascia press, separate from rf1's rolling massage circle.
+    props: (_b, j) => <PressDot at={{ x: (j.handL.x + j.handR.x) / 2, y: (j.handL.y + j.handR.y) / 2 }} />,
+    periodMs: 4500,
+  },
   fc2: { key: "toeSplay", pose: toeSplayPose, periodMs: 2200 },
   fc3: { key: "heelWalk", pose: heelWalkPose, periodMs: 1400 },
   fc4: { key: "ankleCircles", pose: ankleCirclesPose, periodMs: 2400 },
   fc5: { key: "towelScrunch", pose: towelScrunchPose, props: () => <SmallTowelOnFloor />, periodMs: 2400 },
   fc6: { key: "singleLegBalance", pose: singleLegBalancePose, periodMs: 3200 },
-  fc7: { key: "bigToeStretch", pose: bigToeStretchPose, periodMs: 4500 },
+  fc7: {
+    key: "bigToeStretch",
+    pose: bigToeStretchPose,
+    // Amber arrow pulling the big toe back makes the intent of fc7
+    // unmistakable next to the other seated foot-care variants.
+    props: (_b, j) => <ToePullArrow from={j.handR} to={{ x: j.handR.x - 10, y: j.handR.y - 10 }} />,
+    periodMs: 4500,
+  },
   // ===== Tension Release (additions) =====
-  tr1: { key: "pigeon", pose: pigeonPose, props: () => <MatProp />, periodMs: 5500 }, // Pigeon Pose (mat-only differentiates from h1)
+  tr1: {
+    key: "pigeon",
+    pose: pigeonPose,
+    // Coral yoga block under the front shin is the canonical pigeon
+    // prop; pairs with h1's bolsters to keep the two unmistakable.
+    props: (_b, j) => (
+      <>
+        <MatProp />
+        <YogaBlockUnderShin j={j} />
+      </>
+    ),
+    periodMs: 5500,
+  }, // Pigeon Pose (yoga block under shin separates it from h1's butterfly)
   tr2: { key: "seatedFold", pose: seatedFoldPose, props: () => <MatProp />, periodMs: 4500 },
   tr3: { key: "catCowFlow", pose: (b, t) => quadrupedPose(b, t, { arch: Math.sin(t * Math.PI * 2) }), props: () => <MatProp />, periodMs: 3000 },
   tr4: { key: "thoracicExtension",
