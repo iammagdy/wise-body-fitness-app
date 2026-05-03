@@ -1,8 +1,18 @@
-name: Build dist for Hostinger
+name: Build & publish to deploy branch
 
-# Runs on every push to main AND can be triggered manually from the
-# Actions tab. The output is a downloadable zip ("wise-body-dist") that
-# you upload into your Hostinger public_html folder.
+# What this does:
+#   1. Builds the Wise Body PWA from source on `main`.
+#   2. Force-pushes the built static files (the contents of
+#      `artifacts/fitvision/dist/public/`) as the root of a separate
+#      branch called `deploy`.
+#   3. On Hostinger, point the Git tool at this repo and choose the
+#      `deploy` branch — every "Deploy" click runs `git pull` and the
+#      already-built files land directly into public_html. No build
+#      step required on the host.
+#
+# Triggers:
+#   - workflow_dispatch  → manual button in the Actions tab
+#   - push to main       → automatic on any source change
 on:
   workflow_dispatch:
   push:
@@ -15,11 +25,15 @@ on:
       - ".github/workflows/build-dist.yml"
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: deploy-branch
+  cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build static bundle
+  build-and-publish:
+    name: Build & publish
     runs-on: ubuntu-latest
 
     steps:
@@ -38,18 +52,21 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # Not using --frozen-lockfile because the workspace overrides
+        # config currently differs slightly from what's recorded in
+        # pnpm-lock.yaml. CI just resolves a fresh lockfile in-memory.
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build Wise Body PWA
         env:
-          # The Vite config requires these at build time. PORT is only
-          # used by the dev server, so any value works for production.
+          # PORT is required by vite.config.ts but only used by the dev
+          # server, so any value works for production builds.
           # BASE_PATH=/ deploys to the site root (Hostinger public_html).
           PORT: "3000"
           BASE_PATH: "/"
         run: pnpm --filter @workspace/fitvision run build
 
-      - name: Add .htaccess for SPA routing on Apache (Hostinger)
+      - name: Add .htaccess (SPA routing + caching for Apache/Hostinger)
         run: |
           cat > artifacts/fitvision/dist/public/.htaccess <<'HTACCESS'
           # SPA fallback — every unknown path serves index.html so the
@@ -73,7 +90,7 @@ jobs:
             </FilesMatch>
           </IfModule>
 
-          # Gzip / Brotli compression
+          # Gzip compression
           <IfModule mod_deflate.c>
             AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml
           </IfModule>
@@ -84,11 +101,43 @@ jobs:
           </Files>
           HTACCESS
 
-      - name: Upload build as workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: wise-body-dist
-          path: artifacts/fitvision/dist/public/
-          if-no-files-found: error
-          retention-days: 30
-          include-hidden-files: true
+      - name: Write a small README into the deploy branch
+        run: |
+          cat > artifacts/fitvision/dist/public/DEPLOY_README.md <<'MD'
+          # Wise Body — built artifacts
+
+          This branch is **auto-generated** by GitHub Actions from `main`.
+          Do not commit to it directly — your changes will be overwritten
+          on the next build. Edit source on `main` instead.
+
+          Hostinger Git tool should point at:
+          - Repository: this repo
+          - Branch: `deploy`
+
+          Every "Deploy" click runs `git pull` and serves these files
+          directly from `public_html/`.
+          MD
+
+      - name: Publish to deploy branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SRC_SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          cd artifacts/fitvision/dist/public
+
+          git init -q -b deploy
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          git commit -q -m "Deploy build from ${SRC_SHA::7} (by ${ACTOR})"
+
+          git push --force --quiet \
+            "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" \
+            HEAD:deploy
+
+          echo "✅ Pushed build to deploy branch"
+          echo "   On Hostinger: Git → Pull/Deploy on branch 'deploy'"
