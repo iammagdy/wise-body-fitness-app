@@ -364,40 +364,135 @@ type NeonFamily =
   | "cardio"       // jumping jack, burpee, climber, march, high knee
   | "floor";       // pigeon, child's pose, butterfly, supine twist
 
+// Routing of every exercise → animation family. Ordering is load-
+// bearing: more specific tokens must match before generic ones
+// (e.g. "Plank Shoulder Taps" must hit /\bplank\b/ before
+// /shoulder tap/, otherwise it would render as a push-up).
+//
+// Reference table (one row per exercise in EXERCISES, kept in sync
+// manually — covered by Task #32's planned snapshot test):
+//   Push-Up                       → push
+//   Single-Leg Glute Bridge       → bridge
+//   Doorway Row                   → push  (side-view "pull" reuses push frame)
+//   Pike Push-Up                  → push
+//   Split Squat                   → lunge
+//   Bodyweight Squat              → squat
+//   Plank Hold                    → plank
+//   Mountain Climbers             → cardio
+//   Side-Lying Leg Raise          → floor (lying side, animated as floor stretch)
+//   Prenatal Cat-Cow              → floor
+//   Pregnancy Pelvic Tilt         → bridge
+//   Hip Thrusts                   → bridge
+//   Pelvic Floor Bridge           → bridge
+//   Diastasis Recovery Breath     → stand
+//   Standing Donkey Kicks         → cardio (knee-drive)
+//   Hormonal Yoga Flow            → sidestretch
+//   Cortisol Reset Walk           → cardio
+//   Neck Rolls                    → stand
+//   Chin Tucks                    → stand
+//   Upper Trap Stretch            → sidestretch
+//   Foot Arch Massage             → floor
+//   Toe Yoga                      → floor
+//   Calf Wall Stretch             → fold
+//   Standing Quad Stretch         → stand
+//   Hamstring Stretch             → fold
+//   Child's Pose                  → floor
+//   Box Breathing                 → stand
+//   Jump Squat                    → cardio
+//   Superman Hold                 → plank
+//   Reverse Lunge                 → lunge
+//   Towel Pull-Down               → push  (overhead pull)
+//   Single-Leg Deadlift           → bridge (hinge)
+//   Pike Shoulder Tap             → push
+//   Invisible Jump Rope           → cardio
+//   Burpees                       → cardio
+//   Bodyweight Hip Hinge          → bridge
+//   Tuck Jumps                    → cardio
+//   Plank Shoulder Taps           → plank
+//   Bear Crawl                    → plank
+//   High Knees                    → cardio
+//   Bicycle Crunches              → situp
+//   Wall Sit                      → squat
+//   Seated Towel Curl             → floor
+//   Standing Calf Raise           → stand
+//   Modified Side Plank           → plank
+//   Standing Pelvic Rocks         → stand
+//   Prenatal Squat Hold           → squat
+//   Seated Spinal Twist           → floor
+//   Glute Bridge                  → bridge
+//   Bird Dog                      → plank
+//   Heel Slides                   → floor
+//   Wall Push-Up                  → push
+//   Standing Pelvic Tilt          → stand
+//   Dead Bug                      → situp
+//   Seated March                  → floor
+//   Slow Yin Stretch              → floor
+//   Legs-Up-The-Wall              → floor
+//   Gentle Hip Circles            → stand
+//   Supported Bridge              → bridge
+//   Alternate Nostril Breathing   → stand
+//   Goddess Pose                  → squat
+//   Reclined Butterfly            → floor
+//   Doorway Chest Opener          → sidestretch
+//   Levator Scapulae Stretch      → sidestretch
+//   Scapular Squeezes             → stand
+//   Wall Angels                   → sidestretch
+//   Thread the Needle             → floor
+//   Suboccipital Release          → floor
+//   Seated Neck Flexion           → floor
+//   Plantar Fascia Press          → floor
+//   Toe Splay                     → floor
+//   Heel Walks                    → cardio
+//   Ankle Circles                 → stand
+//   Towel Scrunches               → floor
+//   Single-Leg Balance            → stand
+//   Big Toe Stretch               → floor
+//   Pigeon Pose                   → floor
+//   Seated Forward Fold           → fold
+//   Cat-Cow Flow                  → floor
+//   Thoracic Extension            → floor
+//   Standing Forward Fold         → fold
+//   Supine Twist                  → floor
 function neonFamilyFor(ex: Exercise): NeonFamily {
   const n = ex.name.toLowerCase();
-  if (/breath|nostril|humming|tongue/.test(n)) return "stand";
+  // Plank-anchored movements first so plank-tap variants win.
   if (
-    /jumping ?jack|burpee|climber|jog|skater|high ?knee|knee[- ]?up|jumps?\b|hops?\b|march|walk/
-      .test(n)
-  )
-    return "cardio";
-  if (/push[- ]?up|wall press|chest tap|shoulder tap|arm circle/.test(n))
-    return "push";
-  // Order matters: squat hold / wall sit etc. should land in squat,
-  // not get stolen by a generic /hold/ token.
-  if (/lunge|step[- ]?up|split ?squat/.test(n)) return "lunge";
-  if (/squat|wall ?sit|chair pose|goblet/.test(n)) return "squat";
-  if (/bridge|hip ?thrust|hinge|deadlift|pelvic ?tilt/.test(n)) return "bridge";
-  if (/sit[- ]?up|crunch|leg ?raise|reverse crunch|toes? ?to/.test(n))
-    return "situp";
-  if (
-    /\bplank\b|side[- ]?plank|superman|bird ?dog|dead ?bug|forearm hold|hollow hold/
+    /\bplank\b|side[- ]?plank|superman|bird ?dog|forearm hold|hollow hold|bear crawl/
       .test(n)
   )
     return "plank";
-  if (/fold|toe ?touch|good ?morning|hamstring stretch standing/.test(n))
+  if (/dead ?bug/.test(n)) return "situp";
+  if (/breath|nostril|humming|tongue/.test(n)) return "stand";
+  if (
+    /jumping ?jack|burpee|climber|jog|skater|high ?knee|knee[- ]?up|donkey kick|kicks?\b|jumps?\b|hops?\b|march(?!.*seated)|\bwalk/
+      .test(n)
+  )
+    return "cardio";
+  if (/push[- ]?up|wall press|chest tap|shoulder tap|pull[- ]?down|\brow\b/.test(n))
+    return "push";
+  if (/lunge|step[- ]?up|split ?squat/.test(n)) return "lunge";
+  if (/squat|wall ?sit|chair pose|goblet|goddess/.test(n)) return "squat";
+  if (/bridge|hip ?thrust|hinge|deadlift|pelvic ?tilt(?!.*standing)/.test(n))
+    return "bridge";
+  if (/sit[- ]?up|crunch|reverse crunch|toes? ?to/.test(n)) return "situp";
+  if (/standing forward fold|forward fold|toe ?touch|good ?morning|hamstring stretch|calf wall|seated forward fold/.test(n))
     return "fold";
-  if (/side ?bend|lateral|reach over|angel|opener|halo|crescent/.test(n))
+  if (
+    /side ?bend|lateral|reach over|angel|opener|halo|crescent|trap stretch|levator|wall angel|yoga flow/
+      .test(n)
+  )
     return "sidestretch";
   if (
-    /pigeon|child'?s? pose|\bcat\b|\bcow\b|cobra|twist|seated|butterfly|goddess|legs[- ]?up|figure[- ]?4|shav|savasana|threading|needle|happy ?baby|sphinx/
+    /pigeon|child'?s? pose|\bcat\b|\bcow\b|cobra|twist|seated|butterfly|reclined|legs[- ]?up|figure[- ]?4|shav|savasana|threading|thread the needle|happy ?baby|sphinx|yin|side[- ]?lying|cat-cow|heel slide|plantar fascia press|toe splay|toe yoga|towel scrunch|big toe|suboccipital|thoracic extension|towel curl/
       .test(n)
   )
     return "floor";
-  if (/circle|rotation|roll|wrist|ankle|neck|fascia|massage/.test(n))
-    return "stand";
-  if (ex.sub_category === "Strength" || ex.sub_category === "Conditioning")
+  // Standing low-intensity movements: rolls, circles, taps, light
+  // balance work, calf raises, scapular work — render as stand.
+  if (
+    /circle|rotation|roll|wrist|ankle|neck|fascia|massage|chin tuck|scapular|calf raise|balance|pelvic rock|standing pelvic tilt|standing quad/
+      .test(n)
+  )
     return "stand";
   return "stand";
 }
@@ -1026,6 +1121,194 @@ function useLoopClock(periodMs: number, paused: boolean): number {
   return t;
 }
 
+// ===== Filled-silhouette renderer =====
+//
+// The figure is built from filled SVG shapes (tapered limb tubes,
+// a torso polygon with a waist pinch, ellipses for head and feet,
+// circles for hands). The neon rim is produced by drawing the
+// same body group three times:
+//   1. Outer halo: gradient fill (pink → purple → cyan), heavy
+//      Gaussian blur — bleeds wide outside the body.
+//   2. Tight rim: same gradient fill, smaller blur — sharp edge
+//      that hugs the silhouette.
+//   3. Body: solid near-black fill on top, with a thin gradient
+//      stroke for a crisp outline.
+// Nothing is hand-drawn per pose; all geometry derives from the
+// existing joint coordinates so the eleven motion families work
+// unchanged.
+
+const ptSub = (a: Pt, b: Pt): Pt => ({ x: a.x - b.x, y: a.y - b.y });
+const ptAdd = (a: Pt, b: Pt): Pt => ({ x: a.x + b.x, y: a.y + b.y });
+const ptScale = (a: Pt, k: number): Pt => ({ x: a.x * k, y: a.y * k });
+const ptLen = (a: Pt) => Math.hypot(a.x, a.y) || 1;
+const ptUnit = (a: Pt): Pt => {
+  const L = ptLen(a);
+  return { x: a.x / L, y: a.y / L };
+};
+const ptPerp = (a: Pt): Pt => ({ x: -a.y, y: a.x });
+const fx = (n: number) => n.toFixed(2);
+
+// Rounded tapered tube between two points. Width tapers linearly
+// from w1 (at p1) to w2 (at p2). Quadratic end-caps round off the
+// joints so limbs don't look chopped.
+function tubePath(p1: Pt, p2: Pt, w1: number, w2: number): string {
+  const dir = ptUnit(ptSub(p2, p1));
+  const n = ptPerp(dir);
+  const a = ptAdd(p1, ptScale(n, w1 / 2));
+  const b = ptSub(p1, ptScale(n, w1 / 2));
+  const c = ptSub(p2, ptScale(n, w2 / 2));
+  const d = ptAdd(p2, ptScale(n, w2 / 2));
+  const cap1 = ptAdd(p1, ptScale(dir, -w1 / 2));
+  const cap2 = ptAdd(p2, ptScale(dir, w2 / 2));
+  return [
+    `M ${fx(a.x)} ${fx(a.y)}`,
+    `Q ${fx(cap1.x)} ${fx(cap1.y)} ${fx(b.x)} ${fx(b.y)}`,
+    `L ${fx(c.x)} ${fx(c.y)}`,
+    `Q ${fx(cap2.x)} ${fx(cap2.y)} ${fx(d.x)} ${fx(d.y)}`,
+    "Z",
+  ].join(" ");
+}
+
+type BodyWidths = {
+  neck: number;
+  biceps: number;
+  forearm: number;
+  wrist: number;
+  thigh: number;
+  upperCalf: number;
+  ankle: number;
+  hand: number;
+  foot: number;
+  waist: number;
+};
+
+function widthsFor(body: NeonBody): BodyWidths {
+  if (body.hair) {
+    return {
+      neck: 9,
+      biceps: 11,
+      forearm: 9,
+      wrist: 7,
+      thigh: 18,
+      upperCalf: 14,
+      ankle: 9,
+      hand: 5,
+      foot: 9,
+      waist: body.shoulderW * 0.6,
+    };
+  }
+  return {
+    neck: 13,
+    biceps: 17,
+    forearm: 13,
+    wrist: 10,
+    thigh: 22,
+    upperCalf: 16,
+    ankle: 11,
+    hand: 7,
+    foot: 11,
+    waist: body.shoulderW * 0.85,
+  };
+}
+
+// Smooth torso polygon: shoulders → pinched waist → hips, closed
+// back up the other side using cubic bezier curves so it tapers
+// like a real body silhouette rather than a rectangle.
+function torsoPath(j: Joints, w: BodyWidths): string {
+  const spineVec = ptSub(j.pelvis, j.neck);
+  const spineLen = ptLen(spineVec);
+  const spineDir = ptUnit(spineVec);
+  const spinePerp = ptPerp(spineDir);
+  const waistMid = ptAdd(j.neck, ptScale(spineDir, spineLen * 0.55));
+  const waistL = ptSub(waistMid, ptScale(spinePerp, w.waist / 2));
+  const waistR = ptAdd(waistMid, ptScale(spinePerp, w.waist / 2));
+  const lift = spineLen * 0.22;
+  const ctrlSL = ptAdd(j.shoulderL, ptScale(spineDir, lift));
+  const ctrlWL = ptSub(waistL, ptScale(spineDir, lift * 0.8));
+  const ctrlWLb = ptAdd(waistL, ptScale(spineDir, lift * 0.8));
+  const ctrlHL = ptSub(j.hipL, ptScale(spineDir, lift));
+  const ctrlHR = ptSub(j.hipR, ptScale(spineDir, lift));
+  const ctrlWRb = ptAdd(waistR, ptScale(spineDir, lift * 0.8));
+  const ctrlWR = ptSub(waistR, ptScale(spineDir, lift * 0.8));
+  const ctrlSR = ptAdd(j.shoulderR, ptScale(spineDir, lift));
+  return [
+    `M ${fx(j.shoulderL.x)} ${fx(j.shoulderL.y)}`,
+    `C ${fx(ctrlSL.x)} ${fx(ctrlSL.y)} ${fx(ctrlWL.x)} ${fx(ctrlWL.y)} ${fx(waistL.x)} ${fx(waistL.y)}`,
+    `C ${fx(ctrlWLb.x)} ${fx(ctrlWLb.y)} ${fx(ctrlHL.x)} ${fx(ctrlHL.y)} ${fx(j.hipL.x)} ${fx(j.hipL.y)}`,
+    `L ${fx(j.hipR.x)} ${fx(j.hipR.y)}`,
+    `C ${fx(ctrlHR.x)} ${fx(ctrlHR.y)} ${fx(ctrlWRb.x)} ${fx(ctrlWRb.y)} ${fx(waistR.x)} ${fx(waistR.y)}`,
+    `C ${fx(ctrlWR.x)} ${fx(ctrlWR.y)} ${fx(ctrlSR.x)} ${fx(ctrlSR.y)} ${fx(j.shoulderR.x)} ${fx(j.shoulderR.y)}`,
+    "Z",
+  ].join(" ");
+}
+
+function NeonBodyShape({
+  j,
+  w,
+  fill,
+  stroke,
+  strokeWidth,
+}: {
+  j: Joints;
+  w: BodyWidths;
+  fill: string;
+  stroke?: string;
+  strokeWidth?: number;
+}) {
+  // Hair sits behind the head, on the side opposite the neck (so
+  // it always reads as the "back" of the head no matter the pose).
+  const headVec = ptSub(j.head, j.neck);
+  const headDir = ptLen(headVec) > 0.5 ? ptUnit(headVec) : { x: 0, y: -1 };
+  const hairCenter = ptAdd(j.head, ptScale(headDir, j.headR * 0.55));
+  const hairAngle = (Math.atan2(headDir.y, headDir.x) * 180) / Math.PI;
+  return (
+    <g
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={strokeWidth ?? 0}
+      strokeLinejoin="round"
+      strokeLinecap="round"
+    >
+      {j.hair && (
+        <ellipse
+          cx={hairCenter.x}
+          cy={hairCenter.y}
+          rx={j.headR * 1.2}
+          ry={j.headR * 1.6}
+          transform={`rotate(${fx(hairAngle + 90)} ${fx(hairCenter.x)} ${fx(hairCenter.y)})`}
+        />
+      )}
+      {/* Legs */}
+      <path d={tubePath(j.hipL, j.kneeL, w.thigh, w.upperCalf)} />
+      <path d={tubePath(j.kneeL, j.footL, w.upperCalf, w.ankle)} />
+      <ellipse cx={j.footL.x} cy={j.footL.y} rx={w.foot} ry={w.foot * 0.55} />
+      <path d={tubePath(j.hipR, j.kneeR, w.thigh, w.upperCalf)} />
+      <path d={tubePath(j.kneeR, j.footR, w.upperCalf, w.ankle)} />
+      <ellipse cx={j.footR.x} cy={j.footR.y} rx={w.foot} ry={w.foot * 0.55} />
+      {/* Torso */}
+      <path d={torsoPath(j, w)} />
+      {/* Neck — short tube from head base to neck point */}
+      <path
+        d={tubePath(
+          { x: j.head.x, y: j.head.y + j.headR * 0.5 },
+          j.neck,
+          w.neck * 0.85,
+          w.neck,
+        )}
+      />
+      {/* Arms */}
+      <path d={tubePath(j.shoulderL, j.elbowL, w.biceps, w.forearm)} />
+      <path d={tubePath(j.elbowL, j.handL, w.forearm, w.wrist)} />
+      <circle cx={j.handL.x} cy={j.handL.y} r={w.hand} />
+      <path d={tubePath(j.shoulderR, j.elbowR, w.biceps, w.forearm)} />
+      <path d={tubePath(j.elbowR, j.handR, w.forearm, w.wrist)} />
+      <circle cx={j.handR.x} cy={j.handR.y} r={w.hand} />
+      {/* Head */}
+      <ellipse cx={j.head.x} cy={j.head.y} rx={j.headR} ry={j.headR * 1.05} />
+    </g>
+  );
+}
+
 function NeonSilhouette({
   family,
   gender,
@@ -1036,17 +1319,20 @@ function NeonSilhouette({
   paused: boolean;
 }) {
   const body = gender === "woman" ? WOMAN_BODY : MAN_BODY;
+  const widths = widthsFor(body);
   const period = neonPeriodMs(family);
   const t = useLoopClock(period, paused);
   const j = neonJointsFor(family, paused ? 0 : t, body);
-  // Scope all <defs> ids to this instance so simultaneously-mounted
-  // NeonSilhouettes (e.g. workout + a future up-next preview) don't
-  // share gradient/filter state via colliding global ids.
+  // Per-instance ids so multiple silhouettes can coexist without
+  // their <defs> stomping on each other.
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const idBg = `neon-bg-${uid}`;
   const idStrip = `neon-strip-${uid}`;
-  const idStroke = `neon-stroke-${uid}`;
-  const idGlow = `neon-glow-${uid}`;
+  const idHalo = `neon-halo-${uid}`;
+  const idEdge = `neon-edge-${uid}`;
+  const idShadow = `neon-shadow-${uid}`;
+  const idBigBlur = `neon-blur-big-${uid}`;
+  const idTightBlur = `neon-blur-tight-${uid}`;
   return (
     <svg
       viewBox="0 0 200 320"
@@ -1055,76 +1341,79 @@ function NeonSilhouette({
       aria-hidden="true"
     >
       <defs>
-        <radialGradient id={idBg} cx="50%" cy="55%" r="65%">
-          <stop offset="0%" stopColor="#1b0a3a" stopOpacity="1" />
-          <stop offset="100%" stopColor="#000000" stopOpacity="1" />
+        <radialGradient id={idBg} cx="50%" cy="55%" r="70%">
+          <stop offset="0%" stopColor="#1d0b3a" />
+          <stop offset="55%" stopColor="#0a0414" />
+          <stop offset="100%" stopColor="#000000" />
         </radialGradient>
         <linearGradient id={idStrip} x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stopColor="#ff3df6" stopOpacity="0.18" />
-          <stop offset="50%" stopColor="#a855f7" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.18" />
+          <stop offset="0%" stopColor="#ff3df6" stopOpacity="0.10" />
+          <stop offset="50%" stopColor="#a855f7" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#38bdf8" stopOpacity="0.10" />
         </linearGradient>
-        <linearGradient id={idStroke} x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={idHalo} x1="0%" y1="50%" x2="100%" y2="50%">
+          <stop offset="0%" stopColor="#ff2db5" />
+          <stop offset="35%" stopColor="#d946ef" />
+          <stop offset="65%" stopColor="#a78bfa" />
+          <stop offset="100%" stopColor="#22d3ee" />
+        </linearGradient>
+        <linearGradient id={idEdge} x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#ff5cf2" />
-          <stop offset="50%" stopColor="#a78bfa" />
+          <stop offset="50%" stopColor="#c4b5fd" />
           <stop offset="100%" stopColor="#38bdf8" />
         </linearGradient>
-        <filter id={idGlow} x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="3.2" result="blur1" />
-          <feGaussianBlur in="blur1" stdDeviation="5" result="blur2" />
-          <feMerge>
-            <feMergeNode in="blur2" />
-            <feMergeNode in="blur1" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
+        <radialGradient id={idShadow} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#000000" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+        </radialGradient>
+        <filter
+          id={idBigBlur}
+          x="-30%"
+          y="-30%"
+          width="160%"
+          height="160%"
+          colorInterpolationFilters="sRGB"
+        >
+          <feGaussianBlur stdDeviation="7" />
+        </filter>
+        <filter
+          id={idTightBlur}
+          x="-15%"
+          y="-15%"
+          width="130%"
+          height="130%"
+          colorInterpolationFilters="sRGB"
+        >
+          <feGaussianBlur stdDeviation="2" />
         </filter>
       </defs>
+
+      {/* Background panel */}
       <rect width="200" height="320" fill={`url(#${idBg})`} />
-      <rect x="55" y="0" width="90" height="320" fill={`url(#${idStrip})`} />
-      <g
-        filter={`url(#${idGlow})`}
-        stroke={`url(#${idStroke})`}
-        strokeWidth="3.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      >
-        {/* Arms */}
-        <line x1={j.shoulderL.x} y1={j.shoulderL.y} x2={j.elbowL.x} y2={j.elbowL.y} />
-        <line x1={j.elbowL.x} y1={j.elbowL.y} x2={j.handL.x} y2={j.handL.y} />
-        <line x1={j.shoulderR.x} y1={j.shoulderR.y} x2={j.elbowR.x} y2={j.elbowR.y} />
-        <line x1={j.elbowR.x} y1={j.elbowR.y} x2={j.handR.x} y2={j.handR.y} />
-        {/* Torso outline */}
-        <path
-          d={`M ${j.shoulderL.x} ${j.shoulderL.y} L ${j.shoulderR.x} ${j.shoulderR.y} L ${j.hipR.x} ${j.hipR.y} L ${j.hipL.x} ${j.hipL.y} Z`}
-        />
-        {/* Spine */}
-        <line x1={j.neck.x} y1={j.neck.y} x2={j.pelvis.x} y2={j.pelvis.y} />
-        {/* Neck */}
-        <line
-          x1={j.head.x}
-          y1={j.head.y + j.headR}
-          x2={j.neck.x}
-          y2={j.neck.y}
-        />
-        {/* Legs */}
-        <line x1={j.hipL.x} y1={j.hipL.y} x2={j.kneeL.x} y2={j.kneeL.y} />
-        <line x1={j.kneeL.x} y1={j.kneeL.y} x2={j.footL.x} y2={j.footL.y} />
-        <line x1={j.hipR.x} y1={j.hipR.y} x2={j.kneeR.x} y2={j.kneeR.y} />
-        <line x1={j.kneeR.x} y1={j.kneeR.y} x2={j.footR.x} y2={j.footR.y} />
-        {/* Head */}
-        <circle cx={j.head.x} cy={j.head.y} r={j.headR} />
-        {/* Hair (woman) — rendered behind the head as a soft tail */}
-        {j.hair && (
-          <ellipse
-            cx={j.head.x}
-            cy={j.head.y + j.headR * 0.55}
-            rx={j.headR + 1.5}
-            ry={j.headR + 5}
-            opacity="0.85"
-          />
-        )}
+      <rect x="40" y="0" width="120" height="320" fill={`url(#${idStrip})`} />
+
+      {/* Subtle ground shadow under the figure */}
+      <ellipse cx="100" cy="298" rx="55" ry="6" fill={`url(#${idShadow})`} />
+
+      {/* Wide soft outer halo */}
+      <g filter={`url(#${idBigBlur})`} opacity="0.85">
+        <NeonBodyShape j={j} w={widths} fill={`url(#${idHalo})`} />
       </g>
+
+      {/* Tight rim that hugs the silhouette edge */}
+      <g filter={`url(#${idTightBlur})`}>
+        <NeonBodyShape j={j} w={widths} fill={`url(#${idHalo})`} />
+      </g>
+
+      {/* Solid body on top — covers the inside of the halos so only
+          the bleed around the silhouette edges remains visible */}
+      <NeonBodyShape
+        j={j}
+        w={widths}
+        fill="#070310"
+        stroke={`url(#${idEdge})`}
+        strokeWidth={1.1}
+      />
     </svg>
   );
 }
