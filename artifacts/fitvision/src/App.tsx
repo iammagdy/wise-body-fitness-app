@@ -5202,6 +5202,33 @@ function WorkoutScreen({
   const [setNumber, setSetNumber] = useState(1);
   const [phase, setPhase] = useState<"intro" | "exercise" | "rest">("intro");
 
+  // ===== Workout session totals (for end-of-workout summary) =====
+  const [completedSets, setCompletedSets] = useState(0);
+  const [completedExercises, setCompletedExercises] = useState(0);
+  const [summary, setSummary] = useState<
+    | {
+        totalExercises: number;
+        completedSets: number;
+        elapsedSeconds: number;
+      }
+    | null
+  >(null);
+  const sessionStartRef = useRef<number | null>(null);
+
+  // Start (or restart) a session whenever the workout screen becomes
+  // active. We key the start on the first exercise id so re-entering
+  // the same playlist starts fresh totals and an accurate timer.
+  useEffect(() => {
+    if (!active) {
+      sessionStartRef.current = null;
+      return;
+    }
+    sessionStartRef.current = Date.now();
+    setCompletedSets(0);
+    setCompletedExercises(0);
+    setSummary(null);
+  }, [active, playlist[0]?.id]);
+
   // Reset session whenever the exercise changes (keep totalSets — user pref is persisted)
   useEffect(() => {
     if (!exercise) return;
@@ -5216,19 +5243,47 @@ function WorkoutScreen({
     }
   }, [active, cancel]);
 
+  const finishWorkout = useCallback(
+    (finalSetCount: number, finalExerciseCount: number) => {
+      const start = sessionStartRef.current ?? Date.now();
+      const elapsedSeconds = Math.max(
+        0,
+        Math.round((Date.now() - start) / 1000),
+      );
+      cancel();
+      setPhase("exercise");
+      setSummary({
+        totalExercises: finalExerciseCount,
+        completedSets: finalSetCount,
+        elapsedSeconds,
+      });
+    },
+    [cancel],
+  );
+
   const handleSetComplete = useCallback(() => {
+    const nextCompletedSets = completedSets + 1;
+    setCompletedSets(nextCompletedSets);
     if (setNumber < totalSets) {
       setPhase("rest");
       return;
     }
-    // Last set finished — auto-advance if there's a next exercise,
-    // otherwise drop back to dashboard.
+    // Last set of this exercise finished.
+    const nextCompletedExercises = completedExercises + 1;
+    setCompletedExercises(nextCompletedExercises);
     if (hasNext) {
       setPhase("rest");
     } else {
-      window.setTimeout(onBack, 350);
+      finishWorkout(nextCompletedSets, nextCompletedExercises);
     }
-  }, [setNumber, totalSets, hasNext, onBack]);
+  }, [
+    setNumber,
+    totalSets,
+    hasNext,
+    completedSets,
+    completedExercises,
+    finishWorkout,
+  ]);
 
   const handleRestComplete = useCallback(() => {
     if (setNumber < totalSets) {
@@ -5241,9 +5296,18 @@ function WorkoutScreen({
       onChangeIndex(index + 1);
       // Resetting via the index-change effect above will re-init phase.
     } else {
-      window.setTimeout(onBack, 200);
+      finishWorkout(completedSets, completedExercises);
     }
-  }, [setNumber, totalSets, hasNext, onChangeIndex, index, onBack]);
+  }, [
+    setNumber,
+    totalSets,
+    hasNext,
+    onChangeIndex,
+    index,
+    finishWorkout,
+    completedSets,
+    completedExercises,
+  ]);
 
   const goPrev = useCallback(() => {
     if (!hasPrev) return;
@@ -5490,13 +5554,13 @@ function WorkoutScreen({
       </div>
 
       {/* Phase overlays */}
-      {active && phase === "intro" && (
+      {active && phase === "intro" && !summary && (
         <CountdownIntro
           onDone={() => setPhase("exercise")}
           onSkip={() => setPhase("exercise")}
         />
       )}
-      {active && phase === "rest" && (
+      {active && phase === "rest" && !summary && (
         <RestScreen
           initialSeconds={restSeconds}
           nextLabel={
@@ -5509,6 +5573,104 @@ function WorkoutScreen({
           onAdjustDefault={handleRestDefaultChange}
         />
       )}
+      {active && summary && (
+        <WorkoutSummary
+          totalExercises={summary.totalExercises}
+          completedSets={summary.completedSets}
+          elapsedSeconds={summary.elapsedSeconds}
+          onDone={() => {
+            setSummary(null);
+            onBack();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function formatElapsed(totalSeconds: number): string {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  }
+  return `${m}:${String(sec).padStart(2, "0")}`;
+}
+
+function WorkoutSummary({
+  totalExercises,
+  completedSets,
+  elapsedSeconds,
+  onDone,
+}: {
+  totalExercises: number;
+  completedSets: number;
+  elapsedSeconds: number;
+  onDone: () => void;
+}) {
+  const doneRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    doneRef.current?.focus();
+  }, []);
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="workout-summary-title"
+      className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-stone-50/95 px-6 backdrop-blur-sm dark:bg-stone-950/95"
+    >
+      <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl dark:bg-stone-900">
+        <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
+          Workout complete
+        </p>
+        <h2
+          id="workout-summary-title"
+          className="mt-2 text-center text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50"
+        >
+          Great work!
+        </h2>
+        <p className="mt-1 text-center text-sm text-stone-500 dark:text-stone-400">
+          Here's what you just did.
+        </p>
+
+        <dl className="mt-6 grid grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800">
+            <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+              Exercises
+            </dt>
+            <dd className="mt-1 text-2xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
+              {totalExercises}
+            </dd>
+          </div>
+          <div className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800">
+            <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+              Sets
+            </dt>
+            <dd className="mt-1 text-2xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
+              {completedSets}
+            </dd>
+          </div>
+          <div className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800">
+            <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+              Time
+            </dt>
+            <dd className="mt-1 text-2xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
+              {formatElapsed(elapsedSeconds)}
+            </dd>
+          </div>
+        </dl>
+
+        <button
+          ref={doneRef}
+          type="button"
+          onClick={onDone}
+          className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-stone-900 text-base font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
+        >
+          Done
+        </button>
+      </div>
     </div>
   );
 }
