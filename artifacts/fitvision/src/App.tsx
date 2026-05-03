@@ -6522,8 +6522,6 @@ function WorkoutScreen({
   gender,
   onBack,
   onChangeIndex,
-  videoRef,
-  cast,
   onOpenCastModal,
   onLogSession,
 }: {
@@ -6533,8 +6531,6 @@ function WorkoutScreen({
   gender: Gender | null;
   onBack: () => void;
   onChangeIndex: (next: number) => void;
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-  cast: ReturnType<typeof useCast>;
   onOpenCastModal: () => void;
   onLogSession: (s: Omit<WorkoutSession, "id" | "endedAt">) => void;
 }) {
@@ -6783,72 +6779,23 @@ function WorkoutScreen({
         </div>
         <div className="flex items-center gap-2">
           {(() => {
-            const isCasting = cast.state === "casting";
-            const canPick = cast.support.remote || cast.support.airplay;
-            const noDevices =
-              canPick && !isCasting && cast.availability === "unavailable";
-            const helpOnly = !canPick;
-            const label = isCasting
-              ? "Stop casting to TV"
-              : helpOnly
-                ? "Cast help"
-                : noDevices
-                  ? "Cast to TV — no nearby TVs found, see help"
-                  : "Cast to TV";
-            const titleText = isCasting
-              ? "Casting…"
-              : helpOnly
-                ? "Cast help"
-                : noDevices
-                  ? "No nearby TVs found — see help"
-                  : "Cast to TV";
+            // Task #30: the workout demo is a live SVG, not a <video>,
+            // so there is no media element to hand to Chromecast/AirPlay.
+            // Render the cast button as a help-only affordance: tapping
+            // it opens the "how to mirror your screen" modal. This keeps
+            // the control discoverable without pretending it can do
+            // something it can't on this screen.
+            const label = "Cast help — mirror your screen to a TV";
+            const titleText = "How to cast this workout to a TV";
             return (
               <button
                 type="button"
-                onClick={async () => {
-                  if (isCasting) {
-                    cast.stop();
-                    return;
-                  }
-                  if (helpOnly) {
-                    onOpenCastModal();
-                    return;
-                  }
-                  const result = await cast.start();
-                  // Only fall back to the help modal when the platform
-                  // genuinely can't cast. A "failed" result usually means
-                  // the user dismissed the picker — don't nag them.
-                  if (result === "unsupported") onOpenCastModal();
-                }}
+                onClick={() => onOpenCastModal()}
                 aria-label={label}
-                aria-pressed={isCasting}
                 title={titleText}
-                className={`flex h-11 items-center justify-center gap-1.5 rounded-full px-3 shadow-sm transition active:scale-95 ${
-                  isCasting
-                    ? "bg-stone-900 text-white active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
-                    : helpOnly
-                      ? "bg-white/60 text-stone-500 active:bg-stone-100 dark:bg-stone-800/60 dark:text-stone-400 dark:active:bg-stone-700"
-                      : noDevices
-                        ? "bg-white text-stone-500 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-400 dark:active:bg-stone-700"
-                        : "bg-white text-stone-900 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
-                }`}
+                className="flex h-11 items-center justify-center gap-1.5 rounded-full px-3 shadow-sm transition active:scale-95 bg-white/60 text-stone-500 active:bg-stone-100 dark:bg-stone-800/60 dark:text-stone-400 dark:active:bg-stone-700"
               >
-                {isCasting ? <CastingIcon /> : <CastIcon />}
-                {isCasting && (
-                  <span className="text-xs font-semibold uppercase tracking-wide">
-                    Casting · Stop
-                  </span>
-                )}
-                {cast.state === "connecting" && (
-                  <span className="text-xs font-semibold uppercase tracking-wide">
-                    Connecting…
-                  </span>
-                )}
-                {!isCasting && cast.state !== "connecting" && noDevices && (
-                  <span className="text-[10px] font-medium normal-case tracking-normal text-stone-500 dark:text-stone-400">
-                    No TVs found
-                  </span>
-                )}
+                <CastIcon />
               </button>
             );
           })()}
@@ -7456,8 +7403,6 @@ function App() {
             onChangeIndex={(next) =>
               setPlaylistIndex(Math.max(0, Math.min(playlist.length - 1, next)))
             }
-            videoRef={videoRef}
-            cast={cast}
             onOpenCastModal={() => setCastModalOpen(true)}
             onLogSession={logSession}
           />
