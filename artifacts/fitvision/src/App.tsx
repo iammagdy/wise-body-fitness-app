@@ -3290,7 +3290,7 @@ function RepsBody({
   totalSets,
 }: {
   exercise: Exercise;
-  onSetComplete: (repsLogged: number) => void;
+  onSetComplete: () => void;
   cues: ArabicCues;
   speak: (text: string) => void;
   setNumber: number;
@@ -3334,7 +3334,7 @@ function RepsBody({
         type="button"
         onClick={() => {
           speak(cues.end);
-          window.setTimeout(() => onSetComplete(reps), 500);
+          window.setTimeout(() => onSetComplete(), 500);
         }}
         aria-label="Complete set"
         className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 text-lg font-semibold text-white shadow-md transition active:scale-[0.98] active:bg-emerald-600"
@@ -3458,6 +3458,7 @@ function WorkoutScreen({
   useEffect(() => {
     if (!exercise) return;
     setSetNumber(1);
+    setTotalSets(1);
     setPhase("intro");
   }, [exercise?.id]);
 
@@ -3544,17 +3545,37 @@ function WorkoutScreen({
         className="pt-safe relative flex shrink-0 items-center justify-between gap-3 px-4"
         style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 16px)" }}
       >
-        <button
-          type="button"
-          onClick={() => {
-            cancel();
-            onBack();
-          }}
-          aria-label="Back"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
-        >
-          <BackIcon />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              cancel();
+              onBack();
+            }}
+            aria-label="Back"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
+          >
+            <BackIcon />
+          </button>
+          <button
+            type="button"
+            onClick={goPrev}
+            disabled={!hasPrev}
+            aria-label="Previous exercise"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
+          >
+            <PrevIcon />
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={!hasNext}
+            aria-label="Next exercise"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
+          >
+            <NextIcon />
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -3693,48 +3714,31 @@ function WorkoutScreen({
         />
       )}
 
-      {/* Up-next strip + prev/next buttons */}
+      {/* Up-next strip with a small family glyph for the next move */}
       <div className="shrink-0 px-4 pb-safe" style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)" }}>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={goPrev}
-            disabled={!hasPrev}
-            aria-label="Previous exercise"
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50"
-          >
-            <PrevIcon />
-          </button>
-          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm dark:bg-stone-800">
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
-              Up next
-            </span>
-            <div className="min-w-0 flex-1">
-              {nextExercise ? (
-                <>
-                  <p className="truncate text-sm font-semibold text-stone-900 dark:text-stone-50">
-                    {nextExercise.name}
-                  </p>
-                  <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
-                    {nextExercise.targetMuscle} · {nextExercise.mode === "timed" ? `${nextExercise.durationSeconds}s` : `${nextExercise.reps} reps`}
-                  </p>
-                </>
-              ) : (
-                <p className="truncate text-sm font-medium text-stone-500 dark:text-stone-400">
-                  Last one — finish strong
+        <div className="flex min-w-0 items-center gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm dark:bg-stone-800">
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
+            Up next
+          </span>
+          {nextExercise ? (
+            <>
+              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-lg bg-stone-100 text-stone-500 dark:bg-stone-900 dark:text-stone-400">
+                <ResolvedIllustration exercise={nextExercise} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-stone-900 dark:text-stone-50">
+                  {nextExercise.name}
                 </p>
-              )}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={goNext}
-            disabled={!hasNext}
-            aria-label="Next exercise"
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50"
-          >
-            <NextIcon />
-          </button>
+                <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
+                  {nextExercise.targetMuscle} · {nextExercise.mode === "timed" ? `${nextExercise.durationSeconds}s` : `${nextExercise.reps} reps`}
+                </p>
+              </div>
+            </>
+          ) : (
+            <p className="min-w-0 flex-1 truncate text-sm font-medium text-stone-500 dark:text-stone-400">
+              Last one — finish strong
+            </p>
+          )}
         </div>
       </div>
 
