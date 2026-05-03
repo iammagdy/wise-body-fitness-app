@@ -6403,6 +6403,22 @@ function App() {
     };
   }, []);
 
+  // Auto-clean the hidden workout layer if the cast session ends on
+  // its own (TV powered off, network drop, picker cancelled) while
+  // the user is already on the dashboard. Without this, the unmount
+  // is gated on an explicit Stop tap from the casting pill.
+  useEffect(() => {
+    if (screen !== "dashboard") return;
+    if (cast.state !== "idle") return;
+    if (playlist.length === 0) return;
+    if (unmountTimeoutRef.current !== null) return;
+    unmountTimeoutRef.current = window.setTimeout(() => {
+      unmountTimeoutRef.current = null;
+      setPlaylist([]);
+      setPlaylistIndex(0);
+    }, 350);
+  }, [screen, cast.state, playlist.length]);
+
   const handleSelectGender = (g: Gender) => {
     try {
       localStorage.setItem(GENDER_KEY, g);
