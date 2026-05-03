@@ -100,6 +100,11 @@ function useLocalStorage<T extends string>(
 // ===== Workout preference keys =====
 const WORKOUT_TOTAL_SETS_KEY = "fitvision.workout.totalSets";
 const WORKOUT_REST_SECONDS_KEY = "fitvision.workout.restSeconds";
+const DASHBOARD_CATEGORY_KEY = "fitvision.dashboard.category";
+
+function isCategory(v: string): v is Category {
+  return v === "core" || v === "womens_health" || v === "recovery";
+}
 
 // ===== Workout history (logged completed sessions) =====
 const HISTORY_KEY = "fitvision.history.v1";
@@ -4763,7 +4768,11 @@ function DashboardScreen({
   history: WorkoutSession[];
   onClearHistory: () => void;
 }) {
-  const [category, setCategory] = useState<Category>("core");
+  const [category, setCategory] = useLocalStorage<Category>(
+    DASHBOARD_CATEGORY_KEY,
+    "core",
+    isCategory,
+  );
   const chips = SUB_CATEGORIES[category];
   const [activeChip, setActiveChip] = useState<string>(ALL_CHIP);
 
@@ -4773,12 +4782,13 @@ function DashboardScreen({
     );
   }, [gender]);
 
-  // If gender changes to man while womens_health is active, snap back to core.
+  // If the persisted/active tab is unavailable for the current profile
+  // (e.g. saved tab was Women's Health but the user is now Man), reset.
   useEffect(() => {
     if (gender === "man" && category === "womens_health") {
       setCategory("core");
     }
-  }, [gender, category]);
+  }, [gender, category, setCategory]);
 
   // Reset to "All" whenever the active tab changes.
   useEffect(() => {
