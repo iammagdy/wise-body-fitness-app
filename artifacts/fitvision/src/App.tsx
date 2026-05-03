@@ -8169,31 +8169,31 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
 
       <div className="mt-2 flex flex-1 flex-col items-center justify-center text-center">
         <motion.p
-          {...fadeUp(0.35)}
+          {...fadeUp(0.18)}
           className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#A8121A] dark:text-red-400"
         >
           Home workouts · No equipment
         </motion.p>
         <motion.h1
-          {...fadeUp(0.42)}
+          {...fadeUp(0.24)}
           className="mt-3 text-5xl font-bold tracking-tight text-stone-900 dark:text-stone-50"
         >
           Wise Body
         </motion.h1>
         <motion.p
-          {...fadeUp(0.5)}
+          {...fadeUp(0.3)}
           className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500"
         >
           Fitness App
         </motion.p>
         <motion.p
-          {...fadeUp(0.58)}
+          {...fadeUp(0.36)}
           className="mt-3 max-w-xs text-base leading-snug text-stone-500 dark:text-stone-400"
         >
           Strength, recovery and breathing sessions you can do in your living room — no gear required.
         </motion.p>
         <motion.p
-          {...fadeUp(0.66)}
+          {...fadeUp(0.42)}
           className="mt-4 text-[11px] font-medium tracking-wide text-stone-400 dark:text-stone-500"
         >
           Part of The Wise Cloud · fitness.thewise.cloud
@@ -8202,13 +8202,13 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
 
       <div className="flex w-full flex-col gap-3 pb-4">
         <motion.p
-          {...fadeUp(0.74)}
+          {...fadeUp(0.48)}
           className="text-center text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500"
         >
           Pick what fits you
         </motion.p>
         <motion.button
-          {...fadeUp(0.82)}
+          {...fadeUp(0.54)}
           whileTap={tap}
           whileHover={hover}
           type="button"
@@ -8219,7 +8219,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
           I am a Man
         </motion.button>
         <motion.button
-          {...fadeUp(0.9)}
+          {...fadeUp(0.6)}
           whileTap={tap}
           whileHover={hover}
           type="button"
@@ -10447,6 +10447,14 @@ function WorkoutSummary({
 }) {
   const doneRef = useRef<HTMLButtonElement | null>(null);
   const reduced = useReducedMotion();
+  // One-shot guard: backdrop click, Done click, and the auto-dismiss
+  // timer can race with each other; we only want onDone to fire once.
+  const dismissedRef = useRef(false);
+  const dismiss = useCallback(() => {
+    if (dismissedRef.current) return;
+    dismissedRef.current = true;
+    onDone();
+  }, [onDone]);
   useEffect(() => {
     doneRef.current?.focus();
   }, []);
@@ -10456,10 +10464,10 @@ function WorkoutSummary({
   // can move on instantly.
   useEffect(() => {
     const t = window.setTimeout(() => {
-      onDone();
+      dismiss();
     }, 2500);
     return () => window.clearTimeout(t);
-  }, [onDone]);
+  }, [dismiss]);
   const stat = (delay: number) => ({
     initial: reduced ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 12, scale: 0.92 },
     animate: { opacity: 1, y: 0, scale: 1 },
@@ -10476,7 +10484,7 @@ function WorkoutSummary({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.18 }}
-      onClick={onDone}
+      onClick={dismiss}
     >
       <ConfettiBurst active />
       <motion.div
@@ -10558,7 +10566,10 @@ function WorkoutSummary({
         <motion.button
           ref={doneRef}
           type="button"
-          onClick={onDone}
+          onClick={(e) => {
+            e.stopPropagation();
+            dismiss();
+          }}
           whileTap={reduced ? undefined : { scale: 0.96 }}
           whileHover={reduced ? undefined : { scale: 1.015 }}
           className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-stone-900 text-base font-semibold text-white shadow-sm transition active:scale-[0.98] dark:bg-stone-50 dark:text-stone-900"
