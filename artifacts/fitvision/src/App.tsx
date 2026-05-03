@@ -9491,6 +9491,7 @@ function TimedBody({
   const [secondsLeft, setSecondsLeft] = useState(exercise.durationSeconds);
   const [running, setRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
+  const reduced = useReducedMotion();
 
   const clearTimer = () => {
     if (intervalRef.current !== null) {
@@ -9614,9 +9615,13 @@ function TimedBody({
           type="button"
           onClick={toggle}
           aria-label={running ? "Pause" : "Play"}
-          whileTap={{ scale: 0.92 }}
-          whileHover={{ scale: 1.03 }}
-          transition={{ type: "spring", stiffness: 420, damping: 22 }}
+          whileTap={reduced ? undefined : { scale: 0.92 }}
+          whileHover={reduced ? undefined : { scale: 1.03 }}
+          transition={
+            reduced
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 420, damping: 22 }
+          }
           className={`mt-8 flex items-center justify-center rounded-full bg-emerald-500 text-white shadow-xl transition active:scale-95 active:bg-emerald-600 dark:bg-emerald-500 dark:text-white ${running ? "cta-pulse" : ""}`}
           style={{ width: 92, height: 92 }}
         >
@@ -9643,6 +9648,7 @@ function RepsBody({
   totalSets: number;
 }) {
   const [reps, setReps] = useState(0);
+  const reduced = useReducedMotion();
   useEffect(() => {
     setReps(0);
   }, [exercise.id, exercise.reps, setNumber]);
@@ -9683,9 +9689,13 @@ function RepsBody({
           window.setTimeout(() => onSetComplete(), 500);
         }}
         aria-label="Complete set"
-        whileTap={{ scale: 0.97 }}
-        whileHover={{ scale: 1.01 }}
-        transition={{ type: "spring", stiffness: 420, damping: 24 }}
+        whileTap={reduced ? undefined : { scale: 0.97 }}
+        whileHover={reduced ? undefined : { scale: 1.01 }}
+        transition={
+          reduced
+            ? { duration: 0 }
+            : { type: "spring", stiffness: 420, damping: 24 }
+        }
         className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 text-lg font-semibold text-white shadow-md transition active:scale-[0.98] active:bg-emerald-600"
         style={{ minHeight: 64 }}
       >
@@ -10023,9 +10033,13 @@ function WorkoutScreen({
             onClick={goNext}
             disabled={!hasNext}
             aria-label="Next exercise"
-            whileTap={hasNext ? { scale: 0.9 } : undefined}
-            whileHover={hasNext ? { scale: 1.05 } : undefined}
-            transition={{ type: "spring", stiffness: 480, damping: 24 }}
+            whileTap={hasNext && !upNextReducedMotion ? { scale: 0.9 } : undefined}
+            whileHover={hasNext && !upNextReducedMotion ? { scale: 1.05 } : undefined}
+            transition={
+              upNextReducedMotion
+                ? { duration: 0 }
+                : { type: "spring", stiffness: 480, damping: 24 }
+            }
             className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
           >
             <NextIcon />
@@ -10066,9 +10080,13 @@ function WorkoutScreen({
                 muted ? "Unmute Arabic coaching" : "Mute Arabic coaching"
               }
               title={muted ? "Voice off" : "Voice on"}
-              whileTap={{ scale: 0.9 }}
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 480, damping: 24 }}
+              whileTap={upNextReducedMotion ? undefined : { scale: 0.9 }}
+              whileHover={upNextReducedMotion ? undefined : { scale: 1.05 }}
+              transition={
+                upNextReducedMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 480, damping: 24 }
+              }
               className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
             >
               {muted ? <SpeakerOffIcon /> : <SpeakerOnIcon />}
@@ -10292,42 +10310,116 @@ function ScreenSlide({
 }
 
 // ===== Confetti burst =====
-// Lightweight celebration: ~24 colored particles spring outward
-// from the badge with random angle/distance/rotation, then fade.
+// Lightweight celebration: ~100 colored particles fired outward on
+// a <canvas> with gravity/drag and rotation, then torn down once
+// the run finishes (~1.5s). Canvas is preferred over DOM nodes
+// because it scales to 100+ particles without layout thrash.
 // Gated by prefers-reduced-motion (renders nothing).
 function ConfettiBurst({ active }: { active: boolean }) {
   const reduced = useReducedMotion();
-  const pieces = useMemo(() => {
-    const colors = ["#A8121A", "#F59E0B", "#10B981", "#3B82F6", "#EC4899", "#FFD89B"];
-    return Array.from({ length: 26 }, (_, i) => {
-      const angle = (i / 26) * Math.PI * 2 + Math.random() * 0.4;
-      const dist = 90 + Math.random() * 110;
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  useEffect(() => {
+    if (reduced || !active) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    ctx.scale(dpr, dpr);
+
+    const W = rect.width;
+    const H = rect.height;
+    const cx = W / 2;
+    const cy = H * 0.4;
+    const colors = [
+      "#A8121A",
+      "#F59E0B",
+      "#10B981",
+      "#3B82F6",
+      "#EC4899",
+      "#FFD89B",
+      "#FFFFFF",
+    ];
+    type P = {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      w: number;
+      h: number;
+      rot: number;
+      vrot: number;
+      color: string;
+      life: number;
+    };
+    const N = 110;
+    const particles: P[] = Array.from({ length: N }, () => {
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.4;
+      const speed = 280 + Math.random() * 360;
       return {
-        id: i,
-        x: Math.cos(angle) * dist,
-        y: Math.sin(angle) * dist,
-        rot: (Math.random() - 0.5) * 720,
-        color: colors[i % colors.length],
-        delay: Math.random() * 0.06,
-        w: 6 + Math.random() * 6,
-        h: 9 + Math.random() * 9,
+        x: cx,
+        y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        w: 5 + Math.random() * 5,
+        h: 8 + Math.random() * 8,
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 14,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 0,
       };
     });
-  }, []);
+
+    const DURATION = 1.5;
+    const GRAVITY = 1100;
+    const DRAG = 0.985;
+    let raf = 0;
+    let last = performance.now();
+    let elapsed = 0;
+    const tick = (now: number) => {
+      const dt = Math.min(0.04, (now - last) / 1000);
+      last = now;
+      elapsed += dt;
+      ctx.clearRect(0, 0, W, H);
+      for (const p of particles) {
+        p.vx *= DRAG;
+        p.vy = p.vy * DRAG + GRAVITY * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.rot += p.vrot * dt;
+        p.life += dt;
+        const alpha = Math.max(0, 1 - elapsed / DURATION);
+        if (alpha <= 0) continue;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      }
+      if (elapsed < DURATION) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        ctx.clearRect(0, 0, W, H);
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, W, H);
+    };
+  }, [active, reduced]);
   if (reduced || !active) return null;
   return (
-    <div className="pointer-events-none absolute inset-0 z-[60] flex items-center justify-center overflow-hidden">
-      {pieces.map((p) => (
-        <motion.span
-          key={p.id}
-          className="absolute block rounded-sm"
-          style={{ width: p.w, height: p.h, backgroundColor: p.color }}
-          initial={{ x: 0, y: 0, rotate: 0, opacity: 1, scale: 0.6 }}
-          animate={{ x: p.x, y: p.y, rotate: p.rot, opacity: 0, scale: 1 }}
-          transition={{ duration: 1.4, delay: p.delay, ease: [0.18, 0.78, 0.32, 1] }}
-        />
-      ))}
-    </div>
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-[60] h-full w-full"
+    />
   );
 }
 
@@ -10697,10 +10789,20 @@ function App() {
   // correct direction (forward = next slides in from the right,
   // backward = next slides in from the left).
   const [navDirection, setNavDirection] = useState<1 | -1>(1);
-  const goScreen = useCallback((next: Screen, dir: 1 | -1) => {
-    setNavDirection(dir);
-    setScreen(next);
-  }, []);
+  // Track which transition variant the next AnimatePresence cycle
+  // should use. welcome <-> dashboard uses a vertical lift+fade
+  // (gentle first impression). dashboard <-> workout uses a shared
+  // horizontal directional spring so the screens feel like they
+  // belong on the same horizontal stack.
+  const [navKind, setNavKind] = useState<"slide" | "liftFade">("liftFade");
+  const goScreen = useCallback(
+    (next: Screen, dir: 1 | -1, kind: "slide" | "liftFade" = "slide") => {
+      setNavDirection(dir);
+      setNavKind(kind);
+      setScreen(next);
+    },
+    [],
+  );
   const reducedMotionApp = useReducedMotion();
   const [gender, setGender] = useState<Gender | null>(initialGender);
   const { history, logSession, clearHistory } = useWorkoutHistory();
@@ -10750,7 +10852,7 @@ function App() {
       /* ignore */
     }
     setGender(g);
-    goScreen("dashboard", 1);
+    goScreen("dashboard", 1, "liftFade");
   };
 
   const handleResetProfile = () => {
@@ -10761,18 +10863,18 @@ function App() {
     }
     clearHistory();
     setGender(null);
-    goScreen("welcome", -1);
+    goScreen("welcome", -1, "liftFade");
   };
 
   const handleSelectExercise = (nextPlaylist: Exercise[], index: number) => {
     cancelPendingUnmount();
     setPlaylist(nextPlaylist);
     setPlaylistIndex(index);
-    goScreen("workout", 1);
+    goScreen("workout", 1, "slide");
   };
 
   const handleBackFromWorkout = () => {
-    goScreen("dashboard", -1);
+    goScreen("dashboard", -1, "slide");
     cancelPendingUnmount();
     // While casting, keep the workout layer (and therefore the
     // video element) mounted so the cast session survives in-app
@@ -10822,7 +10924,7 @@ function App() {
             key="dashboard"
             direction={navDirection}
             reduced={reducedMotionApp}
-            kind="liftFade"
+            kind={navKind}
           >
             <DashboardScreen
               gender={gender}
