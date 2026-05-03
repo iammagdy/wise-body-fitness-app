@@ -108,3 +108,9 @@ id = "EDLv0Xg4NckOmHDtG3N6W"
 uri = "file://artifacts/fitvision/public/loops/tr1__woman.mp4"
 type = "video"
 title = "Pigeon Pose — female character"
+
+[[outputs]]
+id = "lCSmSTcJ8iW5mcF8_A8f6"
+uri = "file://.local/exports/wise-body-dist.zip"
+type = "unspecified"
+title = "wise-body-dist.zip — upload contents to public_html/"
