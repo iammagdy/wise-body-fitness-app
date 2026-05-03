@@ -355,14 +355,33 @@ type NeonFamily =
   | "stand"        // breathing, neck/wrist circles, calm holds
   | "squat"        // squat variants, wall sit, chair pose
   | "lunge"        // lunge, reverse lunge, split squat, step-up
-  | "push"         // push-up, press, chest/shoulder taps (side view)
+  | "push"         // push-up, chest tap (side view)
   | "plank"        // plank, side plank, superman, bird-dog (side view)
-  | "bridge"       // glute bridge, hip thrust, hinge (supine view)
+  | "bridge"       // glute bridge, hip thrust (supine view)
   | "situp"        // sit-up, crunch, leg raise (supine view)
   | "fold"         // standing forward fold, toe touch, good-morning
   | "sidestretch"  // side bend, lateral reach, halo, side opener
   | "cardio"       // jumping jack, burpee, climber, march, high knee
-  | "floor";       // pigeon, child's pose, butterfly, supine twist
+  | "floor"        // pigeon, child's pose, butterfly, supine twist
+  | "row"          // bent-over row, pull-down (standing pull)
+  | "swing"        // kettlebell swing, hip hinge, deadlift (standing hinge)
+  | "press"        // overhead press, shoulder press (vertical push)
+  | "kneel";       // kneeling holds, half-kneeling base
+
+// Per-exercise overrides for IDs that the regex cascade can't route
+// reliably. Overrides win over regex matching, so this is the
+// authoritative source for tricky entries.
+const NEON_FAMILY_OVERRIDES: Record<string, NeonFamily> = {
+  m3: "row",         // Doorway Row
+  s4: "row",         // Towel Pull-Down
+  c3: "swing",       // Bodyweight Hip Hinge
+  s5: "swing",       // Single-Leg Deadlift
+  m4: "press",       // Pike Push-Up — vertical press, not horizontal push
+  s6: "press",       // Pike Shoulder Tap — same shape as pike press
+  ps6: "kneel",      // Prenatal Squat Hold — held low, supported
+  pp2: "kneel",      // Bird Dog — quadruped on hands and knees
+  ps1: "squat",      // Wall Sit
+};
 
 // Routing of every exercise → animation family. Ordering is load-
 // bearing: more specific tokens must match before generic ones
@@ -371,109 +390,113 @@ type NeonFamily =
 //
 // Reference table (one row per exercise in EXERCISES, kept in sync
 // manually — covered by Task #32's planned snapshot test):
-//   Push-Up                       → push
-//   Single-Leg Glute Bridge       → bridge
-//   Doorway Row                   → push  (side-view "pull" reuses push frame)
-//   Pike Push-Up                  → push
-//   Split Squat                   → lunge
-//   Bodyweight Squat              → squat
-//   Plank Hold                    → plank
-//   Mountain Climbers             → cardio
-//   Side-Lying Leg Raise          → floor (lying side, animated as floor stretch)
-//   Prenatal Cat-Cow              → floor
-//   Pregnancy Pelvic Tilt         → bridge
-//   Hip Thrusts                   → bridge
-//   Pelvic Floor Bridge           → bridge
-//   Diastasis Recovery Breath     → stand
-//   Standing Donkey Kicks         → cardio (knee-drive)
-//   Hormonal Yoga Flow            → sidestretch
-//   Cortisol Reset Walk           → cardio
-//   Neck Rolls                    → stand
-//   Chin Tucks                    → stand
-//   Upper Trap Stretch            → sidestretch
-//   Foot Arch Massage             → floor
-//   Toe Yoga                      → floor
-//   Calf Wall Stretch             → fold
-//   Standing Quad Stretch         → stand
-//   Hamstring Stretch             → fold
-//   Child's Pose                  → floor
-//   Box Breathing                 → stand
-//   Jump Squat                    → cardio
-//   Superman Hold                 → plank
-//   Reverse Lunge                 → lunge
-//   Towel Pull-Down               → push  (overhead pull)
-//   Single-Leg Deadlift           → bridge (hinge)
-//   Pike Shoulder Tap             → push
-//   Invisible Jump Rope           → cardio
-//   Burpees                       → cardio
-//   Bodyweight Hip Hinge          → bridge
-//   Tuck Jumps                    → cardio
-//   Plank Shoulder Taps           → plank
-//   Bear Crawl                    → plank
-//   High Knees                    → cardio
-//   Bicycle Crunches              → situp
-//   Wall Sit                      → squat
-//   Seated Towel Curl             → floor
-//   Standing Calf Raise           → stand
-//   Modified Side Plank           → plank
-//   Standing Pelvic Rocks         → stand
-//   Prenatal Squat Hold           → squat
-//   Seated Spinal Twist           → floor
-//   Glute Bridge                  → bridge
-//   Bird Dog                      → plank
-//   Heel Slides                   → floor
-//   Wall Push-Up                  → push
-//   Standing Pelvic Tilt          → stand
-//   Dead Bug                      → situp
-//   Seated March                  → floor
-//   Slow Yin Stretch              → floor
-//   Legs-Up-The-Wall              → floor
-//   Gentle Hip Circles            → stand
-//   Supported Bridge              → bridge
-//   Alternate Nostril Breathing   → stand
-//   Goddess Pose                  → squat
-//   Reclined Butterfly            → floor
-//   Doorway Chest Opener          → sidestretch
-//   Levator Scapulae Stretch      → sidestretch
-//   Scapular Squeezes             → stand
-//   Wall Angels                   → sidestretch
-//   Thread the Needle             → floor
-//   Suboccipital Release          → floor
-//   Seated Neck Flexion           → floor
-//   Plantar Fascia Press          → floor
-//   Toe Splay                     → floor
-//   Heel Walks                    → cardio
-//   Ankle Circles                 → stand
-//   Towel Scrunches               → floor
-//   Single-Leg Balance            → stand
-//   Big Toe Stretch               → floor
-//   Pigeon Pose                   → floor
-//   Seated Forward Fold           → fold
-//   Cat-Cow Flow                  → floor
-//   Thoracic Extension            → floor
-//   Standing Forward Fold         → fold
-//   Supine Twist                  → floor
+//   m1  Push-Up                       → push
+//   m2  Single-Leg Glute Bridge       → bridge
+//   m3  Doorway Row                   → row    (override)
+//   m4  Pike Push-Up                  → press  (override)
+//   w2  Split Squat                   → lunge
+//   w4  Bodyweight Squat              → squat
+//   b1  Plank Hold                    → plank
+//   b2  Mountain Climbers             → cardio
+//   wh2 Side-Lying Leg Raise          → floor
+//   wh3 Prenatal Cat-Cow              → floor
+//   wh4 Pregnancy Pelvic Tilt         → bridge
+//   w1  Hip Thrusts                   → bridge
+//   wh1 Pelvic Floor Bridge           → bridge
+//   wh5 Diastasis Recovery Breath     → stand
+//   w3  Standing Donkey Kicks         → cardio
+//   wh6 Hormonal Yoga Flow            → sidestretch
+//   wh7 Cortisol Reset Walk           → cardio
+//   rn1 Neck Rolls                    → stand
+//   rn2 Chin Tucks                    → stand
+//   rn3 Upper Trap Stretch            → sidestretch
+//   rf1 Foot Arch Massage             → floor
+//   rf2 Toe Yoga                      → floor
+//   rf3 Calf Wall Stretch             → fold
+//   r1  Standing Quad Stretch         → stand
+//   r2  Hamstring Stretch             → fold
+//   r3  Child's Pose                  → floor
+//   r4  Box Breathing                 → stand
+//   s1  Jump Squat                    → cardio
+//   s2  Superman Hold                 → plank
+//   s3  Reverse Lunge                 → lunge
+//   s4  Towel Pull-Down               → row    (override)
+//   s5  Single-Leg Deadlift           → swing  (override)
+//   s6  Pike Shoulder Tap             → press  (override)
+//   c1  Invisible Jump Rope           → cardio
+//   c2  Burpees                       → cardio
+//   c3  Bodyweight Hip Hinge          → swing  (override)
+//   c4  Tuck Jumps                    → cardio
+//   c5  Plank Shoulder Taps           → plank
+//   c6  Bear Crawl                    → plank
+//   c7  High Knees                    → cardio
+//   c8  Bicycle Crunches              → situp
+//   ps1 Wall Sit                      → squat  (override)
+//   ps2 Seated Towel Curl             → floor
+//   ps3 Standing Calf Raise           → stand
+//   ps4 Modified Side Plank           → plank
+//   ps5 Standing Pelvic Rocks         → stand
+//   ps6 Prenatal Squat Hold           → kneel  (override — supported low hold)
+//   ps7 Seated Spinal Twist           → floor
+//   pp1 Glute Bridge                  → bridge
+//   pp2 Bird Dog                      → kneel  (override — quadruped)
+//   pp3 Heel Slides                   → floor
+//   pp4 Wall Push-Up                  → push
+//   pp5 Standing Pelvic Tilt          → stand
+//   pp6 Dead Bug                      → situp
+//   pp7 Seated March                  → floor
+//   h1  Slow Yin Stretch              → floor
+//   h2  Legs-Up-The-Wall              → floor
+//   h3  Gentle Hip Circles            → stand
+//   h4  Supported Bridge              → bridge
+//   h5  Alternate Nostril Breathing   → stand
+//   h6  Goddess Pose                  → squat
+//   h7  Reclined Butterfly            → floor
+//   tn1 Doorway Chest Opener          → sidestretch
+//   tn2 Levator Scapulae Stretch      → sidestretch
+//   tn3 Scapular Squeezes             → stand
+//   tn4 Wall Angels                   → sidestretch
+//   tn5 Thread the Needle             → floor
+//   tn6 Suboccipital Release          → floor
+//   tn7 Seated Neck Flexion           → floor
+//   fc1 Plantar Fascia Press          → floor
+//   fc2 Toe Splay                     → floor
+//   fc3 Heel Walks                    → cardio
+//   fc4 Ankle Circles                 → stand
+//   fc5 Towel Scrunches               → floor
+//   fc6 Single-Leg Balance            → stand
+//   fc7 Big Toe Stretch               → floor
+//   tr1 Pigeon Pose                   → floor
+//   tr2 Seated Forward Fold           → fold
+//   tr3 Cat-Cow Flow                  → floor
+//   tr4 Thoracic Extension            → floor
+//   tr5 Standing Forward Fold         → fold
+//   tr6 Supine Twist                  → floor
 function neonFamilyFor(ex: Exercise): NeonFamily {
+  const override = NEON_FAMILY_OVERRIDES[ex.id];
+  if (override) return override;
   const n = ex.name.toLowerCase();
-  // Plank-anchored movements first so plank-tap variants win.
+  // Most specific patterns first.
+  if (/kneel/.test(n)) return "kneel";
   if (
     /\bplank\b|side[- ]?plank|superman|bird ?dog|forearm hold|hollow hold|bear crawl/
       .test(n)
   )
     return "plank";
   if (/dead ?bug/.test(n)) return "situp";
+  if (/overhead press|shoulder press|\bpress(?!.*chest)/.test(n)) return "press";
+  if (/pull[- ]?down|\brow\b|lat pull/.test(n)) return "row";
+  if (/swing|kettlebell|hinge|deadlift/.test(n)) return "swing";
   if (/breath|nostril|humming|tongue/.test(n)) return "stand";
   if (
     /jumping ?jack|burpee|climber|jog|skater|high ?knee|knee[- ]?up|donkey kick|kicks?\b|jumps?\b|hops?\b|march(?!.*seated)|\bwalk/
       .test(n)
   )
     return "cardio";
-  if (/push[- ]?up|wall press|chest tap|shoulder tap|pull[- ]?down|\brow\b/.test(n))
-    return "push";
+  if (/push[- ]?up|wall press|chest tap|shoulder tap/.test(n)) return "push";
   if (/lunge|step[- ]?up|split ?squat/.test(n)) return "lunge";
   if (/squat|wall ?sit|chair pose|goblet|goddess/.test(n)) return "squat";
-  if (/bridge|hip ?thrust|hinge|deadlift|pelvic ?tilt(?!.*standing)/.test(n))
-    return "bridge";
+  if (/bridge|hip ?thrust|pelvic ?tilt(?!.*standing)/.test(n)) return "bridge";
   if (/sit[- ]?up|crunch|reverse crunch|toes? ?to/.test(n)) return "situp";
   if (/standing forward fold|forward fold|toe ?touch|good ?morning|hamstring stretch|calf wall|seated forward fold/.test(n))
     return "fold";
@@ -487,8 +510,6 @@ function neonFamilyFor(ex: Exercise): NeonFamily {
       .test(n)
   )
     return "floor";
-  // Standing low-intensity movements: rolls, circles, taps, light
-  // balance work, calf raises, scapular work — render as stand.
   if (
     /circle|rotation|roll|wrist|ankle|neck|fascia|massage|chin tuck|scapular|calf raise|balance|pelvic rock|standing pelvic tilt|standing quad/
       .test(n)
@@ -501,9 +522,15 @@ function neonPeriodMs(family: NeonFamily): number {
   switch (family) {
     case "cardio":
       return 1200;
+    case "swing":
+      return 1600;
+    case "press":
+    case "row":
+      return 2400;
     case "lunge":
       return 4200;
     case "stand":
+    case "kneel":
       return 4500;
     case "plank":
     case "floor":
@@ -1074,6 +1101,195 @@ function floorPose(body: NeonBody, e: number): Joints {
   };
 }
 
+function rowPose(body: NeonBody, t: number): Joints {
+  // Bent-over row, side view (facing right). Hinged forward at the
+  // hip; arms cycle from extended down to retracted at the ribs.
+  const e = easeCos(t);
+  const cx = 100;
+  const hipY = 200;
+  const lean = Math.PI * 0.42;
+  const torsoLen = 72;
+  const sx = cx + Math.sin(lean) * torsoLen * 0.45;
+  const sy = hipY - Math.cos(lean) * torsoLen;
+  const headX = sx + Math.sin(lean) * 18;
+  const headY = sy - Math.cos(lean) * 18;
+  // Endpoints of the arm cycle.
+  const handDown = { x: sx + 6, y: sy + body.armUpL + body.armLoL };
+  const elbowDown = { x: sx + 4, y: sy + body.armUpL * 0.92 };
+  const handUp = { x: sx + 4, y: sy + 16 };
+  const elbowUp = { x: sx - 10, y: sy + body.armUpL * 0.55 };
+  const eX = lerpN(elbowDown.x, elbowUp.x, e);
+  const eY = lerpN(elbowDown.y, elbowUp.y, e);
+  const hX = lerpN(handDown.x, handUp.x, e);
+  const hY = lerpN(handDown.y, handUp.y, e);
+  const hw = body.hipW;
+  const hipL = { x: cx - hw / 2 + 2, y: hipY };
+  const hipR = { x: cx + hw / 2 - 2, y: hipY + 3 };
+  const kL = { x: hipL.x - 2, y: hipY + body.thighL - 6 };
+  const kR = { x: hipR.x - 2, y: hipY + body.thighL - 3 };
+  const fL = { x: kL.x - 4, y: kL.y + body.shinL };
+  const fR = { x: kR.x - 4, y: kR.y + body.shinL };
+  return {
+    head: { x: headX, y: headY },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: lerpN(sx, headX, 0.45), y: lerpN(sy, headY, 0.45) },
+    shoulderL: { x: sx - 2, y: sy },
+    shoulderR: { x: sx + 2, y: sy + 4 },
+    elbowL: { x: eX, y: eY },
+    elbowR: { x: eX + 1, y: eY + 3 },
+    handL: { x: hX, y: hY },
+    handR: { x: hX + 1, y: hY + 3 },
+    pelvis: { x: cx, y: hipY - 6 },
+    hipL,
+    hipR,
+    kneeL: kL,
+    kneeR: kR,
+    footL: fL,
+    footR: fR,
+  };
+}
+function swingPose(body: NeonBody, t: number): Joints {
+  // Kettlebell swing, side view. e=0: bottom of swing (hands
+  // between thighs, hips hinged back). e=1: top (hands chest height,
+  // hips driven forward, mostly upright).
+  const e = easeCos(t);
+  const cx = 100;
+  const hipY = 200;
+  const hinge = lerpN(Math.PI * 0.5, Math.PI * 0.08, e);
+  const torsoLen = 72;
+  const sx = cx + Math.sin(hinge) * torsoLen * 0.4;
+  const sy = hipY - Math.cos(hinge) * torsoLen;
+  // Arm angle: π=straight down, π/2=horizontal forward, 0=overhead.
+  const armAngle = lerpN(Math.PI * 0.95, Math.PI * 0.42, e);
+  const armLen = body.armUpL + body.armLoL;
+  const handX = sx + Math.sin(armAngle) * armLen * 0.6;
+  const handY = sy + Math.cos(armAngle) * armLen;
+  const elbowX = sx + Math.sin(armAngle) * armLen * 0.3;
+  const elbowY = sy + Math.cos(armAngle) * armLen * 0.5;
+  const hw = body.hipW;
+  const hipL = { x: cx - hw / 2 + 2, y: hipY };
+  const hipR = { x: cx + hw / 2 - 2, y: hipY + 3 };
+  const kneeBend = lerpN(18, 4, e);
+  const kL = { x: hipL.x - 2, y: hipY + body.thighL - kneeBend };
+  const kR = { x: hipR.x - 2, y: hipY + body.thighL - kneeBend + 2 };
+  const fL = { x: kL.x - 4, y: hipY + body.thighL + body.shinL - 12 };
+  const fR = { x: kR.x - 4, y: hipY + body.thighL + body.shinL - 10 };
+  return {
+    head: { x: sx + Math.sin(hinge) * 18, y: sy - Math.cos(hinge) * 18 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: sx + Math.sin(hinge) * 9, y: sy - Math.cos(hinge) * 9 },
+    shoulderL: { x: sx - 2, y: sy },
+    shoulderR: { x: sx + 2, y: sy + 4 },
+    elbowL: { x: elbowX, y: elbowY },
+    elbowR: { x: elbowX + 1, y: elbowY + 3 },
+    handL: { x: handX, y: handY },
+    handR: { x: handX + 1, y: handY + 3 },
+    pelvis: { x: cx, y: hipY - 6 },
+    hipL,
+    hipR,
+    kneeL: kL,
+    kneeR: kR,
+    footL: fL,
+    footR: fR,
+  };
+}
+
+function pressPose(body: NeonBody, t: number): Joints {
+  // Overhead press, front view. e=0: racked (hands by shoulders,
+  // elbows wide). e=1: locked out (arms straight overhead).
+  const e = easeCos(t);
+  const cx = 100;
+  const sw = body.shoulderW;
+  const hw = body.hipW;
+  const sy = 105;
+  const sL = { x: cx - sw / 2, y: sy };
+  const sR = { x: cx + sw / 2, y: sy };
+  const eRackL = { x: sL.x - 14, y: sy + 18 };
+  const eRackR = { x: sR.x + 14, y: sy + 18 };
+  const hRackL = { x: sL.x - 6, y: sy + 4 };
+  const hRackR = { x: sR.x + 6, y: sy + 4 };
+  const ePressL = { x: sL.x - 4, y: sy - body.armUpL * 0.55 };
+  const ePressR = { x: sR.x + 4, y: sy - body.armUpL * 0.55 };
+  const hPressL = { x: sL.x - 2, y: sy - body.armUpL - body.armLoL * 0.95 };
+  const hPressR = { x: sR.x + 2, y: sy - body.armUpL - body.armLoL * 0.95 };
+  const eLp = { x: lerpN(eRackL.x, ePressL.x, e), y: lerpN(eRackL.y, ePressL.y, e) };
+  const eRp = { x: lerpN(eRackR.x, ePressR.x, e), y: lerpN(eRackR.y, ePressR.y, e) };
+  const hLp = { x: lerpN(hRackL.x, hPressL.x, e), y: lerpN(hRackL.y, hPressL.y, e) };
+  const hRp = { x: lerpN(hRackR.x, hPressR.x, e), y: lerpN(hRackR.y, hPressR.y, e) };
+  const pelvisY = 188;
+  const hipL = { x: cx - hw / 2, y: pelvisY };
+  const hipR = { x: cx + hw / 2, y: pelvisY };
+  const kL = { x: hipL.x, y: pelvisY + body.thighL };
+  const kR = { x: hipR.x, y: pelvisY + body.thighL };
+  const fL = { x: kL.x - 3, y: kL.y + body.shinL };
+  const fR = { x: kR.x + 3, y: kR.y + body.shinL };
+  return {
+    head: { x: cx, y: 56 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 90 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: eLp,
+    elbowR: eRp,
+    handL: hLp,
+    handR: hRp,
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL,
+    hipR,
+    kneeL: kL,
+    kneeR: kR,
+    footL: fL,
+    footR: fR,
+  };
+}
+
+function kneelPose(body: NeonBody, e: number): Joints {
+  // Half-kneeling base: right knee on the ground behind, left foot
+  // planted forward. Hands rest on hips. Subtle breathing.
+  const breath = (e - 0.5) * 4;
+  const cx = 100;
+  const sw = body.shoulderW;
+  const hw = body.hipW;
+  const pelvisY = 215 + breath * 0.4;
+  const sL = { x: cx - sw / 2, y: 118 + breath * 0.3 };
+  const sR = { x: cx + sw / 2, y: 118 + breath * 0.3 };
+  const hipL = { x: cx - hw / 2, y: pelvisY };
+  const hipR = { x: cx + hw / 2, y: pelvisY };
+  const eL = { x: sL.x - 4, y: sL.y + body.armUpL * 0.7 };
+  const eR = { x: sR.x + 4, y: sR.y + body.armUpL * 0.7 };
+  const hL = { x: hipL.x + 6, y: hipL.y - 2 };
+  const hR = { x: hipR.x - 6, y: hipR.y - 2 };
+  const groundY = 296;
+  // Right leg kneeling behind
+  const kR_ = { x: cx + hw / 2 + 6, y: groundY - 6 };
+  const fR_ = { x: cx + hw / 2 + 18, y: groundY - 2 };
+  // Left leg planted forward, ~90° at the knee
+  const kL_ = { x: cx - hw / 2 - 6, y: pelvisY + body.thighL * 0.55 };
+  const fL_ = { x: cx - hw / 2 - 14, y: groundY };
+  return {
+    head: { x: cx, y: 72 + breath * 0.2 },
+    headR: body.headR,
+    hair: body.hair,
+    neck: { x: cx, y: 102 + breath * 0.2 },
+    shoulderL: sL,
+    shoulderR: sR,
+    elbowL: eL,
+    elbowR: eR,
+    handL: hL,
+    handR: hR,
+    pelvis: { x: cx, y: pelvisY - 6 },
+    hipL,
+    hipR,
+    kneeL: kL_,
+    kneeR: kR_,
+    footL: fL_,
+    footR: fR_,
+  };
+}
+
 function neonJointsFor(family: NeonFamily, t: number, body: NeonBody): Joints {
   const e = easeCos(t);
   switch (family) {
@@ -1099,6 +1315,14 @@ function neonJointsFor(family: NeonFamily, t: number, body: NeonBody): Joints {
       return cardioPose(body, t);
     case "floor":
       return floorPose(body, e);
+    case "row":
+      return rowPose(body, t);
+    case "swing":
+      return swingPose(body, t);
+    case "press":
+      return pressPose(body, t);
+    case "kneel":
+      return kneelPose(body, e);
     default:
       return standPose(body, e);
   }
@@ -1242,71 +1466,89 @@ function torsoPath(j: Joints, w: BodyWidths): string {
   ].join(" ");
 }
 
+// Build an arc-based path string for an ellipse with optional
+// rotation (so it can be inlined into a single combined path
+// without needing a separate <ellipse> + transform element).
+function ellipseArcPath(
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  rotDeg = 0,
+): string {
+  const r = (rotDeg * Math.PI) / 180;
+  const dx = rx * Math.cos(r);
+  const dy = rx * Math.sin(r);
+  const sxp = cx - dx;
+  const syp = cy - dy;
+  const exp = cx + dx;
+  const eyp = cy + dy;
+  return [
+    `M ${fx(sxp)} ${fx(syp)}`,
+    `A ${fx(rx)} ${fx(ry)} ${fx(rotDeg)} 1 0 ${fx(exp)} ${fx(eyp)}`,
+    `A ${fx(rx)} ${fx(ry)} ${fx(rotDeg)} 1 0 ${fx(sxp)} ${fx(syp)}`,
+    "Z",
+  ].join(" ");
+}
+
+// Compose the entire silhouette as ONE continuous fillable path
+// string. All limb tubes, the torso, head, hands, feet, and the
+// optional ponytail are joined as sub-paths in a single `d`, so
+// the renderer can express the body as a single <path> element.
+// With nonzero fill rule, overlapping sub-paths union into one
+// solid silhouette and no internal seams appear in the fill, and
+// no internal stroke is ever drawn around individual joints.
+function bodyPath(j: Joints, w: BodyWidths): string {
+  const parts: string[] = [];
+  if (j.hair) {
+    const headVec = ptSub(j.head, j.neck);
+    const headDir = ptLen(headVec) > 0.5 ? ptUnit(headVec) : { x: 0, y: -1 };
+    const hairCenter = ptAdd(j.head, ptScale(headDir, j.headR * 0.55));
+    const hairAngle = (Math.atan2(headDir.y, headDir.x) * 180) / Math.PI + 90;
+    parts.push(
+      ellipseArcPath(hairCenter.x, hairCenter.y, j.headR * 1.2, j.headR * 1.6, hairAngle),
+    );
+  }
+  // Legs
+  parts.push(tubePath(j.hipL, j.kneeL, w.thigh, w.upperCalf));
+  parts.push(tubePath(j.kneeL, j.footL, w.upperCalf, w.ankle));
+  parts.push(ellipseArcPath(j.footL.x, j.footL.y, w.foot, w.foot * 0.55));
+  parts.push(tubePath(j.hipR, j.kneeR, w.thigh, w.upperCalf));
+  parts.push(tubePath(j.kneeR, j.footR, w.upperCalf, w.ankle));
+  parts.push(ellipseArcPath(j.footR.x, j.footR.y, w.foot, w.foot * 0.55));
+  // Torso
+  parts.push(torsoPath(j, w));
+  // Neck — short tube from base of head to the neck point
+  parts.push(
+    tubePath(
+      { x: j.head.x, y: j.head.y + j.headR * 0.5 },
+      j.neck,
+      w.neck * 0.85,
+      w.neck,
+    ),
+  );
+  // Arms
+  parts.push(tubePath(j.shoulderL, j.elbowL, w.biceps, w.forearm));
+  parts.push(tubePath(j.elbowL, j.handL, w.forearm, w.wrist));
+  parts.push(ellipseArcPath(j.handL.x, j.handL.y, w.hand, w.hand));
+  parts.push(tubePath(j.shoulderR, j.elbowR, w.biceps, w.forearm));
+  parts.push(tubePath(j.elbowR, j.handR, w.forearm, w.wrist));
+  parts.push(ellipseArcPath(j.handR.x, j.handR.y, w.hand, w.hand));
+  // Head
+  parts.push(ellipseArcPath(j.head.x, j.head.y, j.headR, j.headR * 1.05));
+  return parts.join(" ");
+}
+
 function NeonBodyShape({
   j,
   w,
   fill,
-  stroke,
-  strokeWidth,
 }: {
   j: Joints;
   w: BodyWidths;
   fill: string;
-  stroke?: string;
-  strokeWidth?: number;
 }) {
-  // Hair sits behind the head, on the side opposite the neck (so
-  // it always reads as the "back" of the head no matter the pose).
-  const headVec = ptSub(j.head, j.neck);
-  const headDir = ptLen(headVec) > 0.5 ? ptUnit(headVec) : { x: 0, y: -1 };
-  const hairCenter = ptAdd(j.head, ptScale(headDir, j.headR * 0.55));
-  const hairAngle = (Math.atan2(headDir.y, headDir.x) * 180) / Math.PI;
-  return (
-    <g
-      fill={fill}
-      stroke={stroke}
-      strokeWidth={strokeWidth ?? 0}
-      strokeLinejoin="round"
-      strokeLinecap="round"
-    >
-      {j.hair && (
-        <ellipse
-          cx={hairCenter.x}
-          cy={hairCenter.y}
-          rx={j.headR * 1.2}
-          ry={j.headR * 1.6}
-          transform={`rotate(${fx(hairAngle + 90)} ${fx(hairCenter.x)} ${fx(hairCenter.y)})`}
-        />
-      )}
-      {/* Legs */}
-      <path d={tubePath(j.hipL, j.kneeL, w.thigh, w.upperCalf)} />
-      <path d={tubePath(j.kneeL, j.footL, w.upperCalf, w.ankle)} />
-      <ellipse cx={j.footL.x} cy={j.footL.y} rx={w.foot} ry={w.foot * 0.55} />
-      <path d={tubePath(j.hipR, j.kneeR, w.thigh, w.upperCalf)} />
-      <path d={tubePath(j.kneeR, j.footR, w.upperCalf, w.ankle)} />
-      <ellipse cx={j.footR.x} cy={j.footR.y} rx={w.foot} ry={w.foot * 0.55} />
-      {/* Torso */}
-      <path d={torsoPath(j, w)} />
-      {/* Neck — short tube from head base to neck point */}
-      <path
-        d={tubePath(
-          { x: j.head.x, y: j.head.y + j.headR * 0.5 },
-          j.neck,
-          w.neck * 0.85,
-          w.neck,
-        )}
-      />
-      {/* Arms */}
-      <path d={tubePath(j.shoulderL, j.elbowL, w.biceps, w.forearm)} />
-      <path d={tubePath(j.elbowL, j.handL, w.forearm, w.wrist)} />
-      <circle cx={j.handL.x} cy={j.handL.y} r={w.hand} />
-      <path d={tubePath(j.shoulderR, j.elbowR, w.biceps, w.forearm)} />
-      <path d={tubePath(j.elbowR, j.handR, w.forearm, w.wrist)} />
-      <circle cx={j.handR.x} cy={j.handR.y} r={w.hand} />
-      {/* Head */}
-      <ellipse cx={j.head.x} cy={j.head.y} rx={j.headR} ry={j.headR * 1.05} />
-    </g>
-  );
+  return <path d={bodyPath(j, w)} fill={fill} fillRule="nonzero" />;
 }
 
 function NeonSilhouette({
@@ -1406,14 +1648,11 @@ function NeonSilhouette({
       </g>
 
       {/* Solid body on top — covers the inside of the halos so only
-          the bleed around the silhouette edges remains visible */}
-      <NeonBodyShape
-        j={j}
-        w={widths}
-        fill="#070310"
-        stroke={`url(#${idEdge})`}
-        strokeWidth={1.1}
-      />
+          the bleed around the silhouette edges remains visible.
+          Deliberately no stroke: a stroke would outline every
+          internal sub-path, revealing seams between limbs. The
+          crisp rim is supplied by the tight-blur layer above. */}
+      <NeonBodyShape j={j} w={widths} fill="#070310" />
     </svg>
   );
 }
