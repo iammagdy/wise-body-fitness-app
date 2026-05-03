@@ -3380,7 +3380,11 @@ type RemotePlaybackLike = {
   prompt: () => Promise<void>;
   addEventListener: (type: string, cb: EventListener) => void;
   removeEventListener: (type: string, cb: EventListener) => void;
+  watchAvailability?: (cb: (available: boolean) => void) => Promise<number>;
+  cancelWatchAvailability?: (id: number) => Promise<void>;
 };
+
+type CastAvailability = "unknown" | "available" | "unavailable";
 
 type AirPlayEvent = Event & { availability?: "available" | "not-available" };
 
@@ -3401,6 +3405,7 @@ function useCast(
     airplay: false,
   });
   const [state, setState] = useState<CastState>("idle");
+  const [availability, setAvailability] = useState<CastAvailability>("unknown");
 
   // Detect support once
   useEffect(() => {
@@ -3461,6 +3466,38 @@ function useCast(
           remote.removeEventListener("connect", onConnect);
           remote.removeEventListener("disconnect", onDisconnect);
         });
+
+        // Watch device availability so we can hint when no nearby
+        // receivers exist. Some Chromium builds throw if called
+        // without an active gesture or in insecure contexts; treat
+        // any failure as "unknown" rather than blocking the button.
+        if (
+          typeof remote.watchAvailability === "function" &&
+          typeof remote.cancelWatchAvailability === "function"
+        ) {
+          let watchId: number | null = null;
+          let disposed = false;
+          remote
+            .watchAvailability((available) => {
+              setAvailability(available ? "available" : "unavailable");
+            })
+            .then((id) => {
+              if (disposed) {
+                remote.cancelWatchAvailability?.(id).catch(() => {});
+              } else {
+                watchId = id;
+              }
+            })
+            .catch(() => {
+              setAvailability("unknown");
+            });
+          disposers.push(() => {
+            disposed = true;
+            if (watchId != null) {
+              remote.cancelWatchAvailability?.(watchId).catch(() => {});
+            }
+          });
+        }
       }
 
       if (support.airplay) {
@@ -3473,9 +3510,12 @@ function useCast(
           else
             setState((prev) => (prev === "unsupported" ? prev : "idle"));
         };
-        const onAvailability = (_e: AirPlayEvent) => {
-          // Availability changes don't imply an active session;
-          // only update if we're already mid-connect.
+        const onAvailability = (e: AirPlayEvent) => {
+          // Availability changes don't imply an active session,
+          // but they do tell us whether nearby receivers exist.
+          if (e.availability === "available") setAvailability("available");
+          else if (e.availability === "not-available")
+            setAvailability("unavailable");
         };
         av.addEventListener(
           "webkitcurrentplaybacktargetiswirelesschanged",
@@ -3569,7 +3609,7 @@ function useCast(
     setState((prev) => (prev === "unsupported" ? prev : "idle"));
   }, [videoRef]);
 
-  return { state, support, start, stop };
+  return { state, support, availability, start, stop };
 }
 
 type Platform = "ios" | "android" | "macos" | "windows" | "other";
@@ -5876,42 +5916,76 @@ function WorkoutScreen({
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={async () => {
-              if (cast.state === "casting") {
-                cast.stop();
-                return;
-              }
-              const result = await cast.start();
-              // Only fall back to the help modal when the platform
-              // genuinely can't cast. A "failed" result usually means
-              // the user dismissed the picker — don't nag them.
-              if (result === "unsupported") onOpenCastModal();
-            }}
-            aria-label={
-              cast.state === "casting" ? "Stop casting to TV" : "Cast to TV"
-            }
-            aria-pressed={cast.state === "casting"}
-            title={cast.state === "casting" ? "Casting…" : "Cast to TV"}
-            className={`flex h-11 items-center justify-center gap-1.5 rounded-full px-3 shadow-sm transition active:scale-95 ${
-              cast.state === "casting"
-                ? "bg-stone-900 text-white active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
-                : "bg-white text-stone-900 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
-            }`}
-          >
-            {cast.state === "casting" ? <CastingIcon /> : <CastIcon />}
-            {cast.state === "casting" && (
-              <span className="text-xs font-semibold uppercase tracking-wide">
-                Casting · Stop
-              </span>
-            )}
-            {cast.state === "connecting" && (
-              <span className="text-xs font-semibold uppercase tracking-wide">
-                Connecting…
-              </span>
-            )}
-          </button>
+          {(() => {
+            const isCasting = cast.state === "casting";
+            const canPick = cast.support.remote || cast.support.airplay;
+            const noDevices =
+              canPick && !isCasting && cast.availability === "unavailable";
+            const helpOnly = !canPick;
+            const label = isCasting
+              ? "Stop casting to TV"
+              : helpOnly
+                ? "Cast help"
+                : noDevices
+                  ? "Cast to TV — no nearby TVs found, see help"
+                  : "Cast to TV";
+            const titleText = isCasting
+              ? "Casting…"
+              : helpOnly
+                ? "Cast help"
+                : noDevices
+                  ? "No nearby TVs found — see help"
+                  : "Cast to TV";
+            return (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (isCasting) {
+                    cast.stop();
+                    return;
+                  }
+                  if (helpOnly) {
+                    onOpenCastModal();
+                    return;
+                  }
+                  const result = await cast.start();
+                  // Only fall back to the help modal when the platform
+                  // genuinely can't cast. A "failed" result usually means
+                  // the user dismissed the picker — don't nag them.
+                  if (result === "unsupported") onOpenCastModal();
+                }}
+                aria-label={label}
+                aria-pressed={isCasting}
+                title={titleText}
+                className={`flex h-11 items-center justify-center gap-1.5 rounded-full px-3 shadow-sm transition active:scale-95 ${
+                  isCasting
+                    ? "bg-stone-900 text-white active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
+                    : helpOnly
+                      ? "bg-white/60 text-stone-500 active:bg-stone-100 dark:bg-stone-800/60 dark:text-stone-400 dark:active:bg-stone-700"
+                      : noDevices
+                        ? "bg-white text-stone-500 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-400 dark:active:bg-stone-700"
+                        : "bg-white text-stone-900 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
+                }`}
+              >
+                {isCasting ? <CastingIcon /> : <CastIcon />}
+                {isCasting && (
+                  <span className="text-xs font-semibold uppercase tracking-wide">
+                    Casting · Stop
+                  </span>
+                )}
+                {cast.state === "connecting" && (
+                  <span className="text-xs font-semibold uppercase tracking-wide">
+                    Connecting…
+                  </span>
+                )}
+                {!isCasting && cast.state !== "connecting" && noDevices && (
+                  <span className="text-[10px] font-medium normal-case tracking-normal text-stone-500 dark:text-stone-400">
+                    No TVs found
+                  </span>
+                )}
+              </button>
+            );
+          })()}
           {supported && (
             <button
               type="button"
