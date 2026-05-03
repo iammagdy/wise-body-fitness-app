@@ -368,19 +368,108 @@ type NeonFamily =
   | "press"        // overhead press, shoulder press (vertical push)
   | "kneel";       // kneeling holds, half-kneeling base
 
-// Per-exercise overrides for IDs that the regex cascade can't route
-// reliably. Overrides win over regex matching, so this is the
-// authoritative source for tricky entries.
+// Authoritative per-exercise mapping. Every exercise in EXERCISES
+// has an explicit entry here so routing cannot drift. The regex
+// fallback in neonFamilyFor() only runs for exercises added later
+// that haven't been classified yet.
 const NEON_FAMILY_OVERRIDES: Record<string, NeonFamily> = {
+  // motivation / strength starters
+  m1: "push",        // Push-Up
+  m2: "bridge",      // Single-Leg Glute Bridge
   m3: "row",         // Doorway Row
+  m4: "press",       // Pike Push-Up — vertical press
+  // weight loss
+  w1: "bridge",      // Hip Thrusts
+  w2: "lunge",       // Split Squat
+  w3: "cardio",      // Standing Donkey Kicks
+  w4: "squat",       // Bodyweight Squat
+  // beginner
+  b1: "plank",       // Plank Hold
+  b2: "cardio",      // Mountain Climbers
+  // women's health — pregnancy / postpartum / hormonal
+  wh1: "bridge",     // Pelvic Floor Bridge
+  wh2: "floor",      // Side-Lying Leg Raise
+  wh3: "floor",      // Prenatal Cat-Cow
+  wh4: "bridge",     // Pregnancy Pelvic Tilt
+  wh5: "stand",      // Diastasis Recovery Breath
+  wh6: "sidestretch",// Hormonal Yoga Flow
+  wh7: "cardio",     // Cortisol Reset Walk
+  // recovery — neck
+  rn1: "stand",      // Neck Rolls
+  rn2: "stand",      // Chin Tucks
+  rn3: "sidestretch",// Upper Trap Stretch
+  // recovery — feet
+  rf1: "floor",      // Foot Arch Massage
+  rf2: "floor",      // Toe Yoga
+  rf3: "fold",       // Calf Wall Stretch
+  // general recovery
+  r1: "stand",       // Standing Quad Stretch
+  r2: "fold",        // Hamstring Stretch
+  r3: "floor",       // Child's Pose
+  r4: "stand",       // Box Breathing
+  // strength (advanced)
+  s1: "cardio",      // Jump Squat
+  s2: "plank",       // Superman Hold
+  s3: "lunge",       // Reverse Lunge
   s4: "row",         // Towel Pull-Down
-  c3: "swing",       // Bodyweight Hip Hinge
   s5: "swing",       // Single-Leg Deadlift
-  m4: "press",       // Pike Push-Up — vertical press, not horizontal push
-  s6: "press",       // Pike Shoulder Tap — same shape as pike press
-  ps6: "kneel",      // Prenatal Squat Hold — held low, supported
-  pp2: "kneel",      // Bird Dog — quadruped on hands and knees
+  s6: "press",       // Pike Shoulder Tap
+  // conditioning / cardio
+  c1: "cardio",      // Invisible Jump Rope
+  c2: "cardio",      // Burpees
+  c3: "swing",       // Bodyweight Hip Hinge
+  c4: "cardio",      // Tuck Jumps
+  c5: "plank",       // Plank Shoulder Taps
+  c6: "plank",       // Bear Crawl
+  c7: "cardio",      // High Knees
+  c8: "situp",       // Bicycle Crunches
+  // pregnancy safe
   ps1: "squat",      // Wall Sit
+  ps2: "floor",      // Seated Towel Curl
+  ps3: "stand",      // Standing Calf Raise
+  ps4: "plank",      // Modified Side Plank
+  ps5: "stand",      // Standing Pelvic Rocks
+  ps6: "kneel",      // Prenatal Squat Hold
+  ps7: "floor",      // Seated Spinal Twist
+  // postpartum
+  pp1: "bridge",     // Glute Bridge
+  pp2: "kneel",      // Bird Dog
+  pp3: "floor",      // Heel Slides
+  pp4: "push",       // Wall Push-Up
+  pp5: "stand",      // Standing Pelvic Tilt
+  pp6: "situp",      // Dead Bug
+  pp7: "floor",      // Seated March
+  // hormonal
+  h1: "floor",       // Slow Yin Stretch
+  h2: "floor",       // Legs-Up-The-Wall
+  h3: "stand",       // Gentle Hip Circles
+  h4: "bridge",      // Supported Bridge
+  h5: "stand",       // Alternate Nostril Breathing
+  h6: "squat",       // Goddess Pose
+  h7: "floor",       // Reclined Butterfly
+  // tech neck
+  tn1: "sidestretch",// Doorway Chest Opener
+  tn2: "sidestretch",// Levator Scapulae Stretch
+  tn3: "stand",      // Scapular Squeezes
+  tn4: "sidestretch",// Wall Angels
+  tn5: "floor",      // Thread the Needle
+  tn6: "floor",      // Suboccipital Release
+  tn7: "floor",      // Seated Neck Flexion
+  // foot care
+  fc1: "floor",      // Plantar Fascia Press
+  fc2: "floor",      // Toe Splay
+  fc3: "cardio",     // Heel Walks
+  fc4: "stand",      // Ankle Circles
+  fc5: "floor",      // Towel Scrunches
+  fc6: "stand",      // Single-Leg Balance
+  fc7: "floor",      // Big Toe Stretch
+  // tension release
+  tr1: "floor",      // Pigeon Pose
+  tr2: "fold",       // Seated Forward Fold
+  tr3: "floor",      // Cat-Cow Flow
+  tr4: "floor",      // Thoracic Extension
+  tr5: "fold",       // Standing Forward Fold
+  tr6: "floor",      // Supine Twist
 };
 
 // Routing of every exercise → animation family. Ordering is load-
@@ -1571,7 +1660,6 @@ function NeonSilhouette({
   const idBg = `neon-bg-${uid}`;
   const idStrip = `neon-strip-${uid}`;
   const idHalo = `neon-halo-${uid}`;
-  const idEdge = `neon-edge-${uid}`;
   const idShadow = `neon-shadow-${uid}`;
   const idBigBlur = `neon-blur-big-${uid}`;
   const idTightBlur = `neon-blur-tight-${uid}`;
@@ -1598,11 +1686,6 @@ function NeonSilhouette({
           <stop offset="35%" stopColor="#d946ef" />
           <stop offset="65%" stopColor="#a78bfa" />
           <stop offset="100%" stopColor="#22d3ee" />
-        </linearGradient>
-        <linearGradient id={idEdge} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#ff5cf2" />
-          <stop offset="50%" stopColor="#c4b5fd" />
-          <stop offset="100%" stopColor="#38bdf8" />
         </linearGradient>
         <radialGradient id={idShadow} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#000000" stopOpacity="0.55" />
@@ -5434,6 +5517,20 @@ const EXERCISES: Exercise[] = [
   { id: "tr5", name: "Standing Forward Fold", targetMuscle: "Posterior Chain", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release", equipment: "none" },
   { id: "tr6", name: "Supine Twist", targetMuscle: "Lower Back", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release", equipment: "mat" },
 ];
+
+// Dev-only safety net: every exercise must have an explicit
+// NEON_FAMILY_OVERRIDES entry so its silhouette animation cannot
+// silently fall back to the generic stand pose.
+if (import.meta.env.DEV) {
+  const missing = EXERCISES.filter((ex) => !(ex.id in NEON_FAMILY_OVERRIDES));
+  if (missing.length > 0) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[neon] EXERCISES missing NEON_FAMILY_OVERRIDES entry:",
+      missing.map((ex) => `${ex.id} (${ex.name})`).join(", "),
+    );
+  }
+}
 
 // Dev-only safety net: catch any new exercise that forgets to declare equipment.
 if (import.meta.env.DEV) {
