@@ -336,13 +336,6 @@ function getCuesFor(ex: Exercise): ArabicCues {
 // Files placed in /public/loops must be registered here; see
 // /public/loops/README.md.
 const LOOP_MANIFEST = new Set<string>([
-  // Per-exercise AI-generated demonstration clips (pilot, Task #26)
-  "m1",   // Push-Up
-  "w4",   // Bodyweight Squat
-  "b1",   // Plank Hold
-  "pp1",  // Glute Bridge
-  "s3",   // Reverse Lunge
-  "tr1",  // Pigeon Pose
   // Sub-category fallback loops (one per sub-category)
   "strength",
   "conditioning",
@@ -354,11 +347,28 @@ const LOOP_MANIFEST = new Set<string>([
   "tension-release",
 ]);
 
+// Exercises that ship with per-gender stylized cartoon demo clips
+// at /loops/<id>__man.mp4 and /loops/<id>__woman.mp4 (Task #29).
+const GENDERED_LOOP_MANIFEST = new Set<string>([
+  "m1",   // Push-Up
+  "w4",   // Bodyweight Squat
+  "b1",   // Plank Hold
+  "pp1",  // Glute Bridge
+  "s3",   // Reverse Lunge
+  "tr1",  // Pigeon Pose
+]);
+
 function subCategorySlug(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-function loopSourceFor(exercise: Exercise): string | null {
+function loopSourceFor(
+  exercise: Exercise,
+  gender: Gender | null,
+): string | null {
+  if (gender && GENDERED_LOOP_MANIFEST.has(exercise.id)) {
+    return `loops/${exercise.id}__${gender}.mp4`;
+  }
   if (LOOP_MANIFEST.has(exercise.id)) return `loops/${exercise.id}.mp4`;
   const slug = subCategorySlug(exercise.sub_category);
   if (LOOP_MANIFEST.has(slug)) return `loops/${slug}.mp4`;
@@ -3357,15 +3367,27 @@ function ResolvedIllustration({ exercise }: { exercise: Exercise }) {
 
 function ExerciseLoop({
   exercise,
+  gender,
   videoRef,
 }: {
   exercise: Exercise;
+  gender: Gender | null;
   videoRef?: React.RefObject<HTMLVideoElement | null>;
 }) {
-  const src = loopSourceFor(exercise);
+  const src = loopSourceFor(exercise, gender);
   const reducedMotion = useReducedMotion();
+  // iOS WebKit ignores an ancestor's border-radius when clipping a
+  // <video> child (the video paints past the rounded corners). The
+  // fixes that actually work cross-platform are: (1) establish a new
+  // paint isolation context on the rounded container with
+  // `isolation: isolate` + a GPU layer (`translateZ(0)`), and (2)
+  // also apply the rounded clip directly to the video element so it
+  // visually matches the frame even if the parent's clip leaks.
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-3xl bg-gradient-to-br from-stone-200 to-stone-100 text-stone-600 shadow-inner ring-1 ring-stone-200/60 dark:from-stone-800 dark:to-stone-900 dark:text-stone-300 dark:ring-stone-800/60">
+    <div
+      className="relative h-full w-full overflow-hidden rounded-3xl bg-gradient-to-br from-stone-200 to-stone-100 text-stone-600 shadow-inner ring-1 ring-stone-200/60 dark:from-stone-800 dark:to-stone-900 dark:text-stone-300 dark:ring-stone-800/60"
+      style={{ isolation: "isolate", transform: "translateZ(0)" }}
+    >
       <div className="absolute inset-0">
         <ResolvedIllustration exercise={exercise} />
       </div>
@@ -3379,7 +3401,7 @@ function ExerciseLoop({
           loop
           playsInline
           preload="metadata"
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full rounded-3xl object-cover"
           // Native casting attributes so this element is the real
           // surface for Remote Playback (Chromium) and AirPlay (Safari).
           disableRemotePlayback={false}
@@ -5759,6 +5781,7 @@ function WorkoutScreen({
   playlist,
   index,
   active,
+  gender,
   onBack,
   onChangeIndex,
   videoRef,
@@ -5769,6 +5792,7 @@ function WorkoutScreen({
   playlist: Exercise[];
   index: number;
   active: boolean;
+  gender: Gender | null;
   onBack: () => void;
   onChangeIndex: (next: number) => void;
   videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -6122,7 +6146,7 @@ function WorkoutScreen({
 
       {/* Looping animation */}
       <div className="shrink-0 px-4 pt-2" style={{ height: "34%" }}>
-        <ExerciseLoop exercise={exercise} videoRef={videoRef} />
+        <ExerciseLoop exercise={exercise} gender={gender} videoRef={videoRef} />
       </div>
 
       {/* Honest UX fallback if no Arabic voice available */}
@@ -6689,6 +6713,7 @@ function App() {
             playlist={playlist}
             index={playlistIndex}
             active={screen === "workout"}
+            gender={gender}
             onBack={handleBackFromWorkout}
             onChangeIndex={(next) =>
               setPlaylistIndex(Math.max(0, Math.min(playlist.length - 1, next)))

@@ -36,3 +36,75 @@ id = "-JHMAoA2jLMqRGbYgSV7H"
 uri = "file://artifacts/fitvision/public/loops/tr1.mp4"
 type = "video"
 title = "Pigeon Pose (tr1) — pilot AI loop"
+
+[[outputs]]
+id = "hOfTnSN8KVGorUe5Azssh"
+uri = "file://artifacts/fitvision/public/loops/m1__man.mp4"
+type = "video"
+title = "Push-Up — male character"
+
+[[outputs]]
+id = "DZ7lokX2G8rdwW4w_1avE"
+uri = "file://artifacts/fitvision/public/loops/m1__woman.mp4"
+type = "video"
+title = "Push-Up — female character"
+
+[[outputs]]
+id = "WZ3P1j1dYM5d_7oDiQOy-"
+uri = "file://artifacts/fitvision/public/loops/w4__man.mp4"
+type = "video"
+title = "Bodyweight Squat — male character"
+
+[[outputs]]
+id = "ie_rwMijpnH4L_JE_cd9_"
+uri = "file://artifacts/fitvision/public/loops/w4__woman.mp4"
+type = "video"
+title = "Bodyweight Squat — female character"
+
+[[outputs]]
+id = "QZyFEKJEqZOT5yXNwost3"
+uri = "file://artifacts/fitvision/public/loops/b1__man.mp4"
+type = "video"
+title = "Plank Hold — male character"
+
+[[outputs]]
+id = "x_SF_Kzsm_FY1sZfJi5XL"
+uri = "file://artifacts/fitvision/public/loops/b1__woman.mp4"
+type = "video"
+title = "Plank Hold — female character"
+
+[[outputs]]
+id = "iza6mrCpPlN6Zglo5mGn0"
+uri = "file://artifacts/fitvision/public/loops/pp1__man.mp4"
+type = "video"
+title = "Glute Bridge — male character"
+
+[[outputs]]
+id = "YfEFHJwfziNMhFraEAeuP"
+uri = "file://artifacts/fitvision/public/loops/pp1__woman.mp4"
+type = "video"
+title = "Glute Bridge — female character"
+
+[[outputs]]
+id = "1EfDEaze8vy0JfDImorNI"
+uri = "file://artifacts/fitvision/public/loops/s3__man.mp4"
+type = "video"
+title = "Reverse Lunge — male character"
+
+[[outputs]]
+id = "L7uDbXSGjomaxgG02jUVE"
+uri = "file://artifacts/fitvision/public/loops/s3__woman.mp4"
+type = "video"
+title = "Reverse Lunge — female character"
+
+[[outputs]]
+id = "XBHqpkjS-5f6Fcfl-18Iw"
+uri = "file://artifacts/fitvision/public/loops/tr1__man.mp4"
+type = "video"
+title = "Pigeon Pose — male character"
+
+[[outputs]]
+id = "EDLv0Xg4NckOmHDtG3N6W"
+uri = "file://artifacts/fitvision/public/loops/tr1__woman.mp4"
+type = "video"
+title = "Pigeon Pose — female character"
