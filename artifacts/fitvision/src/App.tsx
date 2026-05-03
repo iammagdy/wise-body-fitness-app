@@ -7953,6 +7953,21 @@ if (import.meta.env.DEV) {
 }
 
 function WiseBodyMark({ size = 64 }: { size?: number }) {
+  // Design language:
+  //   - Rounded crimson badge with a warm coral gradient and a soft
+  //     golden glow at the top (premium, energetic, fitness-coded).
+  //   - A meditative figure standing tall: head + torso + legs as a
+  //     single ivory silhouette (the "Body").
+  //   - Arms reach up overhead and curve inward to cradle a small
+  //     gold orb above the head — a halo arcs over the orb. The
+  //     cradled orb + halo evoke wisdom / mindfulness (the "Wise").
+  //   - A faint ground line anchors the figure.
+  // The mark reads cleanly at 40px (top bar) and at 156px (welcome
+  // hero) because the silhouette is bold and the gold accents land
+  // on a clear vertical axis.
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const idBg = `wbm-bg-${uid}`;
+  const idGlow = `wbm-glow-${uid}`;
   return (
     <svg
       width={size}
@@ -7962,21 +7977,98 @@ function WiseBodyMark({ size = 64 }: { size?: number }) {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <rect width="180" height="180" rx="36" fill="#A8121A" />
-      <path
-        d="M38 70 L62 140 L90 100 L118 140 L142 70"
+      <defs>
+        <linearGradient id={idBg} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#5C0D14" />
+          <stop offset="55%" stopColor="#A8121A" />
+          <stop offset="100%" stopColor="#FF6A4D" />
+        </linearGradient>
+        <radialGradient id={idGlow} cx="50%" cy="0%" r="65%">
+          <stop offset="0%" stopColor="#FFE0B0" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="#FFE0B0" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* Badge */}
+      <rect width="180" height="180" rx="40" fill={`url(#${idBg})`} />
+      <rect width="180" height="180" rx="40" fill={`url(#${idGlow})`} />
+      <rect
+        x="3"
+        y="3"
+        width="174"
+        height="174"
+        rx="37"
         fill="none"
         stroke="#FFFFFF"
-        strokeWidth="18"
-        strokeLinejoin="round"
-        strokeLinecap="round"
+        strokeOpacity="0.10"
+        strokeWidth="1.5"
       />
-      <circle cx="138" cy="40" r="22" fill="#FFFFFF" />
-      <g fill="#A8121A">
-        <rect x="124" y="37" width="28" height="6" rx="2" />
-        <rect x="119" y="30" width="6" height="20" rx="2" />
-        <rect x="151" y="30" width="6" height="20" rx="2" />
-      </g>
+
+      {/* Wisdom halo arc above the cradled orb */}
+      <path
+        d="M 56 52 Q 90 12 124 52"
+        fill="none"
+        stroke="#FFD89B"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        opacity="0.95"
+      />
+
+      {/* Cradled wisdom orb (sun / third eye) */}
+      <circle cx="90" cy="42" r="7" fill="#FFD89B" />
+      <circle cx="88.5" cy="40" r="2.4" fill="#FFF6E2" opacity="0.75" />
+
+      {/* Arms reaching up to cradle the orb (forms a chalice shape) */}
+      <path
+        d="M 74 84 Q 46 78 50 50 Q 56 38 82 44"
+        fill="none"
+        stroke="#FFFAF1"
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M 106 84 Q 134 78 130 50 Q 124 38 98 44"
+        fill="none"
+        stroke="#FFFAF1"
+        strokeWidth="10"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      {/* Head */}
+      <circle cx="90" cy="70" r="11" fill="#FFFAF1" />
+
+      {/* Body — torso flowing into legs as one strong silhouette */}
+      <path
+        d="M 74 84
+           Q 70 100 76 114
+           Q 72 134 76 156
+           Q 76 162 82 162
+           L 87 162
+           Q 88 148 88 132
+           L 88 118
+           L 92 118
+           L 92 132
+           Q 92 148 93 162
+           L 98 162
+           Q 104 162 104 156
+           Q 108 134 104 114
+           Q 110 100 106 84
+           Z"
+        fill="#FFFAF1"
+      />
+
+      {/* Ground / foundation */}
+      <rect
+        x="58"
+        y="168"
+        width="64"
+        height="3"
+        rx="1.5"
+        fill="#FFFAF1"
+        opacity="0.35"
+      />
     </svg>
   );
 }
