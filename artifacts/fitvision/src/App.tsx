@@ -9058,9 +9058,14 @@ function DashboardScreen({
               <p className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
                 {CATEGORY_HEADINGS[category]}
               </p>
-              <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
-                Wise Body
-              </h1>
+              <div className="mt-0.5 flex items-baseline gap-2">
+                <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+                  Wise Body
+                </h1>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
+                  v1.1
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
