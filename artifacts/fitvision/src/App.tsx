@@ -22,6 +22,22 @@ function systemPrefersDark(): boolean {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState<boolean>(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    setReduced(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return reduced;
+}
+
 function applyDomTheme(isDark: boolean) {
   const root = document.documentElement;
   root.classList.toggle("dark", isDark);
@@ -3340,12 +3356,13 @@ function ExerciseLoop({
   videoRef?: React.RefObject<HTMLVideoElement | null>;
 }) {
   const src = loopSourceFor(exercise);
+  const reducedMotion = useReducedMotion();
   return (
     <div className="relative h-full w-full overflow-hidden rounded-3xl bg-gradient-to-br from-stone-200 to-stone-100 text-stone-600 shadow-inner ring-1 ring-stone-200/60 dark:from-stone-800 dark:to-stone-900 dark:text-stone-300 dark:ring-stone-800/60">
       <div className="absolute inset-0">
         <ResolvedIllustration exercise={exercise} />
       </div>
-      {src && (
+      {src && !reducedMotion && (
         <video
           ref={videoRef}
           key={src}
