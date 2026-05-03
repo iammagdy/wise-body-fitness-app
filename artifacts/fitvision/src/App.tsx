@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 
 type ThemePref = "system" | "light" | "dark";
@@ -3823,7 +3824,29 @@ function widthsFor(body: NeonBody): BodyWidths {
 // Smooth torso polygon: shoulders → pinched waist → hips, closed
 // back up the other side using cubic bezier curves so it tapers
 // like a real body silhouette rather than a rectangle.
+//
+// For side-view poses (where shoulders or hips collapse onto a
+// single point), the bezier polygon would draw a degenerate shape
+// because shoulderL/R no longer mark opposite sides of the trunk.
+// In that case we fall back to a tapered tube that traces the
+// spine itself, which produces a clean, connected torso for any
+// orientation (supine bridge, push-up, side-plank, etc.).
 function torsoPath(j: Joints, w: BodyWidths): string {
+  const shoulderSpan = ptLen(ptSub(j.shoulderR, j.shoulderL));
+  const hipSpan = ptLen(ptSub(j.hipR, j.hipL));
+  const sideViewThreshold = w.neck * 1.6;
+  if (shoulderSpan < sideViewThreshold || hipSpan < sideViewThreshold) {
+    // Side-view fallback: tapered tube along the spine.
+    const topW = Math.max(w.waist * 0.85, w.neck * 1.7);
+    const midW = Math.max(w.waist * 0.7, w.neck * 1.5);
+    const botW = Math.max(w.waist * 0.95, w.neck * 1.7);
+    const spineMid = ptAdd(j.neck, ptScale(ptSub(j.pelvis, j.neck), 0.5));
+    return (
+      tubePath(j.neck, spineMid, topW, midW) +
+      " " +
+      tubePath(spineMid, j.pelvis, midW, botW)
+    );
+  }
   const spineVec = ptSub(j.pelvis, j.neck);
   const spineLen = ptLen(spineVec);
   const spineDir = ptUnit(spineVec);
@@ -3903,15 +3926,16 @@ function bodyPath(j: Joints, w: BodyWidths): string {
   parts.push(ellipseArcPath(j.footR.x, j.footR.y, w.foot, w.foot * 0.55));
   // Torso
   parts.push(torsoPath(j, w));
-  // Neck — short tube from base of head to the neck point
-  parts.push(
-    tubePath(
-      { x: j.head.x, y: j.head.y + j.headR * 0.5 },
-      j.neck,
-      w.neck * 0.85,
-      w.neck,
-    ),
-  );
+  // Spine connector — guarantees the silhouette stays unioned from
+  // neck to pelvis even when the torso polygon collapses (e.g. the
+  // neck and one shoulder land on opposite sides of the spine for
+  // an extreme twist). With nonzero fill rule this just merges
+  // into the torso shape and is invisible when redundant.
+  parts.push(tubePath(j.neck, j.pelvis, w.neck * 1.4, w.neck * 1.4));
+  // Neck — tube from the head center toward the neck point. Using
+  // the head center (not an offset) guarantees overlap with the
+  // head ellipse so head and torso always read as one body.
+  parts.push(tubePath(j.head, j.neck, w.neck * 0.95, w.neck));
   // Arms
   parts.push(tubePath(j.shoulderL, j.elbowL, w.biceps, w.forearm));
   parts.push(tubePath(j.elbowL, j.handL, w.forearm, w.wrist));
@@ -8085,60 +8109,107 @@ function WiseBodyMark({ size = 64 }: { size?: number }) {
 }
 
 function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
+  const reduced = useReducedMotion();
+  // Choreography: brand mark scales + glow builds, then headline,
+  // tagline, and CTAs cascade in. With reduced-motion, everything
+  // appears instantly.
+  const baseTransition = reduced
+    ? { duration: 0 }
+    : { type: "spring" as const, stiffness: 220, damping: 26, mass: 0.9 };
+  const fadeUp = (delay: number) => ({
+    initial: reduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 },
+    animate: { opacity: 1, y: 0 },
+    transition: { ...baseTransition, delay: reduced ? 0 : delay },
+  });
+  const tap = reduced ? undefined : { scale: 0.96 };
+  const hover = reduced ? undefined : { scale: 1.015 };
+
   return (
     <div className="absolute inset-0 flex flex-col px-6 pt-safe pb-safe">
       {/* Hero brand mark */}
       <div className="relative mt-10 flex h-56 w-full items-center justify-center">
-        <div
-          className="absolute inset-0 mx-auto h-56 w-56 rounded-full opacity-70 blur-3xl"
+        <motion.div
+          className="absolute inset-0 mx-auto h-56 w-56 rounded-full blur-3xl"
           style={{
             background:
               "radial-gradient(circle, rgba(168,18,26,0.30) 0%, rgba(168,18,26,0) 70%)",
           }}
+          initial={reduced ? { opacity: 0.7, scale: 1 } : { opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 0.7, scale: 1 }}
+          transition={reduced ? { duration: 0 } : { duration: 1.1, ease: "easeOut", delay: 0.1 }}
         />
-        <div className="relative z-10">
+        <motion.div
+          className="relative z-10"
+          initial={reduced ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.55, rotate: -6 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 180, damping: 14, mass: 1 }}
+        >
           <WiseBodyMark size={156} />
-        </div>
+        </motion.div>
       </div>
 
       <div className="mt-2 flex flex-1 flex-col items-center justify-center text-center">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#A8121A] dark:text-red-400">
+        <motion.p
+          {...fadeUp(0.35)}
+          className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#A8121A] dark:text-red-400"
+        >
           Home workouts · No equipment
-        </p>
-        <h1 className="mt-3 text-5xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+        </motion.p>
+        <motion.h1
+          {...fadeUp(0.42)}
+          className="mt-3 text-5xl font-bold tracking-tight text-stone-900 dark:text-stone-50"
+        >
           Wise Body
-        </h1>
-        <p className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+        </motion.h1>
+        <motion.p
+          {...fadeUp(0.5)}
+          className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500"
+        >
           Fitness App
-        </p>
-        <p className="mt-3 max-w-xs text-base leading-snug text-stone-500 dark:text-stone-400">
+        </motion.p>
+        <motion.p
+          {...fadeUp(0.58)}
+          className="mt-3 max-w-xs text-base leading-snug text-stone-500 dark:text-stone-400"
+        >
           Strength, recovery and breathing sessions you can do in your living room — no gear required.
-        </p>
-        <p className="mt-4 text-[11px] font-medium tracking-wide text-stone-400 dark:text-stone-500">
+        </motion.p>
+        <motion.p
+          {...fadeUp(0.66)}
+          className="mt-4 text-[11px] font-medium tracking-wide text-stone-400 dark:text-stone-500"
+        >
           Part of The Wise Cloud · fitness.thewise.cloud
-        </p>
+        </motion.p>
       </div>
 
       <div className="flex w-full flex-col gap-3 pb-4">
-        <p className="text-center text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+        <motion.p
+          {...fadeUp(0.74)}
+          className="text-center text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500"
+        >
           Pick what fits you
-        </p>
-        <button
+        </motion.p>
+        <motion.button
+          {...fadeUp(0.82)}
+          whileTap={tap}
+          whileHover={hover}
           type="button"
           onClick={() => onSelect("man")}
-          className="w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
+          className="w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm dark:bg-stone-50 dark:text-stone-900"
           style={{ minHeight: 60 }}
         >
           I am a Man
-        </button>
-        <button
+        </motion.button>
+        <motion.button
+          {...fadeUp(0.9)}
+          whileTap={tap}
+          whileHover={hover}
           type="button"
           onClick={() => onSelect("woman")}
-          className="w-full rounded-2xl border border-stone-200 bg-white px-6 text-lg font-semibold text-stone-900 shadow-sm transition active:scale-[0.98] active:bg-stone-100 dark:border-stone-800 dark:bg-stone-900 dark:text-stone-50 dark:active:bg-stone-800"
+          className="w-full rounded-2xl border border-stone-200 bg-white px-6 text-lg font-semibold text-stone-900 shadow-sm dark:border-stone-800 dark:bg-stone-900 dark:text-stone-50"
           style={{ minHeight: 60 }}
         >
           I am a Woman
-        </button>
+        </motion.button>
       </div>
     </div>
   );
@@ -10100,6 +10171,87 @@ function WorkoutScreen({
   );
 }
 
+// ===== Spring screen-slide wrapper =====
+// Used by AnimatePresence to slide the active screen in from one
+// side and the previous screen out the opposite way, with a soft
+// spring. Honors prefers-reduced-motion by swapping the slide for
+// a near-instant fade.
+function ScreenSlide({
+  children,
+  direction,
+  reduced,
+}: {
+  children: ReactNode;
+  direction: 1 | -1;
+  reduced: boolean;
+}) {
+  const spring = { type: "spring" as const, stiffness: 320, damping: 34, mass: 0.9 };
+  if (reduced) {
+    return (
+      <motion.div
+        className="absolute inset-0"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.12 }}
+      >
+        {children}
+      </motion.div>
+    );
+  }
+  return (
+    <motion.div
+      className="absolute inset-0"
+      initial={{ x: direction > 0 ? "100%" : "-100%", opacity: 0.6 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: direction > 0 ? "-25%" : "25%", opacity: 0 }}
+      transition={spring}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ===== Confetti burst =====
+// Lightweight celebration: ~24 colored particles spring outward
+// from the badge with random angle/distance/rotation, then fade.
+// Gated by prefers-reduced-motion (renders nothing).
+function ConfettiBurst({ active }: { active: boolean }) {
+  const reduced = useReducedMotion();
+  const pieces = useMemo(() => {
+    const colors = ["#A8121A", "#F59E0B", "#10B981", "#3B82F6", "#EC4899", "#FFD89B"];
+    return Array.from({ length: 26 }, (_, i) => {
+      const angle = (i / 26) * Math.PI * 2 + Math.random() * 0.4;
+      const dist = 90 + Math.random() * 110;
+      return {
+        id: i,
+        x: Math.cos(angle) * dist,
+        y: Math.sin(angle) * dist,
+        rot: (Math.random() - 0.5) * 720,
+        color: colors[i % colors.length],
+        delay: Math.random() * 0.06,
+        w: 6 + Math.random() * 6,
+        h: 9 + Math.random() * 9,
+      };
+    });
+  }, []);
+  if (reduced || !active) return null;
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[60] flex items-center justify-center overflow-hidden">
+      {pieces.map((p) => (
+        <motion.span
+          key={p.id}
+          className="absolute block rounded-sm"
+          style={{ width: p.w, height: p.h, backgroundColor: p.color }}
+          initial={{ x: 0, y: 0, rotate: 0, opacity: 1, scale: 0.6 }}
+          animate={{ x: p.x, y: p.y, rotate: p.rot, opacity: 0, scale: 1 }}
+          transition={{ duration: 1.4, delay: p.delay, ease: [0.18, 0.78, 0.32, 1] }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function formatElapsed(totalSeconds: number): string {
   const s = Math.max(0, Math.round(totalSeconds));
   const h = Math.floor(s / 3600);
@@ -10123,17 +10275,54 @@ function WorkoutSummary({
   onDone: () => void;
 }) {
   const doneRef = useRef<HTMLButtonElement | null>(null);
+  const reduced = useReducedMotion();
   useEffect(() => {
     doneRef.current?.focus();
   }, []);
+  const stat = (delay: number) => ({
+    initial: reduced ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 12, scale: 0.92 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    transition: reduced
+      ? { duration: 0 }
+      : { type: "spring" as const, stiffness: 320, damping: 22, mass: 0.8, delay },
+  });
   return (
-    <div
+    <motion.div
       role="dialog"
       aria-modal="true"
       aria-labelledby="workout-summary-title"
       className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-stone-50/95 px-6 backdrop-blur-sm dark:bg-stone-950/95"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18 }}
     >
-      <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl dark:bg-stone-900">
+      <ConfettiBurst active />
+      <motion.div
+        className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl dark:bg-stone-900"
+        initial={reduced ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.85, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={
+          reduced
+            ? { duration: 0 }
+            : { type: "spring", stiffness: 260, damping: 22, mass: 0.95 }
+        }
+      >
+        {/* Celebratory check badge */}
+        <motion.div
+          className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg"
+          initial={reduced ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -90 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={
+            reduced
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 380, damping: 16, delay: 0.18 }
+          }
+          aria-hidden="true"
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 12.5l4.5 4.5L19 7" />
+          </svg>
+        </motion.div>
         <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400">
           Workout complete
         </p>
@@ -10148,42 +10337,53 @@ function WorkoutSummary({
         </p>
 
         <dl className="mt-6 grid grid-cols-3 gap-3">
-          <div className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800">
+          <motion.div
+            {...stat(0.22)}
+            className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800"
+          >
             <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
               Exercises
             </dt>
             <dd className="mt-1 text-2xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
               {totalExercises}
             </dd>
-          </div>
-          <div className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800">
+          </motion.div>
+          <motion.div
+            {...stat(0.3)}
+            className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800"
+          >
             <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
               Sets
             </dt>
             <dd className="mt-1 text-2xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
               {completedSets}
             </dd>
-          </div>
-          <div className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800">
+          </motion.div>
+          <motion.div
+            {...stat(0.38)}
+            className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800"
+          >
             <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
               Time
             </dt>
             <dd className="mt-1 text-2xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
               {formatElapsed(elapsedSeconds)}
             </dd>
-          </div>
+          </motion.div>
         </dl>
 
-        <button
+        <motion.button
           ref={doneRef}
           type="button"
           onClick={onDone}
-          className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-stone-900 text-base font-semibold text-white shadow-sm transition active:scale-[0.98] active:bg-stone-800 dark:bg-stone-50 dark:text-stone-900 dark:active:bg-stone-200"
+          whileTap={reduced ? undefined : { scale: 0.96 }}
+          whileHover={reduced ? undefined : { scale: 1.015 }}
+          className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-stone-900 text-base font-semibold text-white shadow-sm dark:bg-stone-50 dark:text-stone-900"
         >
           Done
-        </button>
-      </div>
-    </div>
+        </motion.button>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -10402,6 +10602,15 @@ function App() {
   const [screen, setScreen] = useState<Screen>(
     initialGender ? "dashboard" : "welcome",
   );
+  // Tracks navigation direction so screen transitions slide in the
+  // correct direction (forward = next slides in from the right,
+  // backward = next slides in from the left).
+  const [navDirection, setNavDirection] = useState<1 | -1>(1);
+  const goScreen = useCallback((next: Screen, dir: 1 | -1) => {
+    setNavDirection(dir);
+    setScreen(next);
+  }, []);
+  const reducedMotionApp = useReducedMotion();
   const [gender, setGender] = useState<Gender | null>(initialGender);
   const { history, logSession, clearHistory } = useWorkoutHistory();
   const [playlist, setPlaylist] = useState<Exercise[]>([]);
@@ -10450,7 +10659,7 @@ function App() {
       /* ignore */
     }
     setGender(g);
-    setScreen("dashboard");
+    goScreen("dashboard", 1);
   };
 
   const handleResetProfile = () => {
@@ -10461,18 +10670,18 @@ function App() {
     }
     clearHistory();
     setGender(null);
-    setScreen("welcome");
+    goScreen("welcome", -1);
   };
 
   const handleSelectExercise = (nextPlaylist: Exercise[], index: number) => {
     cancelPendingUnmount();
     setPlaylist(nextPlaylist);
     setPlaylistIndex(index);
-    setScreen("workout");
+    goScreen("workout", 1);
   };
 
   const handleBackFromWorkout = () => {
-    setScreen("dashboard");
+    goScreen("dashboard", -1);
     cancelPendingUnmount();
     // While casting, keep the workout layer (and therefore the
     // video element) mounted so the cast session survives in-app
@@ -10501,36 +10710,53 @@ function App() {
 
   return (
     <div className="relative mx-auto h-dvh w-full max-w-md overflow-hidden bg-stone-50 dark:bg-stone-950">
-      <div
-        className={`absolute inset-0 transition-opacity duration-500 ease-in-out ${
-          screen === "welcome" ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-      >
-        <WelcomeScreen onSelect={handleSelectGender} />
-      </div>
-
-      <div
-        className={`absolute inset-0 transition-opacity duration-500 ease-in-out ${
-          screen === "dashboard" ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-      >
-        <DashboardScreen
-          gender={gender}
-          onSelectExercise={handleSelectExercise}
-          themePref={themePref}
-          onThemeChange={setTheme}
-          onResetProfile={handleResetProfile}
-          history={history}
-          onClearHistory={clearHistory}
-        />
-      </div>
-
-      <div
-        className={`absolute inset-0 transition-opacity duration-300 ease-in-out ${
-          screen === "workout" ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-      >
-        {activeExercise && playlist.length > 0 && (
+      {/* Welcome and Dashboard slide in/out with a directional spring.
+          Workout is intentionally rendered OUTSIDE AnimatePresence so
+          its <video> element (and any active cast session) survives
+          navigation back to the dashboard — the original code held
+          this invariant via a permanently-mounted hidden div. */}
+      <AnimatePresence initial={false} mode="sync" custom={navDirection}>
+        {screen === "welcome" && (
+          <ScreenSlide key="welcome" direction={navDirection} reduced={reducedMotionApp}>
+            <WelcomeScreen onSelect={handleSelectGender} />
+          </ScreenSlide>
+        )}
+        {screen === "dashboard" && (
+          <ScreenSlide key="dashboard" direction={navDirection} reduced={reducedMotionApp}>
+            <DashboardScreen
+              gender={gender}
+              onSelectExercise={handleSelectExercise}
+              themePref={themePref}
+              onThemeChange={setTheme}
+              onResetProfile={handleResetProfile}
+              history={history}
+              onClearHistory={clearHistory}
+            />
+          </ScreenSlide>
+        )}
+      </AnimatePresence>
+      {activeExercise && playlist.length > 0 && (
+        <motion.div
+          className="absolute inset-0"
+          initial={false}
+          animate={
+            reducedMotionApp
+              ? { opacity: screen === "workout" ? 1 : 0 }
+              : {
+                  x: screen === "workout" ? "0%" : "100%",
+                  opacity: screen === "workout" ? 1 : 0,
+                }
+          }
+          transition={
+            reducedMotionApp
+              ? { duration: 0.12 }
+              : { type: "spring", stiffness: 320, damping: 34, mass: 0.9 }
+          }
+          style={{
+            pointerEvents: screen === "workout" ? "auto" : "none",
+          }}
+          aria-hidden={screen !== "workout"}
+        >
           <WorkoutScreen
             playlist={playlist}
             index={playlistIndex}
@@ -10543,8 +10769,8 @@ function App() {
             onOpenCastModal={() => setCastModalOpen(true)}
             onLogSession={logSession}
           />
-        )}
-      </div>
+        </motion.div>
+      )}
 
       {/* Casting pill — visible on dashboard while a cast session is
           alive, so the user can always stop the cast even after
