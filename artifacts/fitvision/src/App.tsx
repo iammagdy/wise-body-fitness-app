@@ -3325,9 +3325,9 @@ function RepsBody({
   setNumber: number;
   totalSets: number;
 }) {
-  const [reps, setReps] = useState(exercise.reps);
+  const [reps, setReps] = useState(0);
   useEffect(() => {
-    setReps(exercise.reps);
+    setReps(0);
   }, [exercise.id, exercise.reps, setNumber]);
 
   return (
