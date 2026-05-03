@@ -7953,15 +7953,13 @@ if (import.meta.env.DEV) {
 }
 
 function WiseBodyMark({ size = 64 }: { size?: number }) {
-  // Design language (v4 — fitness-first):
-  //   - Deep wine → crimson gradient badge (energy, brand red).
-  //   - Bold ivory KETTLEBELL silhouette as the hero — the most
-  //     instantly readable "fitness app" icon, recognizable even
-  //     at 16×16 favicon size.
-  //   - A small gold north-star above the bell — the single "wise"
-  //     accent (guidance, mindfulness) without diluting the fitness
-  //     signal.
-  //   - Soft warm top-glow + faint inner highlight ring for depth.
+  // Design language (v5 — dumbbell):
+  //   - Deep wine → crimson gradient badge (brand red, energy).
+  //   - A bold horizontal DUMBBELL: thick bar with knurled grip in
+  //     the middle, two stacked weight plates on each side. The
+  //     most universally recognized "fitness" icon.
+  //   - Ivory weights with a subtle vertical highlight on each
+  //     inner plate for dimensionality.
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const idBg = `wbm-bg-${uid}`;
   const idGlow = `wbm-glow-${uid}`;
@@ -8006,53 +8004,81 @@ function WiseBodyMark({ size = 64 }: { size?: number }) {
         strokeWidth="1.5"
       />
 
-      {/* Tiny gold "wise" north-star above the bell */}
-      <g opacity="0.95">
-        <circle cx="90" cy="22" r="2.6" fill="#FFD89B" />
-        <path
-          d="M 90 16 L 90 28 M 84 22 L 96 22"
-          stroke="#FFD89B"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          opacity="0.7"
-        />
+      {/* Bar through the middle (drawn first so plates overlap it) */}
+      <rect
+        x="32"
+        y="83"
+        width="116"
+        height="14"
+        rx="3"
+        fill={`url(#${idBell})`}
+      />
+      {/* Bar grip lines (knurling) */}
+      <g stroke="#8B0E15" strokeWidth="1.2" opacity="0.55">
+        <line x1="74" y1="86" x2="74" y2="94" />
+        <line x1="80" y1="86" x2="80" y2="94" />
+        <line x1="86" y1="86" x2="86" y2="94" />
+        <line x1="92" y1="86" x2="92" y2="94" />
+        <line x1="98" y1="86" x2="98" y2="94" />
+        <line x1="104" y1="86" x2="104" y2="94" />
       </g>
 
-      {/* Kettlebell handle — top arc */}
-      <path
-        d="M 66 60 A 24 24 0 1 1 114 60"
-        fill="none"
-        stroke={`url(#${idBell})`}
-        strokeWidth="11"
-        strokeLinecap="round"
-      />
-
-      {/* Kettlebell neck — trapezoid connecting handle to bell */}
-      <path
-        d="M 70 64 L 110 64 L 104 86 L 76 86 Z"
+      {/* LEFT outer plate */}
+      <rect
+        x="14"
+        y="56"
+        width="22"
+        height="68"
+        rx="6"
         fill={`url(#${idBell})`}
       />
-
-      {/* Kettlebell bell — rounded body */}
-      <path
-        d="M 76 84
-           L 104 84
-           C 132 86 148 106 148 132
-           C 148 152 130 162 90 162
-           C 50 162 32 152 32 132
-           C 32 106 48 86 76 84
-           Z"
+      {/* LEFT inner plate */}
+      <rect
+        x="38"
+        y="48"
+        width="22"
+        height="84"
+        rx="6"
         fill={`url(#${idBell})`}
       />
-
-      {/* Subtle highlight on the bell for dimensionality */}
-      <ellipse
-        cx="68"
-        cy="112"
-        rx="14"
-        ry="20"
+      {/* LEFT plate inner highlight */}
+      <rect
+        x="42"
+        y="56"
+        width="6"
+        height="68"
+        rx="3"
         fill="#FFFFFF"
-        opacity="0.18"
+        opacity="0.22"
+      />
+
+      {/* RIGHT outer plate */}
+      <rect
+        x="144"
+        y="56"
+        width="22"
+        height="68"
+        rx="6"
+        fill={`url(#${idBell})`}
+      />
+      {/* RIGHT inner plate */}
+      <rect
+        x="120"
+        y="48"
+        width="22"
+        height="84"
+        rx="6"
+        fill={`url(#${idBell})`}
+      />
+      {/* RIGHT plate inner highlight */}
+      <rect
+        x="132"
+        y="56"
+        width="6"
+        height="68"
+        rx="3"
+        fill="#FFFFFF"
+        opacity="0.22"
       />
     </svg>
   );

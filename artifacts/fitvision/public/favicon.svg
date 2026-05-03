@@ -17,12 +17,19 @@
   <rect width="180" height="180" rx="40" fill="url(#wbm-bg)"/>
   <rect width="180" height="180" rx="40" fill="url(#wbm-glow)"/>
   <rect x="3" y="3" width="174" height="174" rx="37" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="1.5"/>
-  <g opacity="0.95">
-    <circle cx="90" cy="22" r="2.6" fill="#FFD89B"/>
-    <path d="M 90 16 L 90 28 M 84 22 L 96 22" stroke="#FFD89B" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+  <rect x="32" y="83" width="116" height="14" rx="3" fill="url(#wbm-bell)"/>
+  <g stroke="#8B0E15" stroke-width="1.2" opacity="0.55">
+    <line x1="74" y1="86" x2="74" y2="94"/>
+    <line x1="80" y1="86" x2="80" y2="94"/>
+    <line x1="86" y1="86" x2="86" y2="94"/>
+    <line x1="92" y1="86" x2="92" y2="94"/>
+    <line x1="98" y1="86" x2="98" y2="94"/>
+    <line x1="104" y1="86" x2="104" y2="94"/>
   </g>
-  <path d="M 66 60 A 24 24 0 1 1 114 60" fill="none" stroke="url(#wbm-bell)" stroke-width="11" stroke-linecap="round"/>
-  <path d="M 70 64 L 110 64 L 104 86 L 76 86 Z" fill="url(#wbm-bell)"/>
-  <path d="M 76 84 L 104 84 C 132 86 148 106 148 132 C 148 152 130 162 90 162 C 50 162 32 152 32 132 C 32 106 48 86 76 84 Z" fill="url(#wbm-bell)"/>
-  <ellipse cx="68" cy="112" rx="14" ry="20" fill="#FFFFFF" opacity="0.18"/>
+  <rect x="14" y="56" width="22" height="68" rx="6" fill="url(#wbm-bell)"/>
+  <rect x="38" y="48" width="22" height="84" rx="6" fill="url(#wbm-bell)"/>
+  <rect x="42" y="56" width="6" height="68" rx="3" fill="#FFFFFF" opacity="0.22"/>
+  <rect x="144" y="56" width="22" height="68" rx="6" fill="url(#wbm-bell)"/>
+  <rect x="120" y="48" width="22" height="84" rx="6" fill="url(#wbm-bell)"/>
+  <rect x="132" y="56" width="6" height="68" rx="3" fill="#FFFFFF" opacity="0.22"/>
 </svg>
