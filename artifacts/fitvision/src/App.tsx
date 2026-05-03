@@ -2630,9 +2630,12 @@ const CATEGORY_HEADINGS: Record<Category, string> = {
   recovery: "Recovery & mobility",
 };
 
-const SUB_CATEGORIES: Partial<Record<Category, string[]>> = {
-  womens_health: ["Pregnancy Safe", "Postpartum", "Hormonal"],
-  recovery: ["Tech Neck", "Foot Care", "Tension Release"],
+const ALL_CHIP = "All";
+
+const SUB_CATEGORIES: Record<Category, string[]> = {
+  core: [ALL_CHIP, "Strength", "Conditioning"],
+  womens_health: [ALL_CHIP, "Pregnancy Safe", "Postpartum", "Hormonal"],
+  recovery: [ALL_CHIP, "Tech Neck", "Foot Care", "Tension Release"],
 };
 
 function ChipRow({
@@ -2729,7 +2732,7 @@ function DashboardScreen({
 }) {
   const [category, setCategory] = useState<Category>("core");
   const chips = SUB_CATEGORIES[category];
-  const [activeChip, setActiveChip] = useState<string>(chips?.[0] ?? "");
+  const [activeChip, setActiveChip] = useState<string>(ALL_CHIP);
 
   const visibleTabs = useMemo(() => {
     return ALL_TABS.filter(
@@ -2744,14 +2747,13 @@ function DashboardScreen({
     }
   }, [gender, category]);
 
-  // Reset to the first chip whenever the active tab changes.
+  // Reset to "All" whenever the active tab changes.
   useEffect(() => {
-    const next = SUB_CATEGORIES[category]?.[0] ?? "";
-    setActiveChip(next);
+    setActiveChip(ALL_CHIP);
   }, [category]);
 
   const handleCategoryChange = (next: Category) => {
-    setActiveChip(SUB_CATEGORIES[next]?.[0] ?? "");
+    setActiveChip(ALL_CHIP);
     setCategory(next);
   };
 
@@ -2761,10 +2763,24 @@ function DashboardScreen({
     return EXERCISES.filter((e) => {
       if (e.category !== category) return false;
       if (!(e.genderFocus === focus || e.genderFocus === "both")) return false;
-      if (chips && activeChip && e.sub_category !== activeChip) return false;
+      if (activeChip !== ALL_CHIP && e.sub_category !== activeChip) return false;
       return true;
     });
-  }, [gender, category, chips, activeChip]);
+  }, [gender, category, activeChip]);
+
+  // When viewing "All", group exercises by sub_category preserving the
+  // order declared in SUB_CATEGORIES so the layout is stable.
+  const grouped = useMemo(() => {
+    if (activeChip !== ALL_CHIP) return null;
+    const order = chips.filter((c) => c !== ALL_CHIP);
+    const map = new Map<string, Exercise[]>();
+    for (const sub of order) map.set(sub, []);
+    for (const ex of filtered) {
+      if (!map.has(ex.sub_category)) map.set(ex.sub_category, []);
+      map.get(ex.sub_category)!.push(ex);
+    }
+    return Array.from(map.entries()).filter(([, list]) => list.length > 0);
+  }, [activeChip, chips, filtered]);
 
   return (
     <div className="absolute inset-0 flex flex-col">
@@ -2782,25 +2798,46 @@ function DashboardScreen({
         </div>
       </header>
 
-      {chips && (
-        <ChipRow
-          chips={chips}
-          active={activeChip}
-          onChange={setActiveChip}
-        />
-      )}
+      <ChipRow
+        chips={chips}
+        active={activeChip}
+        onChange={setActiveChip}
+      />
 
       <div
         className="no-scrollbar list-fade min-h-0 flex-1 overflow-y-auto px-6 pt-2"
         style={{ paddingBottom: 100 }}
       >
-        {filtered.map((exercise, idx) => (
-          <ExerciseCard
-            key={exercise.id}
-            exercise={exercise}
-            onClick={() => onSelectExercise(filtered, idx)}
-          />
-        ))}
+        {grouped ? (
+          grouped.map(([sub, items]) => (
+            <section key={sub} className="mb-2">
+              <h2 className="sticky top-0 z-10 -mx-6 mb-2 bg-stone-50/90 px-6 py-2 text-[11px] font-semibold uppercase tracking-widest text-stone-500 backdrop-blur dark:bg-stone-950/90 dark:text-stone-400">
+                {sub}
+                <span className="ml-2 text-stone-400 dark:text-stone-500">
+                  {items.length}
+                </span>
+              </h2>
+              {items.map((exercise) => {
+                const idxInFiltered = filtered.indexOf(exercise);
+                return (
+                  <ExerciseCard
+                    key={exercise.id}
+                    exercise={exercise}
+                    onClick={() => onSelectExercise(filtered, idxInFiltered)}
+                  />
+                );
+              })}
+            </section>
+          ))
+        ) : (
+          filtered.map((exercise, idx) => (
+            <ExerciseCard
+              key={exercise.id}
+              exercise={exercise}
+              onClick={() => onSelectExercise(filtered, idx)}
+            />
+          ))
+        )}
         {filtered.length === 0 && (
           <p className="mt-8 text-center text-sm text-stone-400 dark:text-stone-500">
             No exercises in this category yet.
@@ -3794,6 +3831,200 @@ function WorkoutScreen({
   );
 }
 
+type BeforeInstallPromptEvent = Event & {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+  prompt: () => Promise<void>;
+};
+
+function InstallPrompt() {
+  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
+  const [iosHint, setIosHint] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const installButtonRef = useRef<HTMLButtonElement | null>(null);
+  const dismissedRef = useRef(false);
+
+  useEffect(() => {
+    // Already installed / running standalone — don't pester
+    const standalone =
+      window.matchMedia?.("(display-mode: standalone)").matches ||
+      // iOS Safari exposes navigator.standalone
+      (navigator as unknown as { standalone?: boolean }).standalone === true;
+    if (standalone) return;
+
+    let dismissedAt = 0;
+    try {
+      dismissedAt = Number(localStorage.getItem("fitvision.install.dismissedAt") || "0");
+    } catch {
+      /* ignore storage errors */
+    }
+    // Re-show at most every 7 days after dismissal
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+    if (dismissedAt && Date.now() - dismissedAt < SEVEN_DAYS) return;
+
+    const timers = new Set<number>();
+    const schedule = (fn: () => void, ms: number) => {
+      const id = window.setTimeout(() => {
+        timers.delete(id);
+        if (!dismissedRef.current) fn();
+      }, ms);
+      timers.add(id);
+    };
+
+    let promptShown = false;
+    const onBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferred(e as BeforeInstallPromptEvent);
+      // Dedupe: only schedule the surface once per mount
+      if (promptShown) return;
+      promptShown = true;
+      schedule(() => setVisible(true), 1200);
+    };
+    const onInstalled = () => {
+      setVisible(false);
+      setDeferred(null);
+    };
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
+
+    // iOS Safari fallback: no beforeinstallprompt event support
+    const ua = navigator.userAgent || "";
+    const isIos = /iPad|iPhone|iPod/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+    if (isIos) {
+      schedule(() => {
+        setIosHint(true);
+        setVisible(true);
+      }, 1500);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
+      for (const id of timers) window.clearTimeout(id);
+      timers.clear();
+    };
+  }, []);
+
+  // Move focus to the primary action when surfaced; allow Escape to dismiss
+  useEffect(() => {
+    if (!visible) return;
+    installButtonRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        dismissedRef.current = true;
+        setVisible(false);
+        try {
+          localStorage.setItem("fitvision.install.dismissedAt", String(Date.now()));
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [visible]);
+
+  const dismiss = () => {
+    dismissedRef.current = true;
+    setVisible(false);
+    try {
+      localStorage.setItem("fitvision.install.dismissedAt", String(Date.now()));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const install = async () => {
+    if (!deferred) return;
+    try {
+      await deferred.prompt();
+      const choice = await deferred.userChoice;
+      if (choice.outcome === "accepted") {
+        setVisible(false);
+        setDeferred(null);
+      } else {
+        dismiss();
+      }
+    } catch {
+      dismiss();
+    }
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className="pb-safe pointer-events-none absolute inset-x-0 bottom-0 z-50 flex justify-center px-4"
+      style={{
+        // Lift above the bottom navigation (60px) plus safe-area inset
+        paddingBottom: "calc(max(env(safe-area-inset-bottom, 0px), 12px) + 72px)",
+      }}
+      role="dialog"
+      aria-modal="false"
+      aria-live="polite"
+      aria-labelledby="install-prompt-title"
+    >
+      <div className="pointer-events-auto w-full max-w-sm rounded-2xl bg-white p-4 shadow-xl ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-800">
+        <div className="flex items-start gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white"
+            aria-hidden="true"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 3v12" />
+              <polyline points="7 10 12 15 17 10" />
+              <path d="M5 21h14" />
+            </svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p
+              id="install-prompt-title"
+              className="text-sm font-semibold text-stone-900 dark:text-stone-50"
+            >
+              Install FitVision
+            </p>
+            <p className="mt-0.5 text-xs leading-snug text-stone-600 dark:text-stone-400">
+              {iosHint
+                ? "Tap the Share icon, then Add to Home Screen for the best experience."
+                : "Add to your home screen for full-screen, offline workouts."}
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={dismiss}
+            className="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition active:scale-95 dark:text-stone-400"
+          >
+            Not now
+          </button>
+          {!iosHint && (
+            <button
+              ref={installButtonRef}
+              type="button"
+              onClick={install}
+              className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition active:scale-95 dark:bg-stone-50 dark:text-stone-900"
+            >
+              Install
+            </button>
+          )}
+          {iosHint && (
+            <button
+              ref={installButtonRef}
+              type="button"
+              onClick={dismiss}
+              className="rounded-lg bg-stone-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition active:scale-95 dark:bg-stone-50 dark:text-stone-900"
+            >
+              Got it
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const { pref: themePref, setTheme } = useTheme();
   const [screen, setScreen] = useState<Screen>("welcome");
@@ -3934,6 +4165,8 @@ function App() {
         open={castModalOpen}
         onClose={() => setCastModalOpen(false)}
       />
+
+      <InstallPrompt />
     </div>
   );
 }
