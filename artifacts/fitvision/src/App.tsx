@@ -7953,23 +7953,19 @@ if (import.meta.env.DEV) {
 }
 
 function WiseBodyMark({ size = 64 }: { size?: number }) {
-  // Design language (v3 — full pivot):
-  //   - Deep teal-midnight badge ("wise" night sky, calm, premium).
-  //   - A warm gold sun rising at the horizon (enlightenment, dawn,
-  //     the start of a workout, "rise and grind").
-  //   - Three layered mountain ranges in cream — peak performance,
-  //     the mountain you climb every day, ancient strength.
-  //   - Tiny stars in the upper sky for depth at large sizes; they
-  //     vanish gracefully at favicon size.
-  //   - Snow cap on the tallest central peak.
-  // The shape is bold, geometric, and instantly readable from a tab
-  // favicon all the way up to the 156px hero. Completely abstract /
-  // landscape — no human figure, no monogram.
+  // Design language (v4 — fitness-first):
+  //   - Deep wine → crimson gradient badge (energy, brand red).
+  //   - Bold ivory KETTLEBELL silhouette as the hero — the most
+  //     instantly readable "fitness app" icon, recognizable even
+  //     at 16×16 favicon size.
+  //   - A small gold north-star above the bell — the single "wise"
+  //     accent (guidance, mindfulness) without diluting the fitness
+  //     signal.
+  //   - Soft warm top-glow + faint inner highlight ring for depth.
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
-  const idBg = `wbm-sky-${uid}`;
-  const idSun = `wbm-sun-${uid}`;
-  const idGlow = `wbm-sunglow-${uid}`;
-  const idClip = `wbm-clip-${uid}`;
+  const idBg = `wbm-bg-${uid}`;
+  const idGlow = `wbm-glow-${uid}`;
+  const idBell = `wbm-bell-${uid}`;
   return (
     <svg
       width={size}
@@ -7980,74 +7976,24 @@ function WiseBodyMark({ size = 64 }: { size?: number }) {
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id={idBg} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#0A1B26" />
-          <stop offset="55%" stopColor="#163E50" />
-          <stop offset="100%" stopColor="#2C6B7E" />
+        <linearGradient id={idBg} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#1A0608" />
+          <stop offset="55%" stopColor="#8B0E15" />
+          <stop offset="100%" stopColor="#D62B36" />
         </linearGradient>
-        <radialGradient id={idSun} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FFF1C2" />
-          <stop offset="55%" stopColor="#F5B45A" />
-          <stop offset="100%" stopColor="#E0863A" />
+        <radialGradient id={idGlow} cx="50%" cy="0%" r="65%">
+          <stop offset="0%" stopColor="#FFD89B" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#FFD89B" stopOpacity="0" />
         </radialGradient>
-        <radialGradient id={idGlow} cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#F5B45A" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#F5B45A" stopOpacity="0" />
-        </radialGradient>
-        <clipPath id={idClip}>
-          <rect width="180" height="180" rx="40" />
-        </clipPath>
+        <linearGradient id={idBell} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#FFFDF7" />
+          <stop offset="100%" stopColor="#EFE4D0" />
+        </linearGradient>
       </defs>
 
-      {/* Badge sky */}
+      {/* Badge */}
       <rect width="180" height="180" rx="40" fill={`url(#${idBg})`} />
-
-      <g clipPath={`url(#${idClip})`}>
-        {/* Stars (decorative — disappear cleanly at small sizes) */}
-        <circle cx="32" cy="34" r="1.1" fill="#FFFFFF" opacity="0.55" />
-        <circle cx="60" cy="20" r="0.9" fill="#FFFFFF" opacity="0.45" />
-        <circle cx="124" cy="22" r="1.1" fill="#FFFFFF" opacity="0.55" />
-        <circle cx="150" cy="40" r="1.3" fill="#FFFFFF" opacity="0.65" />
-        <circle cx="158" cy="68" r="0.9" fill="#FFFFFF" opacity="0.4" />
-        <circle cx="22" cy="62" r="0.9" fill="#FFFFFF" opacity="0.4" />
-
-        {/* Sun glow halo */}
-        <circle cx="90" cy="108" r="58" fill={`url(#${idGlow})`} />
-
-        {/* Sun */}
-        <circle cx="90" cy="108" r="30" fill={`url(#${idSun})`} />
-
-        {/* Distant back range — desaturated, behind the sun */}
-        <path
-          d="M -5 150 L 28 110 L 52 132 L 80 96 L 112 124 L 142 100 L 185 132 L 185 185 L -5 185 Z"
-          fill="#6FA4B6"
-          opacity="0.55"
-        />
-
-        {/* Foreground range — bold cream peaks */}
-        <path
-          d="M -5 168
-             L 28 138
-             L 50 158
-             L 70 132
-             L 92 92
-             L 116 138
-             L 138 122
-             L 162 146
-             L 185 134
-             L 185 185
-             L -5 185 Z"
-          fill="#F4EFE2"
-        />
-
-        {/* Snow cap on the tallest central peak */}
-        <path
-          d="M 84 110 L 92 92 L 100 110 L 96 114 L 88 114 Z"
-          fill="#FFFFFF"
-        />
-      </g>
-
-      {/* Subtle inner highlight ring for depth */}
+      <rect width="180" height="180" rx="40" fill={`url(#${idGlow})`} />
       <rect
         x="3"
         y="3"
@@ -8058,6 +8004,55 @@ function WiseBodyMark({ size = 64 }: { size?: number }) {
         stroke="#FFFFFF"
         strokeOpacity="0.10"
         strokeWidth="1.5"
+      />
+
+      {/* Tiny gold "wise" north-star above the bell */}
+      <g opacity="0.95">
+        <circle cx="90" cy="22" r="2.6" fill="#FFD89B" />
+        <path
+          d="M 90 16 L 90 28 M 84 22 L 96 22"
+          stroke="#FFD89B"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          opacity="0.7"
+        />
+      </g>
+
+      {/* Kettlebell handle — top arc */}
+      <path
+        d="M 66 60 A 24 24 0 1 1 114 60"
+        fill="none"
+        stroke={`url(#${idBell})`}
+        strokeWidth="11"
+        strokeLinecap="round"
+      />
+
+      {/* Kettlebell neck — trapezoid connecting handle to bell */}
+      <path
+        d="M 70 64 L 110 64 L 104 86 L 76 86 Z"
+        fill={`url(#${idBell})`}
+      />
+
+      {/* Kettlebell bell — rounded body */}
+      <path
+        d="M 76 84
+           L 104 84
+           C 132 86 148 106 148 132
+           C 148 152 130 162 90 162
+           C 50 162 32 152 32 132
+           C 32 106 48 86 76 84
+           Z"
+        fill={`url(#${idBell})`}
+      />
+
+      {/* Subtle highlight on the bell for dimensionality */}
+      <ellipse
+        cx="68"
+        cy="112"
+        rx="14"
+        ry="20"
+        fill="#FFFFFF"
+        opacity="0.18"
       />
     </svg>
   );
@@ -8072,7 +8067,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
           className="absolute inset-0 mx-auto h-56 w-56 rounded-full opacity-70 blur-3xl"
           style={{
             background:
-              "radial-gradient(circle, rgba(245,180,90,0.28) 0%, rgba(245,180,90,0) 70%)",
+              "radial-gradient(circle, rgba(168,18,26,0.30) 0%, rgba(168,18,26,0) 70%)",
           }}
         />
         <div className="relative z-10">
