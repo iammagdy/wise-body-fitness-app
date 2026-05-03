@@ -3261,11 +3261,40 @@ function TimedBody({
         </div>
       </div>
       <div className="flex flex-1 flex-col items-center justify-center">
-        <div
-          className="text-center font-mono font-bold tabular-nums text-stone-900 dark:text-stone-50"
-          style={{ fontSize: 80, lineHeight: 1 }}
-        >
-          {formatTime(secondsLeft)}
+        <div className="relative" style={{ width: 240, height: 240 }}>
+          <svg
+            viewBox="0 0 120 120"
+            className="absolute inset-0 -rotate-90"
+            aria-hidden="true"
+          >
+            <circle
+              cx="60"
+              cy="60"
+              r="54"
+              fill="none"
+              strokeWidth={6}
+              className="stroke-stone-200 dark:stroke-stone-800"
+            />
+            <circle
+              cx="60"
+              cy="60"
+              r="54"
+              fill="none"
+              strokeWidth={6}
+              strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 54}
+              strokeDashoffset={2 * Math.PI * 54 * (1 - progress)}
+              className="stroke-emerald-500 transition-[stroke-dashoffset] duration-700 ease-linear"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div
+              className="text-center font-mono font-bold tabular-nums text-stone-900 dark:text-stone-50"
+              style={{ fontSize: 64, lineHeight: 1 }}
+            >
+              {formatTime(secondsLeft)}
+            </div>
+          </div>
         </div>
         <button
           type="button"
