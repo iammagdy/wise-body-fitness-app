@@ -4445,12 +4445,88 @@ function ExerciseCard({
   );
 }
 
-type TabDef = { id: Category; label: string; icon: string };
+type TabIconProps = { className?: string };
+type TabDef = {
+  id: Category;
+  label: string;
+  Icon: (props: TabIconProps) => React.JSX.Element;
+};
+
+function DumbbellIcon({ className }: TabIconProps) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M6.5 6.5l11 11" />
+      <path d="M21 21l-1-1" />
+      <path d="M3 3l1 1" />
+      <path d="M18 22l4-4" />
+      <path d="M2 6l4-4" />
+      <path d="M3 10l7-7" />
+      <path d="M14 21l7-7" />
+    </svg>
+  );
+}
+
+function FlowerIcon({ className }: TabIconProps) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M12 9.5c.7-2.4.7-4.4 0-6-1 .8-1.6 2-1.6 3.2 0 1.2.6 2.2 1.6 2.8z" />
+      <path d="M12 14.5c-.7 2.4-.7 4.4 0 6 1-.8 1.6-2 1.6-3.2 0-1.2-.6-2.2-1.6-2.8z" />
+      <path d="M9.5 12c-2.4-.7-4.4-.7-6 0 .8 1 2 1.6 3.2 1.6 1.2 0 2.2-.6 2.8-1.6z" />
+      <path d="M14.5 12c2.4.7 4.4.7 6 0-.8-1-2-1.6-3.2-1.6-1.2 0-2.2.6-2.8 1.6z" />
+    </svg>
+  );
+}
+
+function BandageIcon({ className }: TabIconProps) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <rect x="2.5" y="8" width="19" height="8" rx="3" transform="rotate(-30 12 12)" />
+      <line x1="10" y1="11" x2="10" y2="11" />
+      <line x1="13" y1="10" x2="13" y2="10" />
+      <line x1="11" y1="14" x2="11" y2="14" />
+      <line x1="14" y1="13" x2="14" y2="13" />
+    </svg>
+  );
+}
 
 const ALL_TABS: TabDef[] = [
-  { id: "core", label: "Workout", icon: "💪" },
-  { id: "womens_health", label: "Women's Health", icon: "🌸" },
-  { id: "recovery", label: "Recovery", icon: "🩹" },
+  { id: "core", label: "Workout", Icon: DumbbellIcon },
+  { id: "womens_health", label: "Women's Health", Icon: FlowerIcon },
+  { id: "recovery", label: "Recovery", Icon: BandageIcon },
 ];
 
 const CATEGORY_HEADINGS: Record<Category, string> = {
@@ -4530,9 +4606,10 @@ function BottomNav({
               }`}
               style={{ minHeight: 60 }}
             >
-              <span className="text-2xl leading-none" aria-hidden="true">
-                {tab.icon}
-              </span>
+              <tab.Icon
+                className={isActive ? "h-6 w-6" : "h-6 w-6 opacity-90"}
+              />
+
               <span
                 className={`text-[11px] font-medium tracking-wide ${
                   isActive ? "font-semibold" : ""
