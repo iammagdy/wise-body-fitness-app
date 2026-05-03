@@ -1501,42 +1501,1658 @@ function HipCircleIllustration() {
   );
 }
 
+// ===== Additional per-exercise illustrations (Task #24) =====
+// Each component below gives a previously-shared exercise its own loop while
+// staying inside the 200×200 viewBox / strokeWidth 6 / currentColor system.
+// Animations reuse the existing CSS keyframes so prefers-reduced-motion is
+// still honoured.
+
+function DoorwayRowIllustration() {
+  // Standing figure pulling elbows back as if rowing toward a door frame.
+  return (
+    <LoopFrame>
+      {/* door frame */}
+      <line x1="40" y1="20" x2="40" y2="170" stroke="currentColor" strokeWidth="2" opacity="0.35" />
+      <line x1="40" y1="20" x2="60" y2="20" stroke="currentColor" strokeWidth="2" opacity="0.35" />
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="120" cy="56" r="9" fill="currentColor" stroke="none" />
+        <line x1="120" y1="66" x2="120" y2="120" />
+        <line x1="120" y1="120" x2="100" y2="158" />
+        <line x1="120" y1="120" x2="140" y2="158" />
+      </g>
+      {/* rowing arms pulled back */}
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "120px 80px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M120 80 L88 88 L52 78" />
+      </g>
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "120px 88px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M120 88 L88 96 L52 88" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SupermanHoldIllustration() {
+  // Prone figure with arms forward and legs lifted into a gentle arch.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-arch"
+        style={{ transformOrigin: "100px 120px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="40" cy="100" r="9" fill="currentColor" stroke="none" />
+        {/* arched torso */}
+        <path d="M48 102 Q100 86 152 110" />
+        {/* arms forward */}
+        <line x1="44" y1="98" x2="20" y2="86" />
+        {/* lifted legs */}
+        <path d="M152 110 Q170 100 184 84" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function ReverseLungeIllustration() {
+  // Side view lunge — front leg vertical, back leg stepping behind.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-squat"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="80" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="80" y1="60" x2="80" y2="106" />
+        <line x1="80" y1="74" x2="64" y2="100" />
+        <line x1="80" y1="74" x2="96" y2="100" />
+        {/* front leg straight down */}
+        <line x1="80" y1="106" x2="80" y2="156" />
+        {/* back leg sweeping back, bent knee */}
+        <path d="M80 106 L132 132 L150 156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function PikeShoulderTapIllustration() {
+  // Inverted V hold with one arm tapping the opposite shoulder.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="60" y1="148" x2="100" y2="60" />
+        <line x1="100" y1="60" x2="140" y2="148" />
+        <circle cx="100" cy="80" r="9" fill="currentColor" stroke="none" />
+      </g>
+      {/* tapping arm */}
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "100px 80px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <path d="M100 80 L80 100 L120 110" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function JumpRopeIllustration() {
+  // Standing figure with a rope arc that spins through the loop.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-jump"
+        style={{ transformOrigin: "100px 158px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="56" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="66" x2="100" y2="120" />
+        {/* arms tucked, holding rope handles */}
+        <line x1="100" y1="80" x2="76" y2="100" />
+        <line x1="100" y1="80" x2="124" y2="100" />
+        <line x1="100" y1="120" x2="88" y2="150" />
+        <line x1="100" y1="120" x2="112" y2="150" />
+      </g>
+      {/* rope arcs alternating to suggest rotation */}
+      <g
+        className="ml-anim-fade-step"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        opacity="0.7"
+      >
+        <path d="M76 100 Q100 30 124 100" />
+      </g>
+      <g
+        className="ml-anim-fade-step ml-delay-2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        opacity="0.7"
+      >
+        <path d="M76 100 Q100 170 124 100" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function HipHingeIllustration() {
+  // Side-view forward hinge at the hips, knees soft, arms hanging.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-arch"
+        style={{ transformOrigin: "100px 120px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="80" r="9" fill="currentColor" stroke="none" />
+        {/* hinged torso */}
+        <line x1="58" y1="86" x2="120" y2="120" />
+        {/* arms hanging */}
+        <line x1="84" y1="100" x2="80" y2="140" />
+        {/* legs slightly bent */}
+        <path d="M120 120 L110 156" />
+        <path d="M120 120 L132 156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function TuckJumpIllustration() {
+  // Vertical jump with knees pulled high to chest.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-jump"
+        style={{ transformOrigin: "100px 160px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="100" />
+        {/* arms reaching down to wrap knees */}
+        <path d="M100 78 L80 110 L100 120" />
+        <path d="M100 78 L120 110 L100 120" />
+        {/* tucked legs */}
+        <path d="M100 100 L78 110 L96 138" />
+        <path d="M100 100 L122 110 L104 138" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function PlankShoulderTapIllustration() {
+  // Plank with one arm lifted to tap opposite shoulder.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="108" r="9" fill="currentColor" stroke="none" />
+        <line x1="60" y1="112" x2="160" y2="124" />
+        {/* support arm */}
+        <line x1="68" y1="114" x2="80" y2="148" />
+        {/* legs */}
+        <line x1="160" y1="124" x2="174" y2="148" />
+        <line x1="150" y1="124" x2="156" y2="148" />
+      </g>
+      {/* tapping arm crossing to shoulder */}
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "100px 116px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <path d="M100 116 L88 100 L70 116" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function BicycleCrunchIllustration() {
+  // Supine alternating-knee bicycle pedalling.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="138" r="9" fill="currentColor" stroke="none" />
+        <line x1="60" y1="138" x2="140" y2="138" />
+      </g>
+      {/* hands clasped behind head */}
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M60 138 L48 122 L62 116" />
+      </g>
+      {/* alternating bent legs (pedal) */}
+      <g
+        className="ml-anim-knee-l"
+        style={{ transformOrigin: "140px 138px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M140 138 L156 110 L182 100" />
+      </g>
+      <g
+        className="ml-anim-knee-r"
+        style={{ transformOrigin: "140px 138px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M140 138 L168 124 L186 138" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SideLyingLegRaiseIllustration() {
+  // Figure on side, top leg sweeping up.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="130" r="9" fill="currentColor" stroke="none" />
+        {/* torso lying on side */}
+        <line x1="60" y1="134" x2="120" y2="142" />
+        {/* support arm under head */}
+        <path d="M50 122 L60 110 L74 116" />
+        {/* hand on hip */}
+        <line x1="100" y1="138" x2="108" y2="124" />
+        {/* bottom leg on floor */}
+        <line x1="120" y1="146" x2="180" y2="150" />
+      </g>
+      {/* top leg lifting */}
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "120px 142px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="120" y1="142" x2="180" y2="120" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function PelvicTiltIllustration() {
+  // Quadruped tilting pelvis under (posterior tilt) gently.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-arch"
+        style={{ transformOrigin: "100px 120px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="120" r="9" fill="currentColor" stroke="none" />
+        <path d="M58 120 Q100 110 150 124" />
+        {/* arms */}
+        <line x1="62" y1="124" x2="68" y2="156" />
+        {/* legs */}
+        <line x1="148" y1="124" x2="154" y2="156" />
+      </g>
+      {/* arc arrow under pelvis */}
+      <g fill="none" stroke="currentColor" strokeWidth="2" opacity="0.5" strokeLinecap="round">
+        <path d="M134 138 Q150 150 166 138" />
+        <path d="M162 134 L166 138 L162 142" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function TowelCurlIllustration() {
+  // Seated bicep curl — forearm lifts toward shoulder.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="80" cy="60" r="9" fill="currentColor" stroke="none" />
+        <line x1="80" y1="70" x2="80" y2="118" />
+        {/* hips on chair */}
+        <line x1="60" y1="118" x2="120" y2="118" />
+        {/* legs forward off chair */}
+        <line x1="120" y1="118" x2="160" y2="140" />
+        <line x1="160" y1="140" x2="160" y2="160" />
+        <line x1="60" y1="118" x2="60" y2="160" />
+        {/* upper arm down */}
+        <line x1="80" y1="80" x2="80" y2="110" />
+      </g>
+      {/* curling forearm + towel handle */}
+      <g
+        className="ml-anim-arm"
+        style={{ transformOrigin: "80px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="80" y1="110" x2="120" y2="86" />
+        <line x1="116" y1="80" x2="124" y2="92" stroke="currentColor" strokeWidth="3" opacity="0.6" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function CalfRaiseIllustration() {
+  // Standing figure rising onto toes (subtle vertical lift).
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-bridge"
+        style={{ transformOrigin: "100px 156px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="40" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="50" x2="100" y2="110" />
+        <line x1="100" y1="64" x2="80" y2="100" />
+        <line x1="100" y1="64" x2="120" y2="100" />
+        <line x1="100" y1="110" x2="86" y2="150" />
+        <line x1="100" y1="110" x2="114" y2="150" />
+        {/* feet on toes */}
+        <path d="M86 150 L80 156 L96 156" />
+        <path d="M114 150 L104 156 L120 156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SidePlankIllustration() {
+  // Side-supported plank with hips lifted.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="80" r="9" fill="currentColor" stroke="none" />
+        {/* diagonal body */}
+        <line x1="58" y1="86" x2="170" y2="150" />
+        {/* support forearm */}
+        <line x1="50" y1="90" x2="40" y2="156" />
+        {/* top arm reaching up */}
+        <line x1="100" y1="116" x2="100" y2="60" />
+        {/* feet stacked */}
+        <line x1="170" y1="150" x2="184" y2="156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function PelvicRockIllustration() {
+  // Standing figure rocking pelvis forward/back via gentle sway.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="48" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="58" x2="100" y2="100" />
+        {/* hands on hips */}
+        <path d="M100 80 L82 96 L86 110" />
+        <path d="M100 80 L118 96 L114 110" />
+      </g>
+      {/* hips + legs rocking */}
+      <g
+        className="ml-anim-sway"
+        style={{ transformOrigin: "100px 100px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="100" y1="100" x2="86" y2="156" />
+        <line x1="100" y1="100" x2="114" y2="156" />
+        {/* pelvic indicator arc */}
+        <path d="M82 110 Q100 130 118 110" stroke="currentColor" strokeWidth="2" opacity="0.45" fill="none" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function PrenatalSquatIllustration() {
+  // Wide-stance held squat with rounded belly indicator.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="110" />
+        {/* belly */}
+        <path d="M100 78 Q124 92 100 110" stroke="currentColor" strokeWidth="3" opacity="0.55" fill="none" />
+        {/* hands at chest in prayer */}
+        <path d="M100 76 L84 86" />
+        <path d="M100 76 L116 86" />
+        {/* wide bent legs */}
+        <path d="M100 110 L60 140 L48 158" />
+        <path d="M100 110 L140 140 L152 158" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function HeelSlideIllustration() {
+  // Supine knee bent, heel sliding along floor.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="138" r="9" fill="currentColor" stroke="none" />
+        <line x1="60" y1="138" x2="120" y2="138" />
+        {/* straight leg */}
+        <line x1="120" y1="138" x2="180" y2="142" />
+      </g>
+      {/* sliding bent leg with motion arrow */}
+      <g
+        className="ml-anim-knee-l"
+        style={{ transformOrigin: "120px 138px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M120 138 L150 110 L150 142" />
+      </g>
+      <g fill="none" stroke="currentColor" strokeWidth="2" opacity="0.5" strokeLinecap="round">
+        <path d="M156 154 L172 150" />
+        <path d="M168 146 L172 150 L168 154" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function StandingPelvicTiltIllustration() {
+  // Standing figure tucking pelvis under (subtle hinge with arrow).
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="116" />
+        <path d="M100 76 L82 96 L86 110" />
+        <path d="M100 76 L118 96 L114 110" />
+        <line x1="100" y1="116" x2="86" y2="156" />
+        <line x1="100" y1="116" x2="114" y2="156" />
+      </g>
+      {/* tilt arc indicator at pelvis */}
+      <g fill="none" stroke="currentColor" strokeWidth="2" opacity="0.55" strokeLinecap="round">
+        <path d="M82 122 Q100 136 118 122" />
+        <path d="M114 118 L118 122 L114 126" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SeatedMarchIllustration() {
+  // Seated on chair, alternating knees lifting.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="60" cy="60" r="9" fill="currentColor" stroke="none" />
+        <line x1="60" y1="70" x2="60" y2="120" />
+        {/* hips on chair */}
+        <line x1="50" y1="120" x2="110" y2="120" />
+        {/* chair seat + back */}
+        <line x1="40" y1="118" x2="40" y2="60" stroke="currentColor" strokeWidth="2" opacity="0.5" />
+        <line x1="40" y1="158" x2="120" y2="158" stroke="currentColor" strokeWidth="2" opacity="0.5" />
+        {/* arms by sides */}
+        <line x1="60" y1="80" x2="50" y2="116" />
+      </g>
+      {/* alternating knees */}
+      <g
+        className="ml-anim-knee-l"
+        style={{ transformOrigin: "110px 120px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M110 120 L130 100 L150 124" />
+      </g>
+      <g
+        className="ml-anim-knee-r"
+        style={{ transformOrigin: "110px 120px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M110 120 L140 140 L156 158" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function DonkeyKickIllustration() {
+  // Standing figure with one leg sweeping back into a kick.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="80" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="80" y1="60" x2="80" y2="110" />
+        {/* arms forward holding wall */}
+        <line x1="80" y1="74" x2="50" y2="90" />
+        <line x1="80" y1="74" x2="50" y2="104" />
+        {/* support leg */}
+        <line x1="80" y1="110" x2="80" y2="156" />
+      </g>
+      {/* kicking back leg */}
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "80px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M80 110 L130 110 L168 86" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function YogaFlowIllustration() {
+  // Standing figure flowing through arm sweep with lingering trails.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="120" />
+        <line x1="100" y1="120" x2="86" y2="156" />
+        <line x1="100" y1="120" x2="114" y2="156" />
+      </g>
+      <g
+        className="ml-anim-arm"
+        style={{ transformOrigin: "100px 76px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="100" y1="76" x2="100" y2="30" />
+      </g>
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "100px 76px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="100" y1="76" x2="60" y2="100" />
+      </g>
+      {/* trailing breath dots */}
+      <g fill="currentColor">
+        <g className="ml-anim-trail">
+          <circle cx="140" cy="100" r="2.5" />
+        </g>
+        <g className="ml-anim-trail ml-delay-2">
+          <circle cx="150" cy="84" r="2.5" />
+        </g>
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function CortisolWalkIllustration() {
+  // Walking silhouette with sun + tree to evoke an outdoor reset walk.
+  return (
+    <LoopFrame>
+      {/* sun */}
+      <g fill="none" stroke="currentColor" strokeWidth="2" opacity="0.45">
+        <circle cx="160" cy="44" r="14" />
+        <line x1="160" y1="22" x2="160" y2="14" />
+        <line x1="160" y1="74" x2="160" y2="66" />
+        <line x1="138" y1="44" x2="130" y2="44" />
+        <line x1="190" y1="44" x2="182" y2="44" />
+      </g>
+      {/* tree */}
+      <g fill="none" stroke="currentColor" strokeWidth="2" opacity="0.45">
+        <line x1="40" y1="156" x2="40" y2="120" />
+        <circle cx="40" cy="110" r="14" />
+      </g>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="60" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="70" x2="100" y2="118" />
+      </g>
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "100px 84px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="100" y1="84" x2="118" y2="112" />
+      </g>
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "100px 84px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="100" y1="84" x2="82" y2="112" />
+      </g>
+      <g
+        className="ml-anim-knee-l"
+        style={{ transformOrigin: "100px 118px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <path d="M100 118 L88 138 L96 156" />
+      </g>
+      <g
+        className="ml-anim-knee-r"
+        style={{ transformOrigin: "100px 118px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <path d="M100 118 L114 138 L106 156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function YinStretchIllustration() {
+  // Long-held seated wide-leg fold with very slow breath pulse.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-breathe-soft"
+        opacity="0.55"
+      >
+        <circle cx="100" cy="100" r="64" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      </g>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="120" r="9" fill="currentColor" stroke="none" />
+        {/* slightly folded torso */}
+        <path d="M100 120 Q98 106 102 90" />
+        {/* arms reaching forward to floor */}
+        <line x1="100" y1="106" x2="80" y2="130" />
+        <line x1="100" y1="106" x2="120" y2="130" />
+        {/* wide legs in V */}
+        <line x1="102" y1="90" x2="40" y2="142" />
+        <line x1="102" y1="90" x2="164" y2="142" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SupportedBridgeIllustration() {
+  // Glute bridge with a block beneath the pelvis (held).
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="146" r="9" fill="currentColor" stroke="none" />
+        <line x1="60" y1="142" x2="120" y2="120" />
+        <path d="M120 120 L140 142 L154 154" />
+        <line x1="62" y1="142" x2="80" y2="156" />
+      </g>
+      {/* block under hips */}
+      <rect x="106" y="130" width="36" height="14" rx="3" fill="none" stroke="currentColor" strokeWidth="2.5" opacity="0.6" />
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function GoddessPoseIllustration() {
+  // Wide squat with arms in cactus shape.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="110" />
+        {/* cactus arms */}
+        <path d="M100 72 L60 72 L60 40" />
+        <path d="M100 72 L140 72 L140 40" />
+        {/* very wide bent legs */}
+        <path d="M100 110 L48 132 L34 158" />
+        <path d="M100 110 L152 132 L166 158" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function ReclinedButterflyIllustration() {
+  // Lying on back, soles together, knees out wide.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="40" cy="120" r="9" fill="currentColor" stroke="none" />
+        {/* torso */}
+        <line x1="50" y1="120" x2="120" y2="120" />
+        {/* arms relaxed */}
+        <line x1="70" y1="120" x2="70" y2="148" />
+        <line x1="100" y1="120" x2="100" y2="148" />
+        {/* butterfly legs out then meeting */}
+        <path d="M120 120 L150 80 L170 120" />
+        <path d="M120 120 L150 160 L170 120" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function UpperTrapStretchIllustration() {
+  // Head tilted to side, hand pulling head down.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="100" y1="110" x2="100" y2="170" />
+        <line x1="60" y1="110" x2="140" y2="110" />
+      </g>
+      <g
+        className="ml-anim-sway"
+        style={{ transformOrigin: "100px 110px" }}
+      >
+        <circle cx="86" cy="70" r="14" fill="currentColor" />
+        {/* hand reaching over head */}
+        <g
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="6"
+          strokeLinecap="round"
+        >
+          <path d="M86 70 L120 50 L138 80" />
+        </g>
+      </g>
+      {/* opposite arm relaxed down */}
+      <line x1="140" y1="110" x2="146" y2="160" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function DoorwayChestOpenerIllustration() {
+  // Standing in a doorway with one arm braced on the frame.
+  return (
+    <LoopFrame>
+      {/* door frame */}
+      <line x1="40" y1="20" x2="40" y2="170" stroke="currentColor" strokeWidth="2" opacity="0.4" />
+      <line x1="160" y1="20" x2="160" y2="170" stroke="currentColor" strokeWidth="2" opacity="0.4" />
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="56" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="66" x2="100" y2="120" />
+        {/* braced arm to door frame (bent) */}
+        <path d="M100 78 L60 70 L42 92" />
+        {/* free arm down */}
+        <line x1="100" y1="78" x2="118" y2="110" />
+        {/* legs */}
+        <line x1="100" y1="120" x2="86" y2="156" />
+        <line x1="100" y1="120" x2="114" y2="156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function LevatorScapulaeIllustration() {
+  // Head tilted diagonally down, hand pulling toward armpit.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="100" y1="110" x2="100" y2="170" />
+        <line x1="60" y1="110" x2="140" y2="110" />
+      </g>
+      <g
+        className="ml-anim-pulse"
+        style={{ transformOrigin: "100px 110px" }}
+      >
+        {/* head turned + tilted (offset) */}
+        <circle cx="78" cy="78" r="14" fill="currentColor" />
+        <g
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="6"
+          strokeLinecap="round"
+        >
+          {/* hand on back of head */}
+          <path d="M78 78 L100 50 L130 70" />
+        </g>
+      </g>
+      <line x1="140" y1="110" x2="146" y2="160" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function ScapularSqueezeIllustration() {
+  // Standing front view, elbows pulling back.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="120" />
+        <line x1="100" y1="120" x2="86" y2="156" />
+        <line x1="100" y1="120" x2="114" y2="156" />
+      </g>
+      {/* arms pulling back like wings */}
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "100px 76px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M100 76 L70 90 L50 70" />
+      </g>
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "100px 76px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M100 76 L130 90 L150 70" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function ThreadTheNeedleIllustration() {
+  // Quadruped with one arm threaded under the other.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="50" cy="124" r="9" fill="currentColor" stroke="none" />
+        <line x1="58" y1="120" x2="150" y2="116" />
+        {/* hips + back leg */}
+        <line x1="148" y1="116" x2="156" y2="156" />
+        <line x1="138" y1="116" x2="142" y2="156" />
+        {/* support arm planted */}
+        <line x1="150" y1="116" x2="148" y2="130" />
+      </g>
+      {/* threaded arm crossing under torso */}
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M70 124 L110 152 L150 142" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SuboccipitalReleaseIllustration() {
+  // Supine head with a small ball under the skull base.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* body lying on floor */}
+        <line x1="60" y1="138" x2="160" y2="138" />
+        {/* arms */}
+        <line x1="100" y1="138" x2="100" y2="158" />
+        <line x1="130" y1="138" x2="130" y2="158" />
+      </g>
+      {/* head */}
+      <g
+        className="ml-anim-pulse"
+        style={{ transformOrigin: "60px 130px" }}
+      >
+        <circle cx="60" cy="124" r="14" fill="currentColor" />
+      </g>
+      {/* ball under skull base */}
+      <circle cx="62" cy="142" r="6" fill="none" stroke="currentColor" strokeWidth="3" opacity="0.65" />
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function NeckFlexionIllustration() {
+  // Seated figure dropping chin to chest.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="100" y1="110" x2="100" y2="160" />
+        <line x1="70" y1="110" x2="130" y2="110" />
+        {/* legs forward seated */}
+        <line x1="100" y1="160" x2="160" y2="160" />
+        <line x1="80" y1="120" x2="74" y2="150" />
+      </g>
+      <g
+        className="ml-anim-arch"
+        style={{ transformOrigin: "100px 110px" }}
+      >
+        {/* head dropping forward */}
+        <circle cx="108" cy="80" r="14" fill="currentColor" />
+        <line x1="100" y1="100" x2="108" y2="80" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function ToeYogaIllustration() {
+  // Top-down foot with big toe lifting independently.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M80 60 Q60 110 70 158 Q90 170 110 158 Q140 110 120 60 Z" />
+      </g>
+      {/* big toe pulsing up (lifted) */}
+      <g className="ml-anim-pulse" style={{ transformOrigin: "84px 44px" }}>
+        <circle cx="84" cy="40" r="6" fill="currentColor" />
+      </g>
+      {/* other toes pulsing later */}
+      <g className="ml-anim-pulse ml-delay-half" style={{ transformOrigin: "104px 42px" }}>
+        <circle cx="96" cy="40" r="5" fill="currentColor" opacity="0.85" />
+        <circle cx="108" cy="42" r="5" fill="currentColor" opacity="0.85" />
+        <circle cx="118" cy="46" r="4" fill="currentColor" opacity="0.85" />
+      </g>
+    </LoopFrame>
+  );
+}
+
+function PlantarFasciaPressIllustration() {
+  // Foot pressing down on a small ball.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* shin */}
+        <line x1="100" y1="40" x2="100" y2="110" />
+        {/* foot top of profile */}
+        <path d="M100 110 L100 130 L150 132 L150 138" />
+        {/* heel arc back to ground */}
+        <path d="M100 130 L78 138 L100 142" />
+      </g>
+      {/* ball under arch with breathing pulse */}
+      <g className="ml-anim-breathe" style={{ transformOrigin: "126px 144px" }}>
+        <circle cx="126" cy="144" r="9" fill="currentColor" opacity="0.55" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function ToeSplayIllustration() {
+  // Top-down foot with toes spreading apart (offset taps).
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M80 60 Q60 110 70 158 Q90 170 110 158 Q140 110 120 60 Z" />
+      </g>
+      {/* spreading toes */}
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "100px 60px" }}
+      >
+        <circle cx="80" cy="40" r="5" fill="currentColor" />
+      </g>
+      <circle cx="96" cy="36" r="5" fill="currentColor" />
+      <circle cx="108" cy="38" r="5" fill="currentColor" />
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "100px 60px" }}
+      >
+        <circle cx="120" cy="44" r="4" fill="currentColor" />
+      </g>
+    </LoopFrame>
+  );
+}
+
+function HeelWalkIllustration() {
+  // Side-walking figure with toes lifted (heel-only contact).
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="44" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="54" x2="100" y2="110" />
+      </g>
+      <g
+        className="ml-anim-arm-r"
+        style={{ transformOrigin: "100px 70px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="100" y1="70" x2="120" y2="100" />
+      </g>
+      <g
+        className="ml-anim-arm-l"
+        style={{ transformOrigin: "100px 70px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="100" y1="70" x2="80" y2="100" />
+      </g>
+      {/* legs with toes raised */}
+      <g
+        className="ml-anim-knee-l"
+        style={{ transformOrigin: "100px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M100 110 L86 134 L92 156 L102 148" />
+      </g>
+      <g
+        className="ml-anim-knee-r"
+        style={{ transformOrigin: "100px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M100 110 L114 134 L108 156 L120 150" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function TowelScrunchIllustration() {
+  // Foot in profile gripping a small towel beneath the toes.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="100" y1="40" x2="100" y2="110" />
+      </g>
+      <g
+        className="ml-anim-foot-flex"
+        style={{ transformOrigin: "100px 110px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* foot curling toes downward */}
+        <path d="M100 110 L100 130 L150 134 L156 144 L138 152 L100 150 Z" />
+      </g>
+      {/* towel waves under toes */}
+      <g fill="none" stroke="currentColor" strokeWidth="2.5" opacity="0.55" strokeLinecap="round">
+        <path d="M120 158 Q130 152 140 158 Q150 164 160 158" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SingleLegBalanceIllustration() {
+  // Standing on one leg, other knee lifted, arms out for balance.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="44" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="54" x2="100" y2="110" />
+        {/* arms wide for balance */}
+        <line x1="100" y1="68" x2="60" y2="80" />
+        <line x1="100" y1="68" x2="140" y2="80" />
+        {/* support leg */}
+        <line x1="100" y1="110" x2="100" y2="158" />
+        {/* lifted bent leg */}
+        <path d="M100 110 L130 110 L120 150" />
+      </g>
+      {/* sway dot to suggest micro-balance */}
+      <g className="ml-anim-sway" style={{ transformOrigin: "100px 158px" }}>
+        <circle cx="100" cy="160" r="3" fill="currentColor" opacity="0.45" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function BigToeStretchIllustration() {
+  // Hand pulling the big toe back from a seated foot view.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* shin angled */}
+        <line x1="60" y1="40" x2="100" y2="120" />
+        {/* foot */}
+        <path d="M100 120 L100 142 L150 144 L150 152 L100 150" />
+      </g>
+      {/* big toe being pulled back */}
+      <g
+        className="ml-anim-pulse"
+        style={{ transformOrigin: "150px 144px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+      >
+        <line x1="150" y1="144" x2="170" y2="124" />
+      </g>
+      {/* hand grasping */}
+      <g
+        className="ml-anim-pulse"
+        style={{ transformOrigin: "170px 120px" }}
+        fill="currentColor"
+      >
+        <circle cx="170" cy="120" r="6" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function QuadStretchIllustration() {
+  // Standing balance with one heel pulled to glute.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="100" cy="50" r="9" fill="currentColor" stroke="none" />
+        <line x1="100" y1="60" x2="100" y2="116" />
+        {/* support arm out */}
+        <line x1="100" y1="74" x2="60" y2="86" />
+        {/* support leg */}
+        <line x1="100" y1="116" x2="100" y2="158" />
+        {/* bent leg pulled up behind */}
+        <path d="M100 116 L150 130 L130 96" />
+        {/* hand grasping ankle */}
+        <line x1="100" y1="74" x2="130" y2="96" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function HamstringStretchIllustration() {
+  // Supine single-leg raise with strap (hand reaches the foot).
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="40" cy="138" r="9" fill="currentColor" stroke="none" />
+        <line x1="50" y1="138" x2="100" y2="138" />
+        {/* lifted straight leg */}
+        <line x1="100" y1="138" x2="160" y2="60" />
+        {/* hand reaching foot */}
+        <path d="M70 138 L120 100 L156 64" />
+        {/* other leg flat */}
+        <line x1="100" y1="138" x2="160" y2="142" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SeatedForwardFoldIllustration() {
+  // Sitting with legs forward, torso folding toward toes.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-arch"
+        style={{ transformOrigin: "60px 130px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="80" cy="100" r="9" fill="currentColor" stroke="none" />
+        {/* folded torso forward over legs */}
+        <path d="M80 108 Q120 130 150 138" />
+        {/* arms extending */}
+        <line x1="120" y1="124" x2="160" y2="138" />
+      </g>
+      {/* legs flat */}
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="60" y1="142" x2="170" y2="146" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function ThoracicExtensionIllustration() {
+  // Seated with hands behind head, chest opening up and back.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* hips on floor / stool */}
+        <line x1="60" y1="150" x2="140" y2="150" />
+        {/* legs crossed */}
+        <path d="M140 150 L160 158" />
+        <path d="M60 150 L40 158" />
+      </g>
+      <g
+        className="ml-anim-arch"
+        style={{ transformOrigin: "100px 150px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* extended torso reaching back */}
+        <path d="M100 150 Q104 110 90 70" />
+        <circle cx="90" cy="60" r="9" fill="currentColor" stroke="none" />
+        {/* hands behind head, elbows wide */}
+        <path d="M90 60 L60 50 L62 86" />
+        <path d="M90 60 L120 50 L118 86" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function StandingForwardFoldIllustration() {
+  // Standing figure folded over legs, hands toward floor.
+  return (
+    <LoopFrame>
+      <g
+        className="ml-anim-pulse"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        {/* head down near floor */}
+        <circle cx="100" cy="120" r="9" fill="currentColor" stroke="none" />
+        {/* folded torso going up to hips */}
+        <path d="M100 120 Q108 96 110 70" />
+        {/* arms hanging toward floor */}
+        <line x1="100" y1="120" x2="92" y2="156" />
+        <line x1="100" y1="120" x2="116" y2="156" />
+        {/* legs straight down */}
+        <line x1="110" y1="70" x2="92" y2="156" />
+        <line x1="110" y1="70" x2="124" y2="156" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
+function SupineTwistIllustration() {
+  // Lying on back with knees dropped to one side, arms out wide.
+  return (
+    <LoopFrame>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="40" cy="120" r="9" fill="currentColor" stroke="none" />
+        {/* torso */}
+        <line x1="50" y1="120" x2="120" y2="120" />
+        {/* arms out wide for T-shape */}
+        <line x1="80" y1="120" x2="80" y2="80" />
+        <line x1="100" y1="120" x2="100" y2="80" />
+      </g>
+      {/* knees stacked, dropped to side (sway) */}
+      <g
+        className="ml-anim-sway"
+        style={{ transformOrigin: "120px 120px" }}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M120 120 L160 96 L156 140" />
+        <path d="M120 120 L160 108 L160 150" />
+      </g>
+      <FloorLine />
+    </LoopFrame>
+  );
+}
+
 // ===== ID → illustration map =====
 const ILLUSTRATION_BY_ID: Record<string, React.ComponentType> = {
   // ----- Strength
   m1: PushUpIllustration,
   m2: GluteBridgeIllustration,
-  m3: StandingHoldIllustration, // Doorway Row
+  m3: DoorwayRowIllustration,
   m4: PikePushUpIllustration,
   w2: SplitSquatIllustration,
   w4: SquatIllustration,
   s1: JumpIllustration, // Jump Squat
-  s2: PlankIllustration, // Superman Hold (held isometric)
-  s3: SplitSquatIllustration, // Reverse Lunge
+  s2: SupermanHoldIllustration,
+  s3: ReverseLungeIllustration,
   s4: WallAngelsIllustration, // Towel Pull-Down
   s5: BirdDogIllustration, // Single-Leg Deadlift
-  s6: PlankIllustration, // Pike Shoulder Tap
+  s6: PikeShoulderTapIllustration,
   // ----- Conditioning
   b1: PlankIllustration,
   b2: MountainClimberIllustration,
-  c1: JumpIllustration, // Invisible Jump Rope
+  c1: JumpRopeIllustration,
   c2: BurpeeIllustration,
-  c3: SplitSquatIllustration, // Bodyweight Hip Hinge
-  c4: JumpIllustration, // Tuck Jumps
-  c5: PlankIllustration, // Plank Shoulder Taps
+  c3: HipHingeIllustration,
+  c4: TuckJumpIllustration,
+  c5: PlankShoulderTapIllustration,
   c6: BearCrawlIllustration,
   c7: HighKneesIllustration,
-  c8: DeadBugIllustration, // Bicycle Crunches (alt opposite limbs)
+  c8: BicycleCrunchIllustration,
   // ----- Pregnancy Safe
-  wh2: GluteBridgeIllustration, // Side-Lying Leg Raise
+  wh2: SideLyingLegRaiseIllustration,
   wh3: CatCowIllustration, // Prenatal Cat-Cow
-  wh4: GluteBridgeIllustration, // Pelvic Tilt
+  wh4: PelvicTiltIllustration,
   ps1: StandingHoldIllustration, // Wall Sit
-  ps2: SplitSquatIllustration, // Seated Towel Curl (held)
-  ps3: StandingHoldIllustration, // Standing Calf Raise
-  ps4: PlankIllustration, // Modified Side Plank
-  ps5: HipCircleIllustration, // Standing Pelvic Rocks
-  ps6: SquatIllustration, // Prenatal Squat Hold
+  ps2: TowelCurlIllustration,
+  ps3: CalfRaiseIllustration,
+  ps4: SidePlankIllustration,
+  ps5: PelvicRockIllustration,
+  ps6: PrenatalSquatIllustration,
   ps7: SeatedTwistIllustration, // Seated Spinal Twist
   // ----- Postpartum
   w1: GluteBridgeIllustration, // Hip Thrusts
@@ -1544,55 +3160,55 @@ const ILLUSTRATION_BY_ID: Record<string, React.ComponentType> = {
   wh5: BoxBreathingIllustration, // Diastasis Recovery Breath
   pp1: GluteBridgeIllustration,
   pp2: BirdDogIllustration,
-  pp3: GluteBridgeIllustration, // Heel Slides
+  pp3: HeelSlideIllustration,
   pp4: WallPushUpIllustration,
-  pp5: HipCircleIllustration, // Standing Pelvic Tilt
+  pp5: StandingPelvicTiltIllustration,
   pp6: DeadBugIllustration,
-  pp7: HighKneesIllustration, // Seated March
+  pp7: SeatedMarchIllustration,
   // ----- Hormonal
-  w3: GluteBridgeIllustration, // Standing Donkey Kicks
-  wh6: HeldStretchIllustration, // Hormonal Yoga Flow
-  wh7: WalkIllustration, // Cortisol Reset Walk
-  h1: HeldStretchIllustration, // Slow Yin Stretch
+  w3: DonkeyKickIllustration,
+  wh6: YogaFlowIllustration,
+  wh7: CortisolWalkIllustration,
+  h1: YinStretchIllustration,
   h2: LegsUpWallIllustration,
   h3: HipCircleIllustration,
-  h4: GluteBridgeIllustration, // Supported Bridge
+  h4: SupportedBridgeIllustration,
   h5: NostrilBreathingIllustration,
-  h6: SquatIllustration, // Goddess Pose (wide squat)
-  h7: HeldStretchIllustration, // Reclined Butterfly
+  h6: GoddessPoseIllustration,
+  h7: ReclinedButterflyIllustration,
   // ----- Tech Neck
   rn1: NeckRollIllustration,
   rn2: ChinTuckIllustration,
-  rn3: NeckRollIllustration, // Upper Trap Stretch
-  tn1: WallAngelsIllustration, // Doorway Chest Opener
-  tn2: NeckRollIllustration, // Levator Scapulae
-  tn3: WallAngelsIllustration, // Scapular Squeezes
+  rn3: UpperTrapStretchIllustration,
+  tn1: DoorwayChestOpenerIllustration,
+  tn2: LevatorScapulaeIllustration,
+  tn3: ScapularSqueezeIllustration,
   tn4: WallAngelsIllustration,
-  tn5: CatCowIllustration, // Thread the Needle
-  tn6: ChinTuckIllustration, // Suboccipital Release
-  tn7: ChinTuckIllustration, // Seated Neck Flexion
+  tn5: ThreadTheNeedleIllustration,
+  tn6: SuboccipitalReleaseIllustration,
+  tn7: NeckFlexionIllustration,
   // ----- Foot Care
   rf1: FootArchIllustration,
-  rf2: FootCircleIllustration, // Toe Yoga
+  rf2: ToeYogaIllustration,
   rf3: CalfStretchIllustration,
-  fc1: FootArchIllustration, // Plantar Fascia Press
-  fc2: FootCircleIllustration, // Toe Splay
-  fc3: WalkIllustration, // Heel Walks
-  fc4: FootCircleIllustration, // Ankle Circles
-  fc5: FootCircleIllustration, // Towel Scrunches
-  fc6: StandingHoldIllustration, // Single-Leg Balance
-  fc7: FootCircleIllustration, // Big Toe Stretch
+  fc1: PlantarFasciaPressIllustration,
+  fc2: ToeSplayIllustration,
+  fc3: HeelWalkIllustration,
+  fc4: FootCircleIllustration, // Ankle Circles (canonical)
+  fc5: TowelScrunchIllustration,
+  fc6: SingleLegBalanceIllustration,
+  fc7: BigToeStretchIllustration,
   // ----- Tension Release
-  r1: SplitSquatIllustration, // Standing Quad Stretch
-  r2: HeldStretchIllustration, // Hamstring Stretch
+  r1: QuadStretchIllustration,
+  r2: HamstringStretchIllustration,
   r3: ChildsPoseIllustration,
   r4: BoxBreathingIllustration,
   tr1: PigeonIllustration,
-  tr2: HeldStretchIllustration, // Seated Forward Fold
+  tr2: SeatedForwardFoldIllustration,
   tr3: CatCowIllustration,
-  tr4: CatCowIllustration, // Thoracic Extension
-  tr5: HeldStretchIllustration, // Standing Forward Fold
-  tr6: SeatedTwistIllustration, // Supine Twist
+  tr4: ThoracicExtensionIllustration,
+  tr5: StandingForwardFoldIllustration,
+  tr6: SupineTwistIllustration,
 };
 
 function MovementFamilyLoop({ family }: { family: MovementFamily }) {
