@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "FitVision"
+title = "Wise Body : Fitness App"
 version = "1.0.0"
 id = "artifacts/fitvision"
 router = "path"

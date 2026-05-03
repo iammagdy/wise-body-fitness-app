@@ -2317,39 +2317,67 @@ const EXERCISES: Exercise[] = [
   { id: "tr6", name: "Supine Twist", targetMuscle: "Lower Back", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
 ];
 
+function WiseBodyMark({ size = 64 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 180 180"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <rect width="180" height="180" rx="36" fill="#A8121A" />
+      <path
+        d="M38 70 L62 140 L90 100 L118 140 L142 70"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="18"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <circle cx="138" cy="40" r="22" fill="#FFFFFF" />
+      <g fill="#A8121A">
+        <rect x="124" y="37" width="28" height="6" rx="2" />
+        <rect x="119" y="30" width="6" height="20" rx="2" />
+        <rect x="151" y="30" width="6" height="20" rx="2" />
+      </g>
+    </svg>
+  );
+}
+
 function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
   return (
     <div className="absolute inset-0 flex flex-col px-6 pt-safe pb-safe">
-      {/* Hero illustration */}
+      {/* Hero brand mark */}
       <div className="relative mt-10 flex h-56 w-full items-center justify-center">
         <div
-          className="absolute inset-0 mx-auto h-56 w-56 rounded-full opacity-80 blur-3xl"
+          className="absolute inset-0 mx-auto h-56 w-56 rounded-full opacity-70 blur-3xl"
           style={{
             background:
-              "radial-gradient(circle, rgba(16,185,129,0.35) 0%, rgba(16,185,129,0) 70%)",
+              "radial-gradient(circle, rgba(168,18,26,0.30) 0%, rgba(168,18,26,0) 70%)",
           }}
         />
-        <div
-          className="absolute inset-0 mx-auto h-56 w-56 translate-x-10 translate-y-4 rounded-full opacity-70 blur-3xl"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(245,158,11,0.30) 0%, rgba(245,158,11,0) 70%)",
-          }}
-        />
-        <div className="relative z-10 h-44 w-44 text-stone-700 dark:text-stone-200">
-          <BreathingLoop />
+        <div className="relative z-10">
+          <WiseBodyMark size={156} />
         </div>
       </div>
 
       <div className="mt-2 flex flex-1 flex-col items-center justify-center text-center">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#A8121A] dark:text-red-400">
           Home workouts · No equipment
         </p>
         <h1 className="mt-3 text-5xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
-          FitVision
+          Wise Body
         </h1>
+        <p className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
+          Fitness App
+        </p>
         <p className="mt-3 max-w-xs text-base leading-snug text-stone-500 dark:text-stone-400">
           Strength, recovery and breathing sessions you can do in your living room — no gear required.
+        </p>
+        <p className="mt-4 text-[11px] font-medium tracking-wide text-stone-400 dark:text-stone-500">
+          Part of The Wise Cloud · fitness.thewise.cloud
         </p>
       </div>
 
@@ -2786,13 +2814,16 @@ function DashboardScreen({
     <div className="absolute inset-0 flex flex-col">
       <header className="pt-safe shrink-0 px-6 pb-4" style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 32px)" }}>
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
-              {CATEGORY_HEADINGS[category]}
-            </p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
-              FitVision
-            </h1>
+          <div className="flex min-w-0 items-center gap-3">
+            <WiseBodyMark size={40} />
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+                {CATEGORY_HEADINGS[category]}
+              </p>
+              <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+                Wise Body
+              </h1>
+            </div>
           </div>
           <ThemeMenu pref={themePref} onSelect={onThemeChange} />
         </div>
@@ -3982,12 +4013,15 @@ function InstallPrompt() {
               id="install-prompt-title"
               className="text-sm font-semibold text-stone-900 dark:text-stone-50"
             >
-              Install FitVision
+              Install Wise Body
             </p>
             <p className="mt-0.5 text-xs leading-snug text-stone-600 dark:text-stone-400">
               {iosHint
                 ? "Tap the Share icon, then Add to Home Screen for the best experience."
                 : "Add to your home screen for full-screen, offline workouts."}
+            </p>
+            <p className="mt-1 text-[10px] font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+              Part of The Wise Cloud · fitness.thewise.cloud
             </p>
           </div>
         </div>

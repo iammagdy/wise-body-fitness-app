@@ -1,13 +1,13 @@
 {
-  "name": "FitVision",
-  "short_name": "FitVision",
-  "description": "Your personal fitness journey",
+  "name": "Wise Body : Fitness App",
+  "short_name": "Wise Body",
+  "description": "Home workouts, recovery and breathing — part of The Wise Cloud.",
   "start_url": ".",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#fafaf9",
-  "theme_color": "#1c1917",
+  "theme_color": "#A8121A",
   "icons": [
     {
       "src": "icon-192.png",

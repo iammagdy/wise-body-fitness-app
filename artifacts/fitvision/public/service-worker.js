@@ -1,4 +1,4 @@
-const CACHE_NAME = "fitvision-v1";
+const CACHE_NAME = "wisebody-v1";
 
 function scopedUrl(path) {
   return new URL(path, self.registration.scope).toString();
