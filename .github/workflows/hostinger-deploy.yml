@@ -1,0 +1,17 @@
+name: Trigger Hostinger Deploy
+
+on:
+  push:
+    branches: [deploy]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Hostinger webhook
+        run: |
+          if [ -z "${{ secrets.HOSTINGER_DEPLOY_WEBHOOK }}" ]; then
+            echo "HOSTINGER_DEPLOY_WEBHOOK secret not set; skipping."
+            exit 0
+          fi
+          curl -fsSL -X POST "${{ secrets.HOSTINGER_DEPLOY_WEBHOOK }}"

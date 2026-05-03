@@ -25,3 +25,18 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+
+## Auto-deploy (Hostinger)
+
+`fitness.thewise.cloud` is hosted on Hostinger and built from the `deploy` branch
+of `https://github.com/iammagdy/wise-body-fitness-app`. To make every push to
+`deploy` trigger a Hostinger build automatically:
+
+1. In Hostinger hPanel → Websites → Git, enable "Auto deployment" for the
+   `deploy` branch and copy the webhook URL it generates.
+2. In GitHub → Settings → Secrets and variables → Actions, add a repository
+   secret named `HOSTINGER_DEPLOY_WEBHOOK` and paste the webhook URL.
+
+The workflow at `.github/workflows/hostinger-deploy.yml` will then POST to the
+webhook on every push to `deploy`. If the secret isn't set, the workflow
+skips gracefully.
