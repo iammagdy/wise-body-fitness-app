@@ -3678,6 +3678,27 @@ type Screen = "welcome" | "dashboard" | "workout";
 type Mode = "timed" | "reps";
 type Category = "core" | "womens_health" | "recovery";
 
+type Equipment =
+  | "none"
+  | "mat"
+  | "wall"
+  | "chair"
+  | "doorway"
+  | "towel"
+  | "band"
+  | "light_dumbbell";
+
+const EQUIPMENT_LABEL: Record<Equipment, string> = {
+  none: "No equipment",
+  mat: "Mat",
+  wall: "Wall",
+  chair: "Chair",
+  doorway: "Doorway",
+  towel: "Towel",
+  band: "Band",
+  light_dumbbell: "Light dumbbell",
+};
+
 type Exercise = {
   id: string;
   name: string;
@@ -3688,6 +3709,7 @@ type Exercise = {
   mode: Mode;
   category: Category;
   sub_category: string;
+  equipment: Equipment;
 };
 
 const EXERCISES: Exercise[] = [
@@ -3702,6 +3724,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "core",
     sub_category: "Strength",
+    equipment: "none",
   },
   {
     id: "m2",
@@ -3713,6 +3736,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "core",
     sub_category: "Strength",
+    equipment: "mat",
   },
   {
     id: "m3",
@@ -3724,6 +3748,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "core",
     sub_category: "Strength",
+    equipment: "doorway",
   },
   {
     id: "m4",
@@ -3735,6 +3760,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "core",
     sub_category: "Strength",
+    equipment: "none",
   },
   {
     id: "w2",
@@ -3746,6 +3772,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "core",
     sub_category: "Strength",
+    equipment: "none",
   },
   {
     id: "w4",
@@ -3757,6 +3784,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "core",
     sub_category: "Strength",
+    equipment: "none",
   },
   {
     id: "b1",
@@ -3768,6 +3796,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "core",
     sub_category: "Conditioning",
+    equipment: "mat",
   },
   {
     id: "b2",
@@ -3779,6 +3808,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "core",
     sub_category: "Conditioning",
+    equipment: "mat",
   },
 
   // ----- Women's Health -----
@@ -3793,6 +3823,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "womens_health",
     sub_category: "Pregnancy Safe",
+    equipment: "mat",
   },
   {
     id: "wh3",
@@ -3804,6 +3835,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "womens_health",
     sub_category: "Pregnancy Safe",
+    equipment: "mat",
   },
   {
     id: "wh4",
@@ -3815,6 +3847,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "womens_health",
     sub_category: "Pregnancy Safe",
+    equipment: "mat",
   },
   // Postpartum
   {
@@ -3827,6 +3860,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "womens_health",
     sub_category: "Postpartum",
+    equipment: "mat",
   },
   {
     id: "wh1",
@@ -3838,6 +3872,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "womens_health",
     sub_category: "Postpartum",
+    equipment: "mat",
   },
   {
     id: "wh5",
@@ -3849,6 +3884,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "womens_health",
     sub_category: "Postpartum",
+    equipment: "mat",
   },
   // Hormonal
   {
@@ -3861,6 +3897,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "womens_health",
     sub_category: "Hormonal",
+    equipment: "none",
   },
   {
     id: "wh6",
@@ -3872,6 +3909,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "womens_health",
     sub_category: "Hormonal",
+    equipment: "mat",
   },
   {
     id: "wh7",
@@ -3883,6 +3921,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "womens_health",
     sub_category: "Hormonal",
+    equipment: "none",
   },
 
   // ----- Recovery -----
@@ -3897,6 +3936,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "recovery",
     sub_category: "Tech Neck",
+    equipment: "none",
   },
   {
     id: "rn2",
@@ -3908,6 +3948,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "recovery",
     sub_category: "Tech Neck",
+    equipment: "none",
   },
   {
     id: "rn3",
@@ -3919,6 +3960,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "recovery",
     sub_category: "Tech Neck",
+    equipment: "none",
   },
   // Foot Care
   {
@@ -3931,6 +3973,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "recovery",
     sub_category: "Foot Care",
+    equipment: "none",
   },
   {
     id: "rf2",
@@ -3942,6 +3985,7 @@ const EXERCISES: Exercise[] = [
     mode: "reps",
     category: "recovery",
     sub_category: "Foot Care",
+    equipment: "none",
   },
   {
     id: "rf3",
@@ -3953,6 +3997,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "recovery",
     sub_category: "Foot Care",
+    equipment: "wall",
   },
   // Tension Release
   {
@@ -3965,6 +4010,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "recovery",
     sub_category: "Tension Release",
+    equipment: "none",
   },
   {
     id: "r2",
@@ -3976,6 +4022,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "recovery",
     sub_category: "Tension Release",
+    equipment: "mat",
   },
   {
     id: "r3",
@@ -3987,6 +4034,7 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "recovery",
     sub_category: "Tension Release",
+    equipment: "mat",
   },
   {
     id: "r4",
@@ -3998,81 +4046,103 @@ const EXERCISES: Exercise[] = [
     mode: "timed",
     category: "recovery",
     sub_category: "Tension Release",
+    equipment: "none",
   },
 
   // ===== Expanded library (Task #12) =====
 
   // Strength (additions)
-  { id: "s1", name: "Jump Squat", targetMuscle: "Quads & Glutes", durationSeconds: 40, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
-  { id: "s2", name: "Superman Hold", targetMuscle: "Mid Back", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Strength" },
-  { id: "s3", name: "Reverse Lunge", targetMuscle: "Legs & Glutes", durationSeconds: 45, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
-  { id: "s4", name: "Towel Pull-Down", targetMuscle: "Lats", durationSeconds: 40, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
-  { id: "s5", name: "Single-Leg Deadlift", targetMuscle: "Hamstrings", durationSeconds: 45, reps: 10, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
-  { id: "s6", name: "Pike Shoulder Tap", targetMuscle: "Shoulders", durationSeconds: 40, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength" },
+  { id: "s1", name: "Jump Squat", targetMuscle: "Quads & Glutes", durationSeconds: 40, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength", equipment: "none" },
+  { id: "s2", name: "Superman Hold", targetMuscle: "Mid Back", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Strength", equipment: "mat" },
+  { id: "s3", name: "Reverse Lunge", targetMuscle: "Legs & Glutes", durationSeconds: 45, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength", equipment: "none" },
+  { id: "s4", name: "Towel Pull-Down", targetMuscle: "Lats", durationSeconds: 40, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength", equipment: "towel" },
+  { id: "s5", name: "Single-Leg Deadlift", targetMuscle: "Hamstrings", durationSeconds: 45, reps: 10, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength", equipment: "none" },
+  { id: "s6", name: "Pike Shoulder Tap", targetMuscle: "Shoulders", durationSeconds: 40, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Strength", equipment: "mat" },
 
   // Conditioning (additions)
-  { id: "c1", name: "Invisible Jump Rope", targetMuscle: "Cardio", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
-  { id: "c2", name: "Burpees", targetMuscle: "Full Body", durationSeconds: 45, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning" },
-  { id: "c3", name: "Bodyweight Hip Hinge", targetMuscle: "Posterior Chain", durationSeconds: 40, reps: 20, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning" },
-  { id: "c4", name: "Tuck Jumps", targetMuscle: "Legs", durationSeconds: 30, reps: 10, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning" },
-  { id: "c5", name: "Plank Shoulder Taps", targetMuscle: "Shoulders & Core", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
-  { id: "c6", name: "Bear Crawl", targetMuscle: "Full Body", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
-  { id: "c7", name: "High Knees", targetMuscle: "Cardio", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning" },
-  { id: "c8", name: "Bicycle Crunches", targetMuscle: "Core", durationSeconds: 40, reps: 30, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning" },
+  { id: "c1", name: "Invisible Jump Rope", targetMuscle: "Cardio", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning", equipment: "none" },
+  { id: "c2", name: "Burpees", targetMuscle: "Full Body", durationSeconds: 45, reps: 12, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning", equipment: "mat" },
+  { id: "c3", name: "Bodyweight Hip Hinge", targetMuscle: "Posterior Chain", durationSeconds: 40, reps: 20, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning", equipment: "none" },
+  { id: "c4", name: "Tuck Jumps", targetMuscle: "Legs", durationSeconds: 30, reps: 10, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning", equipment: "none" },
+  { id: "c5", name: "Plank Shoulder Taps", targetMuscle: "Shoulders & Core", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning", equipment: "mat" },
+  { id: "c6", name: "Bear Crawl", targetMuscle: "Full Body", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning", equipment: "mat" },
+  { id: "c7", name: "High Knees", targetMuscle: "Cardio", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "core", sub_category: "Conditioning", equipment: "none" },
+  { id: "c8", name: "Bicycle Crunches", targetMuscle: "Core", durationSeconds: 40, reps: 30, genderFocus: "both", mode: "reps", category: "core", sub_category: "Conditioning", equipment: "mat" },
 
   // Pregnancy Safe (additions)
-  { id: "ps1", name: "Wall Sit", targetMuscle: "Quads", durationSeconds: 30, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
-  { id: "ps2", name: "Seated Towel Curl", targetMuscle: "Biceps", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Pregnancy Safe" },
-  { id: "ps3", name: "Standing Calf Raise", targetMuscle: "Calves", durationSeconds: 40, reps: 15, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Pregnancy Safe" },
-  { id: "ps4", name: "Modified Side Plank", targetMuscle: "Obliques", durationSeconds: 30, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
-  { id: "ps5", name: "Standing Pelvic Rocks", targetMuscle: "Hips", durationSeconds: 60, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
-  { id: "ps6", name: "Prenatal Squat Hold", targetMuscle: "Pelvic Floor", durationSeconds: 30, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
-  { id: "ps7", name: "Seated Spinal Twist", targetMuscle: "Spine", durationSeconds: 45, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe" },
+  { id: "ps1", name: "Wall Sit", targetMuscle: "Quads", durationSeconds: 30, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe", equipment: "wall" },
+  { id: "ps2", name: "Seated Towel Curl", targetMuscle: "Biceps", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Pregnancy Safe", equipment: "towel" },
+  { id: "ps3", name: "Standing Calf Raise", targetMuscle: "Calves", durationSeconds: 40, reps: 15, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Pregnancy Safe", equipment: "none" },
+  { id: "ps4", name: "Modified Side Plank", targetMuscle: "Obliques", durationSeconds: 30, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe", equipment: "mat" },
+  { id: "ps5", name: "Standing Pelvic Rocks", targetMuscle: "Hips", durationSeconds: 60, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe", equipment: "none" },
+  { id: "ps6", name: "Prenatal Squat Hold", targetMuscle: "Pelvic Floor", durationSeconds: 30, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe", equipment: "none" },
+  { id: "ps7", name: "Seated Spinal Twist", targetMuscle: "Spine", durationSeconds: 45, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Pregnancy Safe", equipment: "mat" },
 
   // Postpartum (additions)
-  { id: "pp1", name: "Glute Bridge", targetMuscle: "Glutes", durationSeconds: 40, reps: 15, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum" },
-  { id: "pp2", name: "Bird Dog", targetMuscle: "Core & Back", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum" },
-  { id: "pp3", name: "Heel Slides", targetMuscle: "Deep Core", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum" },
-  { id: "pp4", name: "Wall Push-Up", targetMuscle: "Chest", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum" },
-  { id: "pp5", name: "Standing Pelvic Tilt", targetMuscle: "Lower Back", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum" },
-  { id: "pp6", name: "Dead Bug", targetMuscle: "Deep Core", durationSeconds: 45, reps: 10, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum" },
-  { id: "pp7", name: "Seated March", targetMuscle: "Hip Flexors", durationSeconds: 45, reps: 20, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum" },
+  { id: "pp1", name: "Glute Bridge", targetMuscle: "Glutes", durationSeconds: 40, reps: 15, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum", equipment: "mat" },
+  { id: "pp2", name: "Bird Dog", targetMuscle: "Core & Back", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum", equipment: "mat" },
+  { id: "pp3", name: "Heel Slides", targetMuscle: "Deep Core", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum", equipment: "mat" },
+  { id: "pp4", name: "Wall Push-Up", targetMuscle: "Chest", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum", equipment: "wall" },
+  { id: "pp5", name: "Standing Pelvic Tilt", targetMuscle: "Lower Back", durationSeconds: 40, reps: 12, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum", equipment: "none" },
+  { id: "pp6", name: "Dead Bug", targetMuscle: "Deep Core", durationSeconds: 45, reps: 10, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum", equipment: "mat" },
+  { id: "pp7", name: "Seated March", targetMuscle: "Hip Flexors", durationSeconds: 45, reps: 20, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Postpartum", equipment: "chair" },
 
   // Hormonal (additions)
-  { id: "h1", name: "Slow Yin Stretch", targetMuscle: "Full Body", durationSeconds: 180, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal" },
-  { id: "h2", name: "Legs-Up-The-Wall", targetMuscle: "Lymphatic", durationSeconds: 240, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal" },
-  { id: "h3", name: "Gentle Hip Circles", targetMuscle: "Hips", durationSeconds: 60, reps: 10, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Hormonal" },
-  { id: "h4", name: "Supported Bridge", targetMuscle: "Adrenals", durationSeconds: 120, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal" },
-  { id: "h5", name: "Alternate Nostril Breathing", targetMuscle: "Nervous System", durationSeconds: 180, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal" },
-  { id: "h6", name: "Goddess Pose", targetMuscle: "Inner Thighs", durationSeconds: 60, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal" },
-  { id: "h7", name: "Reclined Butterfly", targetMuscle: "Hips & Pelvis", durationSeconds: 120, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal" },
+  { id: "h1", name: "Slow Yin Stretch", targetMuscle: "Full Body", durationSeconds: 180, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal", equipment: "mat" },
+  { id: "h2", name: "Legs-Up-The-Wall", targetMuscle: "Lymphatic", durationSeconds: 240, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal", equipment: "wall" },
+  { id: "h3", name: "Gentle Hip Circles", targetMuscle: "Hips", durationSeconds: 60, reps: 10, genderFocus: "women", mode: "reps", category: "womens_health", sub_category: "Hormonal", equipment: "none" },
+  { id: "h4", name: "Supported Bridge", targetMuscle: "Adrenals", durationSeconds: 120, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal", equipment: "mat" },
+  { id: "h5", name: "Alternate Nostril Breathing", targetMuscle: "Nervous System", durationSeconds: 180, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal", equipment: "none" },
+  { id: "h6", name: "Goddess Pose", targetMuscle: "Inner Thighs", durationSeconds: 60, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal", equipment: "none" },
+  { id: "h7", name: "Reclined Butterfly", targetMuscle: "Hips & Pelvis", durationSeconds: 120, reps: 1, genderFocus: "women", mode: "timed", category: "womens_health", sub_category: "Hormonal", equipment: "mat" },
 
   // Tech Neck (additions)
-  { id: "tn1", name: "Doorway Chest Opener", targetMuscle: "Chest", durationSeconds: 45, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tech Neck" },
-  { id: "tn2", name: "Levator Scapulae Stretch", targetMuscle: "Neck Side", durationSeconds: 45, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tech Neck" },
-  { id: "tn3", name: "Scapular Squeezes", targetMuscle: "Rhomboids", durationSeconds: 30, reps: 15, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Tech Neck" },
-  { id: "tn4", name: "Wall Angels", targetMuscle: "Upper Back", durationSeconds: 45, reps: 12, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Tech Neck" },
-  { id: "tn5", name: "Thread the Needle", targetMuscle: "Thoracic Spine", durationSeconds: 45, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tech Neck" },
-  { id: "tn6", name: "Suboccipital Release", targetMuscle: "Skull Base", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tech Neck" },
-  { id: "tn7", name: "Seated Neck Flexion", targetMuscle: "Neck", durationSeconds: 30, reps: 10, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Tech Neck" },
+  { id: "tn1", name: "Doorway Chest Opener", targetMuscle: "Chest", durationSeconds: 45, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tech Neck", equipment: "doorway" },
+  { id: "tn2", name: "Levator Scapulae Stretch", targetMuscle: "Neck Side", durationSeconds: 45, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tech Neck", equipment: "none" },
+  { id: "tn3", name: "Scapular Squeezes", targetMuscle: "Rhomboids", durationSeconds: 30, reps: 15, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Tech Neck", equipment: "none" },
+  { id: "tn4", name: "Wall Angels", targetMuscle: "Upper Back", durationSeconds: 45, reps: 12, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Tech Neck", equipment: "wall" },
+  { id: "tn5", name: "Thread the Needle", targetMuscle: "Thoracic Spine", durationSeconds: 45, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tech Neck", equipment: "mat" },
+  { id: "tn6", name: "Suboccipital Release", targetMuscle: "Skull Base", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tech Neck", equipment: "mat" },
+  { id: "tn7", name: "Seated Neck Flexion", targetMuscle: "Neck", durationSeconds: 30, reps: 10, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Tech Neck", equipment: "none" },
 
   // Foot Care (additions)
-  { id: "fc1", name: "Plantar Fascia Press", targetMuscle: "Plantar Fascia", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care" },
-  { id: "fc2", name: "Toe Splay", targetMuscle: "Toes", durationSeconds: 30, reps: 15, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Foot Care" },
-  { id: "fc3", name: "Heel Walks", targetMuscle: "Shin & Foot", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care" },
-  { id: "fc4", name: "Ankle Circles", targetMuscle: "Ankles", durationSeconds: 30, reps: 10, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Foot Care" },
-  { id: "fc5", name: "Towel Scrunches", targetMuscle: "Foot Intrinsics", durationSeconds: 45, reps: 15, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Foot Care" },
-  { id: "fc6", name: "Single-Leg Balance", targetMuscle: "Foot & Ankle", durationSeconds: 45, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care" },
-  { id: "fc7", name: "Big Toe Stretch", targetMuscle: "Big Toe", durationSeconds: 45, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care" },
+  { id: "fc1", name: "Plantar Fascia Press", targetMuscle: "Plantar Fascia", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care", equipment: "none" },
+  { id: "fc2", name: "Toe Splay", targetMuscle: "Toes", durationSeconds: 30, reps: 15, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Foot Care", equipment: "none" },
+  { id: "fc3", name: "Heel Walks", targetMuscle: "Shin & Foot", durationSeconds: 30, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care", equipment: "none" },
+  { id: "fc4", name: "Ankle Circles", targetMuscle: "Ankles", durationSeconds: 30, reps: 10, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Foot Care", equipment: "none" },
+  { id: "fc5", name: "Towel Scrunches", targetMuscle: "Foot Intrinsics", durationSeconds: 45, reps: 15, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Foot Care", equipment: "towel" },
+  { id: "fc6", name: "Single-Leg Balance", targetMuscle: "Foot & Ankle", durationSeconds: 45, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care", equipment: "none" },
+  { id: "fc7", name: "Big Toe Stretch", targetMuscle: "Big Toe", durationSeconds: 45, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Foot Care", equipment: "none" },
 
   // Tension Release (additions)
-  { id: "tr1", name: "Pigeon Pose", targetMuscle: "Hips", durationSeconds: 90, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
-  { id: "tr2", name: "Seated Forward Fold", targetMuscle: "Hamstrings", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
-  { id: "tr3", name: "Cat-Cow Flow", targetMuscle: "Spine", durationSeconds: 60, reps: 10, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Tension Release" },
-  { id: "tr4", name: "Thoracic Extension", targetMuscle: "Thoracic", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
-  { id: "tr5", name: "Standing Forward Fold", targetMuscle: "Posterior Chain", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
-  { id: "tr6", name: "Supine Twist", targetMuscle: "Lower Back", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release" },
+  { id: "tr1", name: "Pigeon Pose", targetMuscle: "Hips", durationSeconds: 90, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release", equipment: "mat" },
+  { id: "tr2", name: "Seated Forward Fold", targetMuscle: "Hamstrings", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release", equipment: "mat" },
+  { id: "tr3", name: "Cat-Cow Flow", targetMuscle: "Spine", durationSeconds: 60, reps: 10, genderFocus: "both", mode: "reps", category: "recovery", sub_category: "Tension Release", equipment: "mat" },
+  { id: "tr4", name: "Thoracic Extension", targetMuscle: "Thoracic", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release", equipment: "mat" },
+  { id: "tr5", name: "Standing Forward Fold", targetMuscle: "Posterior Chain", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release", equipment: "none" },
+  { id: "tr6", name: "Supine Twist", targetMuscle: "Lower Back", durationSeconds: 60, reps: 1, genderFocus: "both", mode: "timed", category: "recovery", sub_category: "Tension Release", equipment: "mat" },
 ];
+
+// Dev-only safety net: catch any new exercise that forgets to declare equipment.
+if (import.meta.env.DEV) {
+  const allowed: ReadonlySet<Equipment> = new Set<Equipment>([
+    "none",
+    "mat",
+    "wall",
+    "chair",
+    "doorway",
+    "towel",
+    "band",
+    "light_dumbbell",
+  ]);
+  for (const ex of EXERCISES) {
+    if (!ex.equipment || !allowed.has(ex.equipment)) {
+      throw new Error(
+        `Exercise "${ex.id}" (${ex.name}) is missing a valid equipment value`,
+      );
+    }
+  }
+}
 
 function WiseBodyMark({ size = 64 }: { size?: number }) {
   return (
@@ -4420,6 +4490,16 @@ function NoEquipmentBadge() {
   );
 }
 
+function GearBadge({ equipment }: { equipment: Equipment }) {
+  if (equipment === "none") return <NoEquipmentBadge />;
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800 ring-1 ring-amber-200/70 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20">
+      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
+      {EQUIPMENT_LABEL[equipment]}
+    </span>
+  );
+}
+
 function ExerciseCard({
   exercise,
   onClick,
@@ -4453,7 +4533,7 @@ function ExerciseCard({
             {exercise.targetMuscle}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <NoEquipmentBadge />
+            <GearBadge equipment={exercise.equipment} />
             <span className="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600 dark:bg-stone-800 dark:text-stone-300">
               {exercise.mode === "timed"
                 ? `${exercise.durationSeconds}s`
@@ -6040,7 +6120,7 @@ function WorkoutScreen({
             {exercise.targetMuscle}
           </p>
           <span aria-hidden="true" className="text-stone-300 dark:text-stone-600">·</span>
-          <NoEquipmentBadge />
+          <GearBadge equipment={exercise.equipment} />
         </div>
         <div className="mt-3 flex items-center justify-center gap-3">
           <span className="text-[11px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
