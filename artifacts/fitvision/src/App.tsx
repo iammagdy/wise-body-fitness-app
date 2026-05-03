@@ -9053,19 +9053,19 @@ function DashboardScreen({
       <header className="pt-safe shrink-0 px-6 pb-4" style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 32px)" }}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <WiseBodyMark size={40} />
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
+                v1.1
+              </span>
+              <WiseBodyMark size={40} />
+            </div>
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
                 {CATEGORY_HEADINGS[category]}
               </p>
-              <div className="mt-0.5 flex items-baseline gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
-                  Wise Body
-                </h1>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
-                  v1.1
-                </span>
-              </div>
+              <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+                Wise Body
+              </h1>
             </div>
           </div>
           <div className="flex items-center gap-2">
