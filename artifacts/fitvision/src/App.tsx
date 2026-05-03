@@ -97,6 +97,10 @@ function useLocalStorage<T extends string>(
   return [value, set];
 }
 
+// ===== Workout preference keys =====
+const WORKOUT_TOTAL_SETS_KEY = "fitvision.workout.totalSets";
+const WORKOUT_REST_SECONDS_KEY = "fitvision.workout.restSeconds";
+
 // ===== Arabic voice coaching =====
 const VOICE_MUTED_KEY = "fitvision.voiceMuted";
 
@@ -4701,11 +4705,13 @@ function RestScreen({
   nextLabel,
   onComplete,
   onSkip,
+  onAdjustDefault,
 }: {
   initialSeconds: number;
   nextLabel: string;
   onComplete: () => void;
   onSkip: () => void;
+  onAdjustDefault?: (deltaSeconds: number) => void;
 }) {
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const totalRef = useRef(initialSeconds);
@@ -4727,6 +4733,8 @@ function RestScreen({
       totalRef.current = Math.max(totalRef.current, next);
       return next;
     });
+    // Persist the user's preferred rest length for next session
+    if (onAdjustDefault) onAdjustDefault(delta);
   };
 
   const C = 2 * Math.PI * 45; // 282.74
@@ -5162,16 +5170,42 @@ function WorkoutScreen({
   const cues = exercise ? getCuesFor(exercise) : DEFAULT_CUES;
 
   // ===== Per-exercise session state =====
-  const [totalSets, setTotalSets] = useState(1);
+  const [totalSetsStr, setTotalSetsStr] = useLocalStorage<string>(
+    WORKOUT_TOTAL_SETS_KEY,
+    "1",
+    (v): v is string => /^([1-9]|10)$/.test(v),
+  );
+  const totalSets = Math.min(10, Math.max(1, parseInt(totalSetsStr, 10) || 1));
+  const setTotalSets = useCallback(
+    (updater: number | ((prev: number) => number)) => {
+      const prev = Math.min(10, Math.max(1, parseInt(totalSetsStr, 10) || 1));
+      const next = typeof updater === "function" ? (updater as (p: number) => number)(prev) : updater;
+      const clamped = Math.min(10, Math.max(1, Math.round(next)));
+      setTotalSetsStr(String(clamped));
+    },
+    [totalSetsStr, setTotalSetsStr],
+  );
+  const [restSecondsStr, setRestSecondsStr] = useLocalStorage<string>(
+    WORKOUT_REST_SECONDS_KEY,
+    "20",
+    (v): v is string => /^\d{1,3}$/.test(v) && parseInt(v, 10) >= 1 && parseInt(v, 10) <= 600,
+  );
+  const restSeconds = Math.min(600, Math.max(1, parseInt(restSecondsStr, 10) || 20));
+  const handleRestDefaultChange = useCallback(
+    (delta: number) => {
+      const prev = Math.min(600, Math.max(1, parseInt(restSecondsStr, 10) || 20));
+      const clamped = Math.min(600, Math.max(1, Math.round(prev + delta)));
+      setRestSecondsStr(String(clamped));
+    },
+    [restSecondsStr, setRestSecondsStr],
+  );
   const [setNumber, setSetNumber] = useState(1);
   const [phase, setPhase] = useState<"intro" | "exercise" | "rest">("intro");
-  const REST_SECONDS = 20;
 
-  // Reset session whenever the exercise changes
+  // Reset session whenever the exercise changes (keep totalSets — user pref is persisted)
   useEffect(() => {
     if (!exercise) return;
     setSetNumber(1);
-    setTotalSets(1);
     setPhase("intro");
   }, [exercise?.id]);
 
@@ -5464,7 +5498,7 @@ function WorkoutScreen({
       )}
       {active && phase === "rest" && (
         <RestScreen
-          initialSeconds={REST_SECONDS}
+          initialSeconds={restSeconds}
           nextLabel={
             setNumber < totalSets
               ? `${exercise.name} · Set ${setNumber + 1}`
@@ -5472,6 +5506,7 @@ function WorkoutScreen({
           }
           onComplete={handleRestComplete}
           onSkip={handleRestComplete}
+          onAdjustDefault={handleRestDefaultChange}
         />
       )}
     </div>
