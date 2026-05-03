@@ -8110,16 +8110,35 @@ function WiseBodyMark({ size = 64 }: { size?: number }) {
 
 function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
   const reduced = useReducedMotion();
+  // First-visit gate: only run the long staggered intro once per
+  // session. On subsequent mounts (e.g. after a profile reset, or
+  // returning from the dashboard) we collapse the choreography to
+  // a quick fade so users don't sit through the same intro twice.
+  const introSeen = useMemo(() => {
+    try {
+      return sessionStorage.getItem("fitvision.welcomeIntroSeen") === "1";
+    } catch {
+      return false;
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("fitvision.welcomeIntroSeen", "1");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const skip = reduced || introSeen;
   // Choreography: brand mark scales + glow builds, then headline,
-  // tagline, and CTAs cascade in. With reduced-motion, everything
-  // appears instantly.
-  const baseTransition = reduced
-    ? { duration: 0 }
+  // tagline, and CTAs cascade in. With reduced-motion or after the
+  // first visit, everything appears (almost) instantly.
+  const baseTransition = skip
+    ? { duration: introSeen && !reduced ? 0.2 : 0 }
     : { type: "spring" as const, stiffness: 220, damping: 26, mass: 0.9 };
   const fadeUp = (delay: number) => ({
-    initial: reduced ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 },
+    initial: skip ? { opacity: introSeen && !reduced ? 0 : 1, y: 0 } : { opacity: 0, y: 14 },
     animate: { opacity: 1, y: 0 },
-    transition: { ...baseTransition, delay: reduced ? 0 : delay },
+    transition: { ...baseTransition, delay: skip ? 0 : delay },
   });
   const tap = reduced ? undefined : { scale: 0.96 };
   const hover = reduced ? undefined : { scale: 1.015 };
@@ -8134,15 +8153,15 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
             background:
               "radial-gradient(circle, rgba(168,18,26,0.30) 0%, rgba(168,18,26,0) 70%)",
           }}
-          initial={reduced ? { opacity: 0.7, scale: 1 } : { opacity: 0, scale: 0.6 }}
+          initial={skip ? { opacity: 0.7, scale: 1 } : { opacity: 0, scale: 0.6 }}
           animate={{ opacity: 0.7, scale: 1 }}
-          transition={reduced ? { duration: 0 } : { duration: 1.1, ease: "easeOut", delay: 0.1 }}
+          transition={skip ? { duration: 0 } : { duration: 1.1, ease: "easeOut", delay: 0.1 }}
         />
         <motion.div
           className="relative z-10"
-          initial={reduced ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.55, rotate: -6 }}
+          initial={skip ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.55, rotate: -6 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 180, damping: 14, mass: 1 }}
+          transition={skip ? { duration: 0 } : { type: "spring", stiffness: 180, damping: 14, mass: 1 }}
         >
           <WiseBodyMark size={156} />
         </motion.div>
@@ -8194,7 +8213,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
           whileHover={hover}
           type="button"
           onClick={() => onSelect("man")}
-          className="w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm dark:bg-stone-50 dark:text-stone-900"
+          className="w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm transition active:scale-[0.98] dark:bg-stone-50 dark:text-stone-900"
           style={{ minHeight: 60 }}
         >
           I am a Man
@@ -8205,7 +8224,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
           whileHover={hover}
           type="button"
           onClick={() => onSelect("woman")}
-          className="w-full rounded-2xl border border-stone-200 bg-white px-6 text-lg font-semibold text-stone-900 shadow-sm dark:border-stone-800 dark:bg-stone-900 dark:text-stone-50"
+          className="w-full rounded-2xl border border-stone-200 bg-white px-6 text-lg font-semibold text-stone-900 shadow-sm transition active:scale-[0.98] dark:border-stone-800 dark:bg-stone-900 dark:text-stone-50"
           style={{ minHeight: 60 }}
         >
           I am a Woman
@@ -8490,8 +8509,9 @@ function ExerciseCard({
   onClick: () => void;
 }) {
   const family = movementFamilyFor(exercise);
+  const reduced = useReducedMotion();
   return (
-    <div
+    <motion.div
       role="button"
       tabIndex={0}
       onClick={onClick}
@@ -8501,7 +8521,14 @@ function ExerciseCard({
           onClick();
         }
       }}
-      className="group mb-3 cursor-pointer rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200/70 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.985] active:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:active:bg-stone-800"
+      whileTap={reduced ? undefined : { scale: 0.97 }}
+      whileHover={reduced ? undefined : { y: -2 }}
+      transition={
+        reduced
+          ? { duration: 0 }
+          : { type: "spring", stiffness: 420, damping: 28 }
+      }
+      className="group mb-3 cursor-pointer rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200/70 transition-all duration-150 hover:shadow-md active:scale-[0.985] active:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:active:bg-stone-800"
     >
       <div className="flex items-start gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-stone-100 text-stone-700 ring-1 ring-stone-200/70 dark:bg-stone-800 dark:text-stone-200 dark:ring-stone-700/60">
@@ -8543,7 +8570,7 @@ function ExerciseCard({
           <polyline points="9 6 15 12 9 18" />
         </svg>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -8687,6 +8714,7 @@ function BottomNav({
   active: Category;
   onChange: (id: Category) => void;
 }) {
+  const reduced = useReducedMotion();
   return (
     <nav
       className="pb-safe absolute bottom-0 left-0 right-0 w-full max-w-md border-t border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900"
@@ -8696,18 +8724,34 @@ function BottomNav({
         {tabs.map((tab) => {
           const isActive = tab.id === active;
           return (
-            <button
+            <motion.button
               key={tab.id}
               type="button"
               onClick={() => onChange(tab.id)}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-1 flex-col items-center justify-center gap-1 py-2 transition active:scale-[0.97] ${
+              whileTap={reduced ? undefined : { scale: 0.94 }}
+              className={`relative flex flex-1 flex-col items-center justify-center gap-1 py-2 transition active:scale-[0.97] ${
                 isActive
                   ? "text-stone-900 dark:text-stone-50"
                   : "text-stone-400 dark:text-stone-500"
               }`}
               style={{ minHeight: 60 }}
             >
+              {/* Spring-driven active-tab indicator: a small pill
+                  underline that flies between tabs using framer-motion's
+                  shared layoutId. */}
+              {isActive && (
+                <motion.span
+                  layoutId="bottom-nav-indicator"
+                  aria-hidden="true"
+                  className="absolute left-1/2 top-1 h-1 w-8 -translate-x-1/2 rounded-full bg-[#A8121A] dark:bg-red-400"
+                  transition={
+                    reduced
+                      ? { duration: 0 }
+                      : { type: "spring", stiffness: 500, damping: 36 }
+                  }
+                />
+              )}
               <tab.Icon
                 className={isActive ? "h-6 w-6" : "h-6 w-6 opacity-90"}
               />
@@ -8719,7 +8763,7 @@ function BottomNav({
               >
                 {tab.label}
               </span>
-            </button>
+            </motion.button>
           );
         })}
       </div>
@@ -9566,15 +9610,18 @@ function TimedBody({
             </div>
           </div>
         </div>
-        <button
+        <motion.button
           type="button"
           onClick={toggle}
           aria-label={running ? "Pause" : "Play"}
+          whileTap={{ scale: 0.92 }}
+          whileHover={{ scale: 1.03 }}
+          transition={{ type: "spring", stiffness: 420, damping: 22 }}
           className={`mt-8 flex items-center justify-center rounded-full bg-emerald-500 text-white shadow-xl transition active:scale-95 active:bg-emerald-600 dark:bg-emerald-500 dark:text-white ${running ? "cta-pulse" : ""}`}
           style={{ width: 92, height: 92 }}
         >
           {running ? <PauseIcon /> : <PlayIcon />}
-        </button>
+        </motion.button>
       </div>
     </div>
   );
@@ -9629,19 +9676,22 @@ function RepsBody({
           />
         </div>
       </div>
-      <button
+      <motion.button
         type="button"
         onClick={() => {
           speak(cues.end);
           window.setTimeout(() => onSetComplete(), 500);
         }}
         aria-label="Complete set"
+        whileTap={{ scale: 0.97 }}
+        whileHover={{ scale: 1.01 }}
+        transition={{ type: "spring", stiffness: 420, damping: 24 }}
         className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 text-lg font-semibold text-white shadow-md transition active:scale-[0.98] active:bg-emerald-600"
         style={{ minHeight: 64 }}
       >
         <CheckIcon />
         Complete set
-      </button>
+      </motion.button>
     </div>
   );
 }
@@ -9968,15 +10018,18 @@ function WorkoutScreen({
           >
             <PrevIcon />
           </button>
-          <button
+          <motion.button
             type="button"
             onClick={goNext}
             disabled={!hasNext}
             aria-label="Next exercise"
+            whileTap={hasNext ? { scale: 0.9 } : undefined}
+            whileHover={hasNext ? { scale: 1.05 } : undefined}
+            transition={{ type: "spring", stiffness: 480, damping: 24 }}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
           >
             <NextIcon />
-          </button>
+          </motion.button>
         </div>
         <div className="flex items-center gap-2">
           {(() => {
@@ -10001,7 +10054,7 @@ function WorkoutScreen({
             );
           })()}
           {supported && (
-            <button
+            <motion.button
               type="button"
               onClick={() => {
                 const next = muted ? "0" : "1";
@@ -10013,10 +10066,13 @@ function WorkoutScreen({
                 muted ? "Unmute Arabic coaching" : "Mute Arabic coaching"
               }
               title={muted ? "Voice off" : "Voice on"}
+              whileTap={{ scale: 0.9 }}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 480, damping: 24 }}
               className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
             >
               {muted ? <SpeakerOffIcon /> : <SpeakerOnIcon />}
-            </button>
+            </motion.button>
           )}
         </div>
       </div>
@@ -10180,10 +10236,16 @@ function ScreenSlide({
   children,
   direction,
   reduced,
+  kind = "slide",
 }: {
   children: ReactNode;
   direction: 1 | -1;
   reduced: boolean;
+  // "slide" = horizontal directional push/pop (used between
+  // dashboard and workout). "liftFade" = soft vertical lift +
+  // opacity crossfade (used between welcome and dashboard so the
+  // first impression doesn't feel like a sideways shove).
+  kind?: "slide" | "liftFade";
 }) {
   const spring = { type: "spring" as const, stiffness: 320, damping: 34, mass: 0.9 };
   if (reduced) {
@@ -10194,6 +10256,23 @@ function ScreenSlide({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.12 }}
+      >
+        {children}
+      </motion.div>
+    );
+  }
+  if (kind === "liftFade") {
+    // Welcome -> Dashboard lifts up and fades; Dashboard -> Welcome
+    // settles back down. Direction lets us reverse cleanly.
+    const enterY = direction > 0 ? 24 : -16;
+    const exitY = direction > 0 ? -16 : 24;
+    return (
+      <motion.div
+        className="absolute inset-0"
+        initial={{ y: enterY, opacity: 0, scale: 0.985 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: exitY, opacity: 0, scale: 0.99 }}
+        transition={{ ...spring, damping: 30 }}
       >
         {children}
       </motion.div>
@@ -10279,6 +10358,16 @@ function WorkoutSummary({
   useEffect(() => {
     doneRef.current?.focus();
   }, []);
+  // Celebration is meant to be a quick high-five, not a screen the
+  // user has to tap through. Auto-dismiss after ~2.5s, but also
+  // accept a tap on the backdrop or the Done button so eager users
+  // can move on instantly.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      onDone();
+    }, 2500);
+    return () => window.clearTimeout(t);
+  }, [onDone]);
   const stat = (delay: number) => ({
     initial: reduced ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 12, scale: 0.92 },
     animate: { opacity: 1, y: 0, scale: 1 },
@@ -10295,10 +10384,12 @@ function WorkoutSummary({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.18 }}
+      onClick={onDone}
     >
       <ConfettiBurst active />
       <motion.div
         className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl dark:bg-stone-900"
+        onClick={(e) => e.stopPropagation()}
         initial={reduced ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.85, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={
@@ -10378,7 +10469,7 @@ function WorkoutSummary({
           onClick={onDone}
           whileTap={reduced ? undefined : { scale: 0.96 }}
           whileHover={reduced ? undefined : { scale: 1.015 }}
-          className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-stone-900 text-base font-semibold text-white shadow-sm dark:bg-stone-50 dark:text-stone-900"
+          className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-stone-900 text-base font-semibold text-white shadow-sm transition active:scale-[0.98] dark:bg-stone-50 dark:text-stone-900"
         >
           Done
         </motion.button>
@@ -10717,12 +10808,22 @@ function App() {
           this invariant via a permanently-mounted hidden div. */}
       <AnimatePresence initial={false} mode="sync" custom={navDirection}>
         {screen === "welcome" && (
-          <ScreenSlide key="welcome" direction={navDirection} reduced={reducedMotionApp}>
+          <ScreenSlide
+            key="welcome"
+            direction={navDirection}
+            reduced={reducedMotionApp}
+            kind="liftFade"
+          >
             <WelcomeScreen onSelect={handleSelectGender} />
           </ScreenSlide>
         )}
         {screen === "dashboard" && (
-          <ScreenSlide key="dashboard" direction={navDirection} reduced={reducedMotionApp}>
+          <ScreenSlide
+            key="dashboard"
+            direction={navDirection}
+            reduced={reducedMotionApp}
+            kind="liftFade"
+          >
             <DashboardScreen
               gender={gender}
               onSelectExercise={handleSelectExercise}
