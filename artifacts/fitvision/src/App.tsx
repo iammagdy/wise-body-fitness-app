@@ -336,7 +336,28 @@ function getCuesFor(ex: Exercise): ArabicCues {
 // Files placed in /public/loops must be registered here; see
 // /public/loops/README.md.
 const LOOP_MANIFEST = new Set<string>([
-  // Sub-category fallback loops (one per sub-category)
+  // Per-exercise AI-generated photo-realistic demonstration clips
+  // (Task #27 — full library rollout). The 6 pilot exercises from
+  // Task #26 (m1, w4, b1, pp1, s3, tr1) are intentionally excluded
+  // here because Task #29 replaced them with per-gender stylized
+  // cartoon clips listed in GENDERED_LOOP_MANIFEST below.
+  "b2",
+  "c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8",
+  "fc1", "fc2", "fc3", "fc4", "fc5", "fc6", "fc7",
+  "h1", "h2", "h3", "h4", "h5", "h6", "h7",
+  "m2", "m3", "m4",
+  "pp2", "pp3", "pp4", "pp5", "pp6", "pp7",
+  "ps1", "ps2", "ps3", "ps4", "ps5", "ps6", "ps7",
+  "r1", "r2", "r3", "r4",
+  "rf1", "rf2", "rf3",
+  "rn1", "rn2", "rn3",
+  "s1", "s2", "s4", "s5", "s6",
+  "tn1", "tn2", "tn3", "tn4", "tn5", "tn6", "tn7",
+  "tr2", "tr3", "tr4", "tr5", "tr6",
+  "w1", "w2", "w3",
+  "wh1", "wh2", "wh3", "wh4", "wh5", "wh6", "wh7",
+  // Sub-category fallback loops (kept as a safety net for any future
+  // exercises added without their own clip)
   "strength",
   "conditioning",
   "pregnancy-safe",
