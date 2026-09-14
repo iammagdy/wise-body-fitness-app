@@ -1,3 +1,4 @@
+import { useLanguage } from "../../services/i18n";
 import React, { useState } from "react";
 import {
   detectCastCapabilities,
@@ -20,6 +21,7 @@ export function CastDialog({
   activeExerciseName,
 }: CastDialogProps) {
   const [guideTab, setGuideTab] = useState<"ios" | "android">("ios");
+  const { t, lang, isRTL } = useLanguage();
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   if (!open) return null;
@@ -34,7 +36,7 @@ export function CastDialog({
     setStatusMsg("Opening wireless TV selector…");
     const res = await startDirectVideoCast(videoRef.current);
     if (res === "failed") {
-      setStatusMsg("Native cast dialog not supported in this browser. Try Screen Mirroring below.");
+      setStatusMsg(lang === "ar" ? "خاصية البث المباشر غير مدعومة في هذا المتصفح. جرب مشاركة الشاشة أدناه." : "Native cast dialog not supported in this browser. Try Screen Mirroring below.");
     } else {
       setStatusMsg(null);
       onClose();
@@ -182,7 +184,7 @@ export function CastDialog({
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-stone-100">
-                Fullscreen Cinema Display
+                {t("castCinema")}
               </p>
               <p className="text-xs text-stone-400 mt-1">
                 Expands the app to borderless widescreen (ideal for Smart TV web browsers or HDMI-connected displays).

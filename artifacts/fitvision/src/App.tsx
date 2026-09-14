@@ -1006,6 +1006,7 @@ function ThemeMenu({
   pref: ThemePref;
   onSelect: (next: ThemePref) => void;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -1027,12 +1028,12 @@ function ThemeMenu({
   }, [open]);
 
   const label =
-    pref === "light" ? "Light" : pref === "dark" ? "Dark" : "System";
+    pref === "light" ? t("themeLight") : pref === "dark" ? t("themeDark") : t("themeSystem");
   const options: { value: ThemePref; label: string; icon: ReactNode }[] =
     [
-      { value: "light", label: "Light", icon: <SunIcon /> },
-      { value: "dark", label: "Dark", icon: <MoonIcon /> },
-      { value: "system", label: "System", icon: <SystemIcon /> },
+      { value: "light", label: t("themeLight"), icon: <SunIcon /> },
+      { value: "dark", label: t("themeDark"), icon: <MoonIcon /> },
+      { value: "system", label: t("themeSystem"), icon: <SystemIcon /> },
     ];
 
   return (
@@ -1104,6 +1105,7 @@ function ProfileMenu({
   gender: Gender | null;
   onReset: () => void;
 }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -1124,7 +1126,7 @@ function ProfileMenu({
     };
   }, [open]);
 
-  const label = gender === "man" ? "Man" : gender === "woman" ? "Woman" : "Profile";
+  const label = gender === "man" ? t("profileMan") : gender === "woman" ? t("profileWoman") : t("profileCurrent");
 
   return (
     <div ref={containerRef} className="relative">
@@ -1146,7 +1148,7 @@ function ProfileMenu({
           className="absolute right-0 top-12 z-10 w-56 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-lg dark:border-stone-800 dark:bg-stone-900"
         >
           <div className="px-3 py-2.5 text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
-            Current profile
+            {t("profileCurrent")}
           </div>
           <div className="px-3 pb-2 text-sm font-semibold text-stone-900 dark:text-stone-50">
             {label}
@@ -1249,20 +1251,22 @@ function FamilyGlyph({ family }: { family: MovementFamily }) {
 }
 
 function NoEquipmentBadge() {
+  const { t } = useLanguage();
   return (
     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200/70 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-      No equipment
+      {t("noEquipment")}
     </span>
   );
 }
 
 function GearBadge({ equipment }: { equipment: Equipment }) {
+  const { translateEquipment } = useLanguage();
   if (equipment === "none") return <NoEquipmentBadge />;
   return (
     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800 ring-1 ring-amber-200/70 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20">
       <span className="h-1.5 w-1.5 rounded-full bg-amber-500 dark:bg-amber-400" />
-      {EQUIPMENT_LABEL[equipment]}
+      {translateEquipment(equipment)}
     </span>
   );
 }
@@ -1276,6 +1280,7 @@ function ExerciseCard({
 }) {
   const family = movementFamilyFor(exercise);
   const reduced = useReducedMotion();
+  const { t, translateExerciseName, translateMuscle, translateGenderFocus } = useLanguage();
   return (
     <motion.div
       role="button"
@@ -1305,21 +1310,21 @@ function ExerciseCard({
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-[15px] font-bold leading-tight text-stone-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
-            {exercise.name}
+            {translateExerciseName(exercise.name)}
           </h3>
           <p className="mt-0.5 truncate text-[12px] font-medium text-stone-500 dark:text-zinc-400">
-            {exercise.targetMuscle}
+            {translateMuscle(exercise.targetMuscle)}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <span className="inline-flex items-center rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border dark:border-emerald-500/20">
               {exercise.mode === "timed"
-                ? `⏱️ ${exercise.durationSeconds}s`
-                : `🔁 ${exercise.reps} reps`}
+                ? `⏱️ ${exercise.durationSeconds} ${t("secondsSuffix")}`
+                : `🔁 ${exercise.reps} ${t("repsSuffix")}`}
             </span>
             <GearBadge equipment={exercise.equipment} />
             {exercise.genderFocus !== "both" && (
               <span className="inline-flex items-center rounded-lg bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:bg-zinc-800 dark:text-zinc-400">
-                {exercise.genderFocus}
+                {translateGenderFocus(exercise.genderFocus)}
               </span>
             )}
           </div>
@@ -1451,10 +1456,12 @@ function ChipRow({
   active: string;
   onChange: (chip: string) => void;
 }) {
+  const { t, translateSubCategory } = useLanguage();
   return (
     <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto whitespace-nowrap p-4">
       {chips.map((chip) => {
         const isActive = chip === active;
+        const displayLabel = chip === ALL_CHIP ? t("all") : translateSubCategory(chip);
         return (
           <button
             key={chip}
@@ -1467,7 +1474,7 @@ function ChipRow({
                 : "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300"
             }`}
           >
-            {chip}
+            {displayLabel}
           </button>
         );
       })}
@@ -1787,7 +1794,7 @@ function DashboardScreen({
   const [activeChip, setActiveChip] = useState<string>(ALL_CHIP);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(() => getUserProfile());
-  const { t, lang, isRTL, translateSubCategory, translateEquipment, translateMuscle, translateCategory, translateCategoryHeading } = useLanguage();
+  const { t, lang, isRTL, translateExerciseName, translateSubCategory, translateEquipment, translateMuscle, translateCategory, translateCategoryHeading } = useLanguage();
 
   const visibleTabs = useMemo(() => {
     return ALL_TABS.filter(
@@ -1915,10 +1922,10 @@ function DashboardScreen({
                   </span>
                 </div>
                 <h3 className="mt-2 text-2xl font-black text-white tracking-tight">
-                  {featuredExercise.name}
+                  {translateExerciseName(featuredExercise.name)}
                 </h3>
                 <p className="mt-1 text-xs text-zinc-400 leading-relaxed max-w-sm">
-                  Targeting {featuredExercise.targetMuscle} · No equipment needed · Complete technique coaching
+                  {lang === "ar" ? `تستهدف ${translateMuscle(featuredExercise.targetMuscle)} · ${t("noEquipment")} · إرشادات كاملة للأداء السليم` : `Targeting ${featuredExercise.targetMuscle} · No equipment needed · Complete technique coaching`}
                 </p>
               </div>
               <motion.button
@@ -1935,11 +1942,11 @@ function DashboardScreen({
             <div className="mt-4 flex items-center justify-between border-t border-zinc-800/80 pt-3 text-[11px] font-bold text-zinc-400">
               <span className="flex items-center gap-1.5">
                 <span>🎯 {t("focusOn")}:</span>
-                <span className="text-zinc-200">{featuredExercise.targetMuscle}</span>
+                <span className="text-zinc-200">{translateMuscle(featuredExercise.targetMuscle)}</span>
               </span>
               <span className="flex items-center gap-1.5">
                 <span>⚡ {t("gear")}:</span>
-                <span className="text-zinc-200">{featuredExercise.equipment.replace('_', ' ')}</span>
+                <span className="text-zinc-200">{translateEquipment(featuredExercise.equipment)}</span>
               </span>
             </div>
           </div>
@@ -1980,7 +1987,7 @@ function DashboardScreen({
                     </div>
                   </div>
                   <span className="shrink-0 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-emerald-400">
-                    {routine.estimatedMinutes}m · {routine.level}
+                    {routine.estimatedMinutes}{lang === "ar" ? "د" : "m"} · {lang === "ar" && ROUTINE_TRANSLATIONS[routine.id] ? ROUTINE_TRANSLATIONS[routine.id].arLevel : routine.level}
                   </span>
                 </div>
 
@@ -2024,7 +2031,7 @@ function DashboardScreen({
           grouped.map(([sub, items]) => (
             <section key={sub} className="mb-5">
               <h2 className="sticky top-0 z-10 -mx-5 sm:-mx-6 mb-3 bg-[#09090b]/90 px-5 sm:px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur border-b border-zinc-800/60">
-                {sub}
+                {translateSubCategory(sub)}
                 <span className="ml-2 rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-emerald-400 font-extrabold">
                   {items.length}
                 </span>
@@ -2265,7 +2272,7 @@ function CountdownIntro({
         className="ml-anim-pulse mt-4 font-bold tabular-nums text-stone-900 dark:text-stone-50"
         style={{ fontSize: 144, lineHeight: 1 }}
       >
-        {n > 0 ? n : "GO"}
+        {n > 0 ? n : t("go")}
       </div>
       <p className="mt-6 text-xs font-medium text-stone-400 dark:text-stone-500">
         Tap anywhere to skip
@@ -2287,7 +2294,7 @@ function RestScreen({
   onSkip: () => void;
   onAdjustDefault?: (deltaSeconds: number) => void;
 }) {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const totalRef = useRef(initialSeconds);
 
@@ -2360,14 +2367,14 @@ function RestScreen({
           onClick={() => adjust(-15)}
           className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-stone-900 shadow-sm transition active:scale-95 dark:bg-stone-800 dark:text-stone-50"
         >
-          −15s
+          {isRTL ? "-١٥ث" : "−15s"}
         </button>
         <button
           type="button"
           onClick={() => adjust(15)}
           className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-stone-900 shadow-sm transition active:scale-95 dark:bg-stone-800 dark:text-stone-50"
         >
-          +15s
+          {isRTL ? "+١٥ث" : "+15s"}
         </button>
       </div>
       <button
@@ -2761,7 +2768,7 @@ function WorkoutScreen({
   onOpenCastModal: () => void;
   onLogSession: (s: Omit<WorkoutSession, "id" | "endedAt">) => void;
 }) {
-  const { t, isRTL, translateMuscle, translateEquipment } = useLanguage();
+  const { t, isRTL, translateExerciseName, translateSubCategory, translateMuscle, translateEquipment } = useLanguage();
   const exercise = playlist[index] ?? null;
   const nextExercise = playlist[index + 1] ?? null;
   const hasPrev = index > 0;
@@ -3086,12 +3093,12 @@ function WorkoutScreen({
             </span>
             <span className="text-stone-300 dark:text-stone-700">·</span>
             <span className="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">
-              {exercise.sub_category}
+              {translateSubCategory(exercise.sub_category)}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/20">
-              🎯 {exercise.targetMuscle}
+              🎯 {translateMuscle(exercise.targetMuscle)}
             </span>
             <GearBadge equipment={exercise.equipment} />
           </div>
@@ -3208,7 +3215,7 @@ function WorkoutScreen({
           <div className="mt-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-stone-400">
             <span>{t("exerciseCount", { current: index + 1, total: playlist.length })}</span>
             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-              🔥 ~{estCalories} kcal
+              🔥 ~{estCalories} {t("calories")}
             </span>
           </div>
         </div>
@@ -3292,10 +3299,10 @@ function WorkoutScreen({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-bold text-stone-900 dark:text-stone-50">
-                    {nextExercise.name}
+                    {translateExerciseName(nextExercise.name)}
                   </p>
                   <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
-                    {nextExercise.targetMuscle} · {nextExercise.mode === "timed" ? `${nextExercise.durationSeconds}s` : `${nextExercise.reps} reps`}
+                    {translateMuscle(nextExercise.targetMuscle)} · {nextExercise.mode === "timed" ? `${nextExercise.durationSeconds} ${t("secondsSuffix")}` : `${nextExercise.reps} ${t("repsSuffix")}`}
                   </p>
                 </div>
               </>
@@ -3320,8 +3327,8 @@ function WorkoutScreen({
           initialSeconds={restSeconds}
           nextLabel={
             setNumber < totalSets
-              ? `${exercise.name} · Set ${setNumber + 1}`
-              : nextExercise?.name ?? t("workoutComplete")
+              ? `${translateExerciseName(exercise.name)} · ${t("setCount", { current: setNumber + 1, total: totalSets })}`
+              : nextExercise ? translateExerciseName(nextExercise.name) : t("workoutComplete")
           }
           onComplete={handleRestComplete}
           onSkip={handleRestComplete}

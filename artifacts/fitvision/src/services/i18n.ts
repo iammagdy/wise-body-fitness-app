@@ -11,7 +11,7 @@ export const TRANSLATIONS = {
     appName: "Wise Body",
     tagline: "Pro Athletic Fitness",
     version: "v2.0 Athletic",
-    
+
     // Welcome screen
     welcomeTitle: "WISE BODY — WORLD-CLASS ATHLETIC TRAINING",
     welcomeSubtitle: "Choose your performance focus track. Customized video circuits, scientific calorie analytics, and wireless TV casting.",
@@ -38,6 +38,7 @@ export const TRANSLATIONS = {
     startWorkout: "Start Workout",
     curatedRoutines: "Curated Fast Routines",
     oneTapCircuit: "1-Tap Circuit",
+    startCircuit: "Start Circuit",
     todayActivity: "Today's Athletic Activity",
     readyForAction: "Ready for action. Complete a session to log your metrics.",
     loggedToday: "{count} session{plural} logged today",
@@ -57,8 +58,14 @@ export const TRANSLATIONS = {
     all: "All",
     estimatedCalories: "~{count} kcal",
     estimatedMinutes: "{count}m",
+    noEquipment: "No equipment",
 
-    // Categories
+    // Tabs
+    tab_workout: "Workout",
+    tab_womens_health: "Women's Health",
+    tab_recovery: "Recovery",
+
+    // Categories headings
     cat_core: "Core & Abs",
     cat_womens_health: "Women's Health",
     cat_recovery: "Recovery & Mobility",
@@ -76,7 +83,7 @@ export const TRANSLATIONS = {
     restTitle: "Rest",
     upNext: "Up Next",
     skipRest: "Skip rest",
-    getReady: "Get Ready",
+    getReady: "Get ready",
     tapToSkip: "Tap anywhere to skip",
     finalExerciseMsg: "Final exercise — finish strong! 🏆",
     exit: "Exit",
@@ -86,9 +93,12 @@ export const TRANSLATIONS = {
     soundOff: "Sound off",
     coachingTips: "Technique Tips",
     hideTips: "Hide Tips",
+    go: "GO",
+    secondsSuffix: "s",
+    repsSuffix: "reps",
 
     // Summary
-    workoutComplete: "Workout Complete",
+    workoutComplete: "Workout complete",
     greatWork: "Great work!",
     summaryDesc: "Here's what you just accomplished.",
     exercisesDone: "Exercises",
@@ -98,14 +108,25 @@ export const TRANSLATIONS = {
     shareStoryCard: "Share Story Card (9:16)",
     done: "Done",
 
+    // Menus
+    themeLight: "Light",
+    themeDark: "Dark",
+    themeSystem: "System",
+    profileCurrent: "Current profile",
+    profileMan: "Men's Track",
+    profileWoman: "Women's Sculpt",
+    profileReset: "Reset Profile & History",
+
     // Athlete Profile Modal
-    calibrateTitle: "Athlete Profile Calibration",
-    calibrateSubtitle: "Calibrate your body weight for accurate MET calorie calculations.",
-    weightLabel: "Body Weight",
-    heightLabel: "Height (cm)",
-    saveCalibration: "Save Profile",
+    calibrateTitle: "Athlete Body Profile",
+    calibrateSubtitle: "Scientific MET Calorie Calibration",
+    weightLabel: "Current Body Weight",
+    heightLabel: "Height",
+    saveCalibration: "Save & Recalibrate Metrics",
     kg: "kg",
     lbs: "lbs",
+    bmrLabel: "Estimated Basal Burn (BMR):",
+    bmrNotice: "Calorie expenditure is calculated using the Stanford Compendium of Physical Activities MET formula, adjusted for your exact mass.",
 
     // Heart Rate & Bluetooth
     heartRate: "Heart Rate",
@@ -115,6 +136,21 @@ export const TRANSLATIONS = {
     fatBurnZone: "Fat Burn",
     cardioZone: "Cardio",
     peakZone: "Peak",
+
+    // Cast Dialog
+    castTitle: "Cast Workout to TV",
+    castSubtitle: "Stream your workout to your big screen with zero login.",
+    castDirect: "AirPlay / Google Cast",
+    castDirectDesc: "Wireless playback directly to your Smart TV.",
+    castScreen: "Screen Mirroring",
+    castScreenDesc: "Mirror your browser tab or phone screen.",
+    castCinema: "Fullscreen Mode",
+    castCinemaDesc: "Maximize video for TV browser view.",
+    castConnecting: "Connecting to display…",
+    castGuide: "TV Connection Guide",
+    castGuideApple: "Apple TV / AirPlay",
+    castGuideAndroid: "Chromecast / Android TV",
+    castClose: "Close",
 
     // Language switcher
     switchLanguage: "عربي",
@@ -153,6 +189,7 @@ export const TRANSLATIONS = {
     startWorkout: "بدء التمرين",
     curatedRoutines: "دوائر تدريبية سريعة",
     oneTapCircuit: "دائرة بضغطة واحدة",
+    startCircuit: "بدء الدائرة",
     todayActivity: "نشاطك الرياضي اليوم",
     readyForAction: "جاهز للبدء! أكمل جلسة تمرين لتسجيل مؤشراتك الرياضية.",
     loggedToday: "تم تسجيل {count} جلسة اليوم",
@@ -172,8 +209,14 @@ export const TRANSLATIONS = {
     all: "الكل",
     estimatedCalories: "~{count} سعرة",
     estimatedMinutes: "{count} دقيقة",
+    noEquipment: "بدون أدوات",
 
-    // Categories
+    // Tabs
+    tab_workout: "التمارين",
+    tab_womens_health: "صحة المرأة",
+    tab_recovery: "الاستشفاء",
+
+    // Categories headings
     cat_core: "عضلات البطن والوسط",
     cat_womens_health: "صحة المرأة والنحت",
     cat_recovery: "الاستشفاء والمرونة",
@@ -201,6 +244,9 @@ export const TRANSLATIONS = {
     soundOff: "كتم الصوت",
     coachingTips: "إرشادات الأداء",
     hideTips: "إخفاء الإرشادات",
+    go: "انطلق!",
+    secondsSuffix: "ثانية",
+    repsSuffix: "تكرار",
 
     // Summary
     workoutComplete: "اكتمل التمرين بنجاح",
@@ -213,14 +259,25 @@ export const TRANSLATIONS = {
     shareStoryCard: "مشاركة بطاقة الستوري (9:16)",
     done: "تم",
 
+    // Menus
+    themeLight: "فاتح",
+    themeDark: "داكن",
+    themeSystem: "تلقائي",
+    profileCurrent: "المسار الحالي",
+    profileMan: "مسار الرجال",
+    profileWoman: "مسار السيدات",
+    profileReset: "إعادة ضبط الحساب والسجل",
+
     // Athlete Profile Modal
     calibrateTitle: "معايرة بيانات المتدرب",
     calibrateSubtitle: "معايرة وزن الجسم لحساب السعرات الحرارية بدقة علمية (معادلة MET).",
-    weightLabel: "وزن الجسم",
-    heightLabel: "الطول (سم)",
-    saveCalibration: "حفظ المعايرة",
+    weightLabel: "وزن الجسم الحالي",
+    heightLabel: "الطول",
+    saveCalibration: "حفظ المعايرة والبيانات",
     kg: "كجم",
     lbs: "باوند",
+    bmrLabel: "معدل الحرق الأساسي (BMR):",
+    bmrNotice: "يتم حساب معدل استهلاك الطاقة وفق دليل جامعة ستانفورد للنشاط البدني (معادلة MET) بناءً على كتلة جسمك الدقيقة.",
 
     // Heart Rate & Bluetooth
     heartRate: "نبضات القلب",
@@ -231,6 +288,21 @@ export const TRANSLATIONS = {
     cardioZone: "كارديو",
     peakZone: "الذروة",
 
+    // Cast Dialog
+    castTitle: "بث التمرين على التلفزيون الذكي",
+    castSubtitle: "اعرض تمرينك مباشرة على الشاشة الكبيرة بدون تسجيل دخول.",
+    castDirect: "بث مباشر (AirPlay / Google Cast)",
+    castDirectDesc: "تشغيل لاسلكي مباشر على شاشة التلفزيون الذكي.",
+    castScreen: "مشاركة الشاشة (Screen Mirror)",
+    castScreenDesc: "عرض شاشة هاتفك أو متصفحك بالكامل على التلفزيون.",
+    castCinema: "وضع السينما الكاملة (Fullscreen)",
+    castCinemaDesc: "تكبير الفيديو لملء شاشة متصفح التلفزيون.",
+    castConnecting: "جارٍ الاتصال بالشاشة…",
+    castGuide: "إرشادات التوصيل بالتلفزيون",
+    castGuideApple: "أجهزة Apple (iPhone / iPad / Mac)",
+    castGuideAndroid: "أجهزة Android و Google TV",
+    castClose: "إغلاق",
+
     // Language switcher
     switchLanguage: "English",
     languageName: "العربية",
@@ -239,21 +311,168 @@ export const TRANSLATIONS = {
 
 export type TranslationKey = keyof typeof TRANSLATIONS.en;
 
-// Subcategories Arabic translation map
+// ALL 82 Exercise Names in Arabic
+export const EXERCISE_NAMES_AR: Record<string, string> = {
+  "Push-Up": "تمرين الضغط (Push-Up)",
+  "Single-Leg Glute Bridge": "جسر الأرداف بساق واحدة",
+  "Doorway Row": "سحب الظهر عند إطار الباب",
+  "Pike Push-Up": "ضغط الأكتاف بايك",
+  "Split Squat": "سكوات بوضعية متباعدة (Split Squat)",
+  "Bodyweight Squat": "سكوات بوزن الجسم",
+  "Plank Hold": "تثبيت البلانك (Plank)",
+  "Mountain Climbers": "تسلق الجبل (Mountain Climbers)",
+  "Side-Lying Leg Raise": "رفع الساق الجانبي",
+  "Prenatal Cat-Cow": "تمرين القطة والجمل للحوامل",
+  "Pregnancy Pelvic Tilt": "إمالة الحوض للحوامل",
+  "Hip Thrusts": "دفع الحوض (Hip Thrust)",
+  "Pelvic Floor Bridge": "جسر تقوية قاع الحوض",
+  "Diastasis Recovery Breath": "تنفس علاج انفصال عضلات البطن",
+  "Standing Donkey Kicks": "ركلات الحمار واقفاً (Donkey Kicks)",
+  "Hormonal Yoga Flow": "تدفق يوجا التوازن الهرموني",
+  "Cortisol Reset Walk": "مشي تفريغ الكورتيزول والتوتر",
+  "Neck Rolls": "دوران الرقبة الحركي",
+  "Chin Tucks": "سحب الذقن واستقامة الرقبة",
+  "Upper Trap Stretch": "إطالة عضلات الأكتاف العلوية",
+  "Foot Arch Massage": "تدليك قوس القدم",
+  "Toe Yoga": "تمرين مرونة أصابع القدم",
+  "Calf Wall Stretch": "إطالة السمانة على الجدار",
+  "Standing Quad Stretch": "إطالة الفخذ الأمامي واقفاً",
+  "Hamstring Stretch": "إطالة عضلات الفخذ الخلفية",
+  "Child's Pose": "وضعية الطفل للاسترخاء (Child's Pose)",
+  "Box Breathing": "تنفس الصندوق للهدوء والتركيز",
+  "Jump Squat": "سكوات قفز انفجاري",
+  "Superman Hold": "تثبيت سوبرمان لتقوية الظهر",
+  "Reverse Lunge": "طعن خلفي (Reverse Lunge)",
+  "Towel Pull-Down": "سحب المنشفة للأكتاف والظهر",
+  "Single-Leg Deadlift": "رفعة ميتة بساق واحدة (Deadlift)",
+  "Pike Shoulder Tap": "لمس الأكتاف بوضعية البايك",
+  "Invisible Jump Rope": "نط الحبل الافتراضي",
+  "Burpees": "تمرين البربي الانفجاري (Burpees)",
+  "Bodyweight Hip Hinge": "ثني مفصل الورك بوزن الجسم",
+  "Tuck Jumps": "قفز ضم الركبتين (Tuck Jumps)",
+  "Plank Shoulder Taps": "لمس الأكتاف بوضعية البلانك",
+  "Bear Crawl": "زحف الدب للياقة والثبات (Bear Crawl)",
+  "High Knees": "الجري برفع الركبتين عالياً (High Knees)",
+  "Bicycle Crunches": "عجلات البطن المتقاطعة (Bicycle Crunches)",
+  "Wall Sit": "تثبيت الكرسي على الجدار (Wall Sit)",
+  "Seated Towel Curl": "ثني القدم بالمنشفة جالساً",
+  "Standing Calf Raise": "رفع السمانة واقفاً",
+  "Modified Side Plank": "بلانك جانبي معدل",
+  "Standing Pelvic Rocks": "تأرجح الحوض واقفاً",
+  "Prenatal Squat Hold": "تثبيت السكوات للحوامل",
+  "Seated Spinal Twist": "التواء العمود الفقري جالساً",
+  "Glute Bridge": "جسر الأرداف الكلاسيكي (Glute Bridge)",
+  "Bird Dog": "تمرين الطائر والكلب للثبات (Bird Dog)",
+  "Heel Slides": "انزلاق الكعبين لتقوية الكور",
+  "Wall Push-Up": "ضغط الجدار الخفيف",
+  "Standing Pelvic Tilt": "إمالة الحوض واقفاً",
+  "Dead Bug": "حشرة ميتة لتقوية البطن (Dead Bug)",
+  "Seated March": "المشي الإيقاعي جالساً",
+  "Slow Yin Stretch": "إطالة ين العميقة للاسترخاء",
+  "Legs-Up-The-Wall": "رفع الساقين على الجدار لراحة الدورة الدموية",
+  "Gentle Hip Circles": "دوائر الحوض المرنة",
+  "Supported Bridge": "جسر مدعوم لراحة الظهر",
+  "Alternate Nostril Breathing": "تنفس تنقية مسارات الطاقة والهدوء",
+  "Goddess Pose": "وضعية آلهة القوة لفتح الحوض",
+  "Reclined Butterfly": "فراشة مستلقية لإطالة الحوض",
+  "Doorway Chest Opener": "فتح وإطالة الصدر عند الباب",
+  "Levator Scapulae Stretch": "إطالة العضلة الرافعة للوح الكتف",
+  "Scapular Squeezes": "ضم لوحي الكتف",
+  "Wall Angels": "ملائكة الجدار لفتح الأكتاف (Wall Angels)",
+  "Thread the Needle": "تمرير الإبرة لإطالة أعلى الظهر",
+  "Suboccipital Release": "تحرير عضلات أسفل الجمجمة والصداع",
+  "Seated Neck Flexion": "ثني الرقبة للأمام بلطف",
+  "Plantar Fascia Press": "ضغط تحرير اللفافة الأخمصية للقدم",
+  "Toe Splay": "مباعدة أصابع القدم",
+  "Heel Walks": "المشي على الكعبين",
+  "Ankle Circles": "دوائر الكاحل الحركية",
+  "Towel Scrunches": "سحب وقبض المنشفة بأصابع القدم",
+  "Single-Leg Balance": "توازن الثبات بساق واحدة",
+  "Big Toe Stretch": "إطالة إبهام القدم",
+  "Pigeon Pose": "وضعية الحمام لفتح مفصل الورك (Pigeon Pose)",
+  "Seated Forward Fold": "انحناء للأمام جالساً لإطالة الظهر",
+  "Cat-Cow Flow": "تدفق القطة والجمل لمرونة العمود الفقري",
+  "Thoracic Extension": "تمديد الفقرات الصدرية",
+  "Standing Forward Fold": "انحناء للأمام واقفاً لإطالة الجسم الخلفي",
+  "Supine Twist": "التواء الظهر مستلقياً للاستشفاء"
+};
+
+// Muscle groups in Arabic
+export const MUSCLES_AR: Record<string, string> = {
+  "Chest & Triceps": "الصدر والترايسبس",
+  "Glutes & Hamstrings": "الأرداف والفخذ الخلفي",
+  "Back & Biceps": "الظهر والبايسبس",
+  "Shoulders": "الأكتاف",
+  "Quads & Glutes": "الفخذ الأمامي والأرداف",
+  "Core": "عضلات البطن والوسط",
+  "Full Body": "كامل الجسم",
+  "Hip Abductors": "مبعدات الفخذ والورك",
+  "Spine": "العمود الفقري",
+  "Lower Back": "أسفل الظهر",
+  "Glutes": "عضلات الأرداف والحوض",
+  "Pelvic Floor": "قاع الحوض",
+  "Deep Core": "عضلات البطن العميقة",
+  "Cardio": "اللياقة القلبية والتنفسية",
+  "Neck": "الرقبة",
+  "Cervical Spine": "الفقرات العنقية",
+  "Upper Traps": "عضلات الأكتاف والترابيس العلوية",
+  "Plantar Fascia": "اللفافة الأخمصية للقدم",
+  "Toes": "أصابع القدمين",
+  "Calves": "السمانة",
+  "Quads": "الفخذ الأمامي",
+  "Hamstrings": "الفخذ الخلفي",
+  "Nervous System": "الجهاز العصبي والاسترخاء",
+  "Mid Back": "منتصف الظهر",
+  "Legs & Glutes": "الساقين والأرداف",
+  "Lats": "عضلات الظهر الجانبية (المجنص)",
+  "Posterior Chain": "السلسلة العضلية الخلفية",
+  "Legs": "الساقين",
+  "Shoulders & Core": "الأكتاف وعضلات البطن",
+  "Biceps": "عضلات البايسبس",
+  "Obliques": "العضلات الجانبية للبطن (الخواصر)",
+  "Hips": "الوركين والحوض",
+  "Core & Back": "البطن والظهر",
+  "Chest": "عضلات الصدر",
+  "Hip Flexors": "عضلات ثني الورك",
+  "Lymphatic": "الجهاز اللمفاوي وتصريف السوائل",
+  "Adrenals": "الغدد الكظرية وتخفيف الإجهاد",
+  "Inner Thighs": "الفخذ الداخلي (الضامة)",
+  "Hips & Pelvis": "الوركين وعظام الحوض",
+  "Neck Side": "جانبي الرقبة",
+  "Rhomboids": "العضلات المعينية بين لوحي الكتف",
+  "Upper Back": "أعلى الظهر",
+  "Thoracic Spine": "الفقرات الصدرية",
+  "Skull Base": "قاعدة الجمجمة",
+  "Shin & Foot": "قصبة الساق والقدم",
+  "Ankles": "مفصل الكاحل",
+  "Foot Intrinsics": "عضلات باطن القدم العميقة",
+  "Foot & Ankle": "القدم والكاحل",
+  "Big Toe": "إبهام القدم",
+  "Thoracic": "القفص الصدري والفقرات الصدرية"
+};
+
+// Subcategories in Arabic
 export const SUB_CATEGORIES_AR: Record<string, string> = {
-  "Abs & Core": "عضلات البطن والوسط",
+  "All": "الكل",
   "Strength": "القوة العضلية",
   "Conditioning": "اللياقة والتحمل",
+  "Pregnancy Safe": "آمن للحمل",
+  "Postpartum": "استشفاء ما بعد الولادة",
+  "Hormonal": "التوازن الهرموني",
+  "Tech Neck": "إجهاد الرقبة",
+  "Foot Care": "صحة القدمين والكاحل",
+  "Tension Release": "تخفيف التوتر والإجهاد",
+  "Abs & Core": "عضلات البطن والوسط",
   "Posture": "استقامة القوام",
   "Pelvic Floor": "قاع الحوض",
   "Postpartum Recovery": "استشفاء ما بعد الولادة",
   "Hormonal Health": "التوازن الهرموني",
   "Neck & Traps": "الرقبة والأكتاف",
   "Feet & Ankles": "القدمين والكاحل",
-  "Total Body Reset": "استشفاء الجسم بالكامل",
+  "Total Body Reset": "استشفاء الجسم بالكامل"
 };
 
-// Equipment Arabic translation map
+// Equipment in Arabic
 export const EQUIPMENT_AR: Record<string, string> = {
   none: "بدون أدوات",
   mat: "سجادة رياضية",
@@ -262,64 +481,55 @@ export const EQUIPMENT_AR: Record<string, string> = {
   doorway: "إطار الباب",
   towel: "منشفة",
   band: "شريط مقاومة",
-  light_dumbbell: "دمبل خفيف",
-};
-
-// Muscle groups Arabic translation map
-export const MUSCLES_AR: Record<string, string> = {
-  "Rectus Abdominis": "عضلات البطن المستقيمة",
-  "Obliques": "العضلات الجانبية (الخواصر)",
-  "Transverse Abdominis": "عضلات البطن العميقة",
-  "Chest": "الصدر",
-  "Back": "الظهر",
-  "Glutes": "الأرداف والحوض",
-  "Hamstrings": "الخلفيات",
-  "Quadriceps": "الفخذ الأمامي",
-  "Calves": "السمانة",
-  "Shoulders": "الأكتاف",
-  "Neck": "الرقبة",
-  "Spine": "العمود الفقري",
-  "Full Body": "كامل الجسم",
-  "Pelvic Floor": "قاع الحوض",
-  "Feet & Ankles": "القدمين والكاحل",
+  light_dumbbell: "دمبل خفيف"
 };
 
 // Curated Routines localized titles & descriptions
-export const ROUTINE_TRANSLATIONS: Record<string, { arTitle: string; arSubtitle: string; arDesc: string }> = {
+export const ROUTINE_TRANSLATIONS: Record<string, { arTitle: string; arSubtitle: string; arDesc: string; arLevel: string }> = {
   "morning-shred": {
     arTitle: "دائرة الحرق الصباحي المكثف",
     arSubtitle: "تنشيط فوري لمعدل الأيض",
     arDesc: "تمارين مركبة لرفع الحرق وبدء اليوم بطاقة ونشاط متفجر.",
+    arLevel: "متوسط",
   },
   "core-igniter": {
     arTitle: "نحت البطن ودرع الكور",
     arSubtitle: "تفعيل شامل لحزام البطن والوسط",
     arDesc: "تقوية العضلات المستقيمة والجانبية للثبات والقوة الرياضية.",
+    arLevel: "جميع المستويات",
   },
   "posture-spine-reset": {
     arTitle: "استشفاء العمود الفقري والرقبة",
     arSubtitle: "علاج إجهاد الجلوس المكتبي",
     arDesc: "تخفيف الضغط عن الرقبة والفقرات الصدرية واستعادة توازن القوام.",
+    arLevel: "خفيف / مرن",
   },
   "lower-body-sculpt": {
     arTitle: "نحت وتقوية الحوض والأرداف",
     arSubtitle: "ثبات الحوض وقوة العضلات الخلفية",
     arDesc: "تقوية عضلات الحوض والأرداف لحماية أسفل الظهر ونحت القوام بدون أوزان.",
+    arLevel: "متوسط",
   },
 };
 
+export const GENDER_FOCUS_AR: Record<string, string> = {
+  men: "رجال",
+  women: "سيدات",
+  both: "للجميع",
+};
+
+/**
+ * DEFAULT LANGUAGE MUST BE ENGLISH AS REQUESTED.
+ * Only returns 'ar' if the user explicitly clicked to switch to Arabic.
+ */
 export function readStoredLanguage(): Language {
   try {
     const val = localStorage.getItem(LANG_STORAGE_KEY);
     if (val === "ar" || val === "en") return val;
-    // If user's device browser language is Arabic, default to Arabic
-    if (typeof navigator !== "undefined" && navigator.language && navigator.language.startsWith("ar")) {
-      return "ar";
-    }
   } catch {
     /* ignore */
   }
-  return "ar"; // Default to Arabic as requested by user
+  return "en"; // Default is strictly English
 }
 
 export function applyLanguageDom(lang: Language) {
@@ -387,6 +597,16 @@ export function useLanguage() {
     [lang]
   );
 
+  const translateExerciseName = useCallback(
+    (name: string): string => {
+      if (lang === "ar") {
+        return EXERCISE_NAMES_AR[name] || name;
+      }
+      return name;
+    },
+    [lang]
+  );
+
   const translateSubCategory = useCallback(
     (sub: string): string => {
       if (lang === "ar") {
@@ -417,6 +637,16 @@ export function useLanguage() {
     [lang]
   );
 
+  const translateGenderFocus = useCallback(
+    (focus: string): string => {
+      if (lang === "ar") {
+        return GENDER_FOCUS_AR[focus] || focus;
+      }
+      return focus;
+    },
+    [lang]
+  );
+
   const translateCategory = useCallback(
     (cat: Category): string => {
       return t(`cat_${cat}` as TranslationKey);
@@ -439,9 +669,11 @@ export function useLanguage() {
     toggleLanguage,
     t,
     isRTL,
+    translateExerciseName,
     translateSubCategory,
     translateEquipment,
     translateMuscle,
+    translateGenderFocus,
     translateCategory,
     translateCategoryHeading,
   };
