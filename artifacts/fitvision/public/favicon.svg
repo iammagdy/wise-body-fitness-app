@@ -1,35 +1,22 @@
-<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="180" height="180" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="wbm-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1A0608"/>
-      <stop offset="55%" stop-color="#8B0E15"/>
-      <stop offset="100%" stop-color="#D62B36"/>
+    <linearGradient id="wb-fav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="50%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#047857" />
     </linearGradient>
-    <radialGradient id="wbm-glow" cx="50%" cy="0%" r="65%">
-      <stop offset="0%" stop-color="#FFD89B" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#FFD89B" stop-opacity="0"/>
+    <radialGradient id="wb-fav-glow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#34D399" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#059669" stop-opacity="0" />
     </radialGradient>
-    <linearGradient id="wbm-bell" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFFDF7"/>
-      <stop offset="100%" stop-color="#EFE4D0"/>
-    </linearGradient>
   </defs>
-  <rect width="180" height="180" rx="40" fill="url(#wbm-bg)"/>
-  <rect width="180" height="180" rx="40" fill="url(#wbm-glow)"/>
-  <rect x="3" y="3" width="174" height="174" rx="37" fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="1.5"/>
-  <rect x="32" y="83" width="116" height="14" rx="3" fill="url(#wbm-bell)"/>
-  <g stroke="#8B0E15" stroke-width="1.2" opacity="0.55">
-    <line x1="74" y1="86" x2="74" y2="94"/>
-    <line x1="80" y1="86" x2="80" y2="94"/>
-    <line x1="86" y1="86" x2="86" y2="94"/>
-    <line x1="92" y1="86" x2="92" y2="94"/>
-    <line x1="98" y1="86" x2="98" y2="94"/>
-    <line x1="104" y1="86" x2="104" y2="94"/>
+
+  <rect x="4" y="4" width="112" height="112" rx="30" fill="#09090B" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" />
+  <rect x="4" y="4" width="112" height="112" rx="30" fill="url(#wb-fav-glow)" />
+
+  <g stroke="url(#wb-fav-grad)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 42L44 82L60 52" />
+    <path d="M60 52L76 82L92 42" />
+    <circle cx="60" cy="52" r="3.5" fill="#34D399" stroke="none" />
   </g>
-  <rect x="14" y="56" width="22" height="68" rx="6" fill="url(#wbm-bell)"/>
-  <rect x="38" y="48" width="22" height="84" rx="6" fill="url(#wbm-bell)"/>
-  <rect x="42" y="56" width="6" height="68" rx="3" fill="#FFFFFF" opacity="0.22"/>
-  <rect x="144" y="56" width="22" height="68" rx="6" fill="url(#wbm-bell)"/>
-  <rect x="120" y="48" width="22" height="84" rx="6" fill="url(#wbm-bell)"/>
-  <rect x="132" y="56" width="6" height="68" rx="3" fill="#FFFFFF" opacity="0.22"/>
 </svg>

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { WiseBodyLogo } from "./components/brand/WiseBodyLogo";
 
 
 type ThemePref = "system" | "light" | "dark";
 const THEME_KEY = "fitvision.theme";
 const LIGHT_BG = "#fafaf9";
-const DARK_BG = "#0c0a09";
+const DARK_BG = "#09090b";
 
 function readStoredTheme(): ThemePref {
   try {
@@ -15,7 +16,7 @@ function readStoredTheme(): ThemePref {
   } catch {
     /* ignore */
   }
-  return "system";
+  return "dark";
 }
 
 function systemPrefersDark(): boolean {
@@ -738,144 +739,12 @@ if (import.meta.env.DEV) {
   }
 }
 
-function WiseBodyMark({ size = 64 }: { size?: number }) {
-  // Design language (v5 — dumbbell):
-  //   - Deep wine → crimson gradient badge (brand red, energy).
-  //   - A bold horizontal DUMBBELL: thick bar with knurled grip in
-  //     the middle, two stacked weight plates on each side. The
-  //     most universally recognized "fitness" icon.
-  //   - Ivory weights with a subtle vertical highlight on each
-  //     inner plate for dimensionality.
-  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
-  const idBg = `wbm-bg-${uid}`;
-  const idGlow = `wbm-glow-${uid}`;
-  const idBell = `wbm-bell-${uid}`;
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 180 180"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id={idBg} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#1A0608" />
-          <stop offset="55%" stopColor="#8B0E15" />
-          <stop offset="100%" stopColor="#D62B36" />
-        </linearGradient>
-        <radialGradient id={idGlow} cx="50%" cy="0%" r="65%">
-          <stop offset="0%" stopColor="#FFD89B" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="#FFD89B" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id={idBell} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#FFFDF7" />
-          <stop offset="100%" stopColor="#EFE4D0" />
-        </linearGradient>
-      </defs>
-
-      {/* Badge */}
-      <rect width="180" height="180" rx="40" fill={`url(#${idBg})`} />
-      <rect width="180" height="180" rx="40" fill={`url(#${idGlow})`} />
-      <rect
-        x="3"
-        y="3"
-        width="174"
-        height="174"
-        rx="37"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeOpacity="0.10"
-        strokeWidth="1.5"
-      />
-
-      {/* Bar through the middle (drawn first so plates overlap it) */}
-      <rect
-        x="32"
-        y="83"
-        width="116"
-        height="14"
-        rx="3"
-        fill={`url(#${idBell})`}
-      />
-      {/* Bar grip lines (knurling) */}
-      <g stroke="#8B0E15" strokeWidth="1.2" opacity="0.55">
-        <line x1="74" y1="86" x2="74" y2="94" />
-        <line x1="80" y1="86" x2="80" y2="94" />
-        <line x1="86" y1="86" x2="86" y2="94" />
-        <line x1="92" y1="86" x2="92" y2="94" />
-        <line x1="98" y1="86" x2="98" y2="94" />
-        <line x1="104" y1="86" x2="104" y2="94" />
-      </g>
-
-      {/* LEFT outer plate */}
-      <rect
-        x="14"
-        y="56"
-        width="22"
-        height="68"
-        rx="6"
-        fill={`url(#${idBell})`}
-      />
-      {/* LEFT inner plate */}
-      <rect
-        x="38"
-        y="48"
-        width="22"
-        height="84"
-        rx="6"
-        fill={`url(#${idBell})`}
-      />
-      {/* LEFT plate inner highlight */}
-      <rect
-        x="42"
-        y="56"
-        width="6"
-        height="68"
-        rx="3"
-        fill="#FFFFFF"
-        opacity="0.22"
-      />
-
-      {/* RIGHT outer plate */}
-      <rect
-        x="144"
-        y="56"
-        width="22"
-        height="68"
-        rx="6"
-        fill={`url(#${idBell})`}
-      />
-      {/* RIGHT inner plate */}
-      <rect
-        x="120"
-        y="48"
-        width="22"
-        height="84"
-        rx="6"
-        fill={`url(#${idBell})`}
-      />
-      {/* RIGHT plate inner highlight */}
-      <rect
-        x="132"
-        y="56"
-        width="6"
-        height="68"
-        rx="3"
-        fill="#FFFFFF"
-        opacity="0.22"
-      />
-    </svg>
-  );
+function WiseBodyMark({ size = 64, showText = false }: { size?: number; showText?: boolean }) {
+  return <WiseBodyLogo size={size} showText={showText} />;
 }
 
 function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
   const reduced = useReducedMotion();
-  // First-visit gate: only run the long staggered intro once per
-  // session. On subsequent mounts (e.g. after a profile reset, or
-  // returning from the dashboard) we collapse the choreography to
-  // a quick fade so users don't sit through the same intro twice.
   const introSeen = useMemo(() => {
     try {
       return sessionStorage.getItem("fitvision.welcomeIntroSeen") === "1";
@@ -891,9 +760,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
     }
   }, []);
   const skip = reduced || introSeen;
-  // Choreography: brand mark scales + glow builds, then headline,
-  // tagline, and CTAs cascade in. With reduced-motion or after the
-  // first visit, everything appears (almost) instantly.
+
   const baseTransition = skip
     ? { duration: introSeen && !reduced ? 0.2 : 0 }
     : { type: "spring" as const, stiffness: 220, damping: 26, mass: 0.9 };
@@ -902,96 +769,180 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
     animate: { opacity: 1, y: 0 },
     transition: { ...baseTransition, delay: skip ? 0 : delay },
   });
-  const tap = reduced ? undefined : { scale: 0.96 };
-  const hover = reduced ? undefined : { scale: 1.015 };
+  const tap = reduced ? undefined : { scale: 0.97 };
+  const hover = reduced ? undefined : { y: -3, scale: 1.01 };
 
   return (
-    <div className="absolute inset-0 flex flex-col px-6 pt-safe pb-safe">
-      {/* Hero brand mark */}
-      <div className="relative mt-10 flex h-56 w-full items-center justify-center">
+    <div className="absolute inset-0 flex flex-col justify-between overflow-y-auto px-5 py-6 sm:px-8 bg-[#09090b] text-white no-scrollbar scroll-touch">
+      {/* Ambient background glow */}
+      <div
+        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-[340px] w-[340px] sm:w-[480px] rounded-full blur-[100px] opacity-25"
+        style={{
+          background: "radial-gradient(circle, #10B981 0%, #059669 45%, transparent 70%)",
+        }}
+      />
+
+      {/* Brand Hero Section */}
+      <div className="relative z-10 flex flex-col items-center text-center pt-4 sm:pt-8">
         <motion.div
-          className="absolute inset-0 mx-auto h-56 w-56 rounded-full blur-3xl"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(168,18,26,0.30) 0%, rgba(168,18,26,0) 70%)",
-          }}
-          initial={skip ? { opacity: 0.7, scale: 1 } : { opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 0.7, scale: 1 }}
-          transition={skip ? { duration: 0 } : { duration: 1.1, ease: "easeOut", delay: 0.1 }}
-        />
-        <motion.div
-          className="relative z-10"
-          initial={skip ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.55, rotate: -6 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={skip ? { duration: 0 } : { type: "spring", stiffness: 180, damping: 14, mass: 1 }}
+          initial={skip ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={skip ? { duration: 0 } : { type: "spring", stiffness: 200, damping: 18 }}
+          className="relative"
         >
-          <WiseBodyMark size={156} />
+          <WiseBodyLogo size={96} />
+        </motion.div>
+
+        <motion.div {...fadeUp(0.12)} className="mt-4 flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-emerald-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            World-Class Athletic Training
+          </span>
+        </motion.div>
+
+        <motion.h1
+          {...fadeUp(0.18)}
+          className="mt-3 text-4xl sm:text-5xl font-black tracking-tight text-white uppercase"
+        >
+          Wise<span className="text-emerald-500">Body</span>
+        </motion.h1>
+
+        <motion.p
+          {...fadeUp(0.24)}
+          className="mt-2 max-w-sm text-sm sm:text-base font-normal leading-relaxed text-zinc-400"
+        >
+          Studio-grade home workouts, real video coaching, and zero-login TV casting — right in your living room.
+        </motion.p>
+
+        {/* Value Pills Grid */}
+        <motion.div
+          {...fadeUp(0.3)}
+          className="mt-4 flex flex-wrap items-center justify-center gap-2 max-w-md"
+        >
+          <span className="rounded-full bg-zinc-900/90 border border-zinc-800/80 px-3 py-1 text-[11px] font-semibold text-zinc-300">
+            ⚡ 82 HD Studio Video Loops
+          </span>
+          <span className="rounded-full bg-zinc-900/90 border border-zinc-800/80 px-3 py-1 text-[11px] font-semibold text-zinc-300">
+            📺 Wireless TV Screen Cast
+          </span>
+          <span className="rounded-full bg-zinc-900/90 border border-zinc-800/80 px-3 py-1 text-[11px] font-semibold text-zinc-300">
+            🎯 Technique Coaching Tips
+          </span>
+          <span className="rounded-full bg-zinc-900/90 border border-zinc-800/80 px-3 py-1 text-[11px] font-semibold text-zinc-300">
+            🔊 Bilingual Audio Cues
+          </span>
         </motion.div>
       </div>
 
-      <div className="mt-2 flex flex-1 flex-col items-center justify-center text-center">
-        <motion.p
-          {...fadeUp(0.18)}
-          className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#A8121A] dark:text-red-400"
-        >
-          Home workouts · No equipment
-        </motion.p>
-        <motion.h1
-          {...fadeUp(0.24)}
-          className="mt-3 text-5xl font-bold tracking-tight text-stone-900 dark:text-stone-50"
-        >
-          Wise Body
-        </motion.h1>
-        <motion.p
-          {...fadeUp(0.3)}
-          className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500"
-        >
-          Fitness App
-        </motion.p>
+      {/* Athlete Track Selection Cards */}
+      <div className="relative z-10 my-6 flex w-full flex-col gap-4 max-w-md mx-auto">
         <motion.p
           {...fadeUp(0.36)}
-          className="mt-3 max-w-xs text-base leading-snug text-stone-500 dark:text-stone-400"
+          className="text-center text-xs font-bold uppercase tracking-[0.2em] text-zinc-500"
         >
-          Strength, recovery and breathing sessions you can do in your living room — no gear required.
+          Select Your Training Track
         </motion.p>
-        <motion.p
-          {...fadeUp(0.42)}
-          className="mt-4 text-[11px] font-medium tracking-wide text-stone-400 dark:text-stone-500"
-        >
-          Part of The Wise Cloud · fitness.thewise.cloud
-        </motion.p>
-      </div>
 
-      <div className="flex w-full flex-col gap-3 pb-4">
-        <motion.p
-          {...fadeUp(0.48)}
-          className="text-center text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500"
-        >
-          Pick what fits you
-        </motion.p>
+        {/* Card 1: Men's Strength & Conditioning */}
         <motion.button
-          {...fadeUp(0.54)}
+          {...fadeUp(0.42)}
           whileTap={tap}
           whileHover={hover}
           type="button"
           onClick={() => onSelect("man")}
-          className="w-full rounded-2xl bg-stone-900 px-6 text-lg font-semibold text-white shadow-sm transition active:scale-[0.98] dark:bg-stone-50 dark:text-stone-900"
-          style={{ minHeight: 60 }}
+          className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900/90 to-zinc-950 p-5 text-left transition-all duration-200 hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-950/20 active:scale-[0.98]"
         >
-          I am a Man
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xl font-bold">
+                ⚡
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400">
+                  Strength & Conditioning
+                </span>
+                <h2 className="text-xl font-black tracking-tight text-white group-hover:text-emerald-300 transition">
+                  Men's Athletic Track
+                </h2>
+              </div>
+            </div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 group-hover:bg-emerald-500 group-hover:text-black transition">
+              →
+            </div>
+          </div>
+
+          <p className="mt-2.5 text-xs text-zinc-400 leading-relaxed">
+            Explosive pushups, core stability, high-knee conditioning, and full-body athletic power without any gear.
+          </p>
+
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <span className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+              Chest & Core
+            </span>
+            <span className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+              Conditioning
+            </span>
+            <span className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+              Posture & Back
+            </span>
+          </div>
         </motion.button>
+
+        {/* Card 2: Women's Sculpt & Wellness */}
         <motion.button
-          {...fadeUp(0.6)}
+          {...fadeUp(0.48)}
           whileTap={tap}
           whileHover={hover}
           type="button"
           onClick={() => onSelect("woman")}
-          className="w-full rounded-2xl border border-stone-200 bg-white px-6 text-lg font-semibold text-stone-900 shadow-sm transition active:scale-[0.98] dark:border-stone-800 dark:bg-stone-900 dark:text-stone-50"
-          style={{ minHeight: 60 }}
+          className="group relative overflow-hidden rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900/90 to-zinc-950 p-5 text-left transition-all duration-200 hover:border-pink-500/50 hover:shadow-xl hover:shadow-pink-950/20 active:scale-[0.98]"
         >
-          I am a Woman
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-pink-500/15 border border-pink-500/30 text-pink-400 text-xl font-bold">
+                ✨
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-pink-400">
+                  Sculpt, Pelvic & Wellness
+                </span>
+                <h2 className="text-xl font-black tracking-tight text-white group-hover:text-pink-300 transition">
+                  Women's Sculpt Track
+                </h2>
+              </div>
+            </div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 group-hover:bg-pink-500 group-hover:text-black transition">
+              →
+            </div>
+          </div>
+
+          <p className="mt-2.5 text-xs text-zinc-400 leading-relaxed">
+            Targeted core toning, glute activation, postpartum & pregnancy safe routines, plus mindful breathing.
+          </p>
+
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <span className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+              Glutes & Core
+            </span>
+            <span className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+              Pelvic Health
+            </span>
+            <span className="rounded-md bg-zinc-800/80 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+              Mobility & Recovery
+            </span>
+          </div>
         </motion.button>
       </div>
+
+      {/* Footer reassuring note */}
+      <motion.div {...fadeUp(0.54)} className="text-center pb-2">
+        <p className="text-[11px] font-medium text-zinc-500">
+          No sign-in required · 100% Free · Switch tracks anytime
+        </p>
+        <p className="mt-1 text-[10px] text-zinc-600">
+          Part of The Wise Cloud · fitness.thewise.cloud
+        </p>
+      </motion.div>
     </div>
   );
 }
@@ -1310,54 +1261,58 @@ function ExerciseCard({
           onClick();
         }
       }}
-      whileTap={reduced ? undefined : { scale: 0.97 }}
-      whileHover={reduced ? undefined : { y: -2 }}
+      whileTap={reduced ? undefined : { scale: 0.98 }}
+      whileHover={reduced ? undefined : { y: -2, scale: 1.01 }}
       transition={
         reduced
           ? { duration: 0 }
           : { type: "spring", stiffness: 420, damping: 28 }
       }
-      className="group mb-3 cursor-pointer rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200/70 transition-all duration-150 hover:shadow-md active:scale-[0.985] active:bg-stone-50 dark:bg-stone-900 dark:ring-stone-800 dark:active:bg-stone-800"
+      className="group mb-3 cursor-pointer rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200/80 transition-all duration-200 hover:shadow-md active:scale-[0.985] dark:bg-zinc-900/90 dark:ring-zinc-800/80 dark:hover:ring-emerald-500/40 dark:hover:shadow-emerald-950/20"
     >
-      <div className="flex items-start gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-stone-100 text-stone-700 ring-1 ring-stone-200/70 dark:bg-stone-800 dark:text-stone-200 dark:ring-stone-700/60">
+      <div className="flex items-center gap-3.5">
+        <div className="relative flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-stone-100 text-stone-700 ring-1 ring-stone-200/70 dark:bg-zinc-950 dark:text-emerald-400 dark:ring-zinc-800 shadow-inner">
           <FamilyGlyph family={family} />
+          <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[8px] font-black text-black">
+            ▶
+          </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[15px] font-semibold leading-tight text-stone-900 dark:text-stone-50">
+          <h3 className="truncate text-[15px] font-bold leading-tight text-stone-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
             {exercise.name}
           </h3>
-          <p className="mt-0.5 truncate text-[13px] text-stone-500 dark:text-stone-400">
+          <p className="mt-0.5 truncate text-[12px] font-medium text-stone-500 dark:text-zinc-400">
             {exercise.targetMuscle}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <GearBadge equipment={exercise.equipment} />
-            <span className="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600 dark:bg-stone-800 dark:text-stone-300">
+            <span className="inline-flex items-center rounded-lg bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border dark:border-emerald-500/20">
               {exercise.mode === "timed"
-                ? `${exercise.durationSeconds}s`
-                : `${exercise.reps} reps`}
+                ? `⏱️ ${exercise.durationSeconds}s`
+                : `🔁 ${exercise.reps} reps`}
             </span>
+            <GearBadge equipment={exercise.equipment} />
             {exercise.genderFocus !== "both" && (
-              <span className="inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+              <span className="inline-flex items-center rounded-lg bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:bg-zinc-800 dark:text-zinc-400">
                 {exercise.genderFocus}
               </span>
             )}
           </div>
         </div>
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-          className="mt-1 shrink-0 text-stone-300 transition group-hover:translate-x-0.5 group-hover:text-stone-500 dark:text-stone-600 dark:group-hover:text-stone-400"
-        >
-          <polyline points="9 6 15 12 9 18" />
-        </svg>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stone-100 text-stone-400 group-hover:bg-emerald-500 group-hover:text-black dark:bg-zinc-800 dark:text-zinc-400 transition">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="9 6 15 12 9 18" />
+          </svg>
+        </div>
       </div>
     </motion.div>
   );
@@ -1611,84 +1566,91 @@ function ProgressOverview({
   const minutesLabel = Math.round(todaysSeconds / 60);
 
   return (
-    <section className="mb-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-stone-200/70 dark:bg-stone-900 dark:ring-stone-800">
+    <section className="mb-5 rounded-3xl bg-zinc-900/90 border border-zinc-800/80 p-5 shadow-xl text-white">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
-            Today
-          </p>
-          <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-emerald-400">
+              Today's Athletic Activity
+            </p>
+          </div>
+          <p className="mt-1 text-sm font-medium text-zinc-400">
             {todays.length === 0
-              ? "No workouts yet — finish one to log it."
-              : `${todays.length} workout${todays.length === 1 ? "" : "s"} logged`}
+              ? "Ready for action. Complete a session to log your metrics."
+              : `${todays.length} session${todays.length === 1 ? "" : "s"} logged today`}
           </p>
         </div>
         <div
-          className="flex h-12 min-w-[3.25rem] flex-col items-center justify-center rounded-2xl bg-emerald-50 px-3 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+          className="flex h-12 min-w-[3.5rem] flex-col items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/30 px-3 text-emerald-400 shadow-inner"
           aria-label={`${streak}-day streak`}
         >
-          <span className="text-lg font-bold leading-none tabular-nums">
-            {streak}
+          <span className="text-xl font-black leading-none tabular-nums">
+            🔥 {streak}
           </span>
-          <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-widest">
-            day streak
+          <span className="mt-0.5 text-[8px] font-extrabold uppercase tracking-widest text-emerald-300">
+            Day Streak
           </span>
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-3 gap-2">
-        <div className="rounded-2xl bg-stone-100 px-2 py-3 text-center dark:bg-stone-800">
-          <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
-            Workouts
+      <dl className="mt-4 grid grid-cols-3 gap-2.5">
+        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 px-2 py-3 text-center">
+          <dt className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+            Sessions
           </dt>
-          <dd className="mt-1 text-xl font-bold tabular-nums text-stone-900 dark:text-stone-50">
+          <dd className="mt-1 text-2xl font-black tabular-nums text-white">
             {todays.length}
           </dd>
         </div>
-        <div className="rounded-2xl bg-stone-100 px-2 py-3 text-center dark:bg-stone-800">
-          <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 px-2 py-3 text-center">
+          <dt className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
             Sets
           </dt>
-          <dd className="mt-1 text-xl font-bold tabular-nums text-stone-900 dark:text-stone-50">
+          <dd className="mt-1 text-2xl font-black tabular-nums text-white">
             {todaysSets}
           </dd>
         </div>
-        <div className="rounded-2xl bg-stone-100 px-2 py-3 text-center dark:bg-stone-800">
-          <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 px-2 py-3 text-center">
+          <dt className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
             Minutes
           </dt>
-          <dd className="mt-1 text-xl font-bold tabular-nums text-stone-900 dark:text-stone-50">
+          <dd className="mt-1 text-2xl font-black tabular-nums text-emerald-400">
             {minutesLabel}
           </dd>
         </div>
       </dl>
 
-      <div className="mt-4">
-        <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
-          Last 7 days
-        </p>
-        <div className="flex h-20 items-end justify-between gap-1.5">
+      <div className="mt-5">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+            Last 7 Days Matrix
+          </p>
+          <span className="text-[10px] font-semibold text-zinc-500">
+            Activity Volume
+          </span>
+        </div>
+        <div className="flex h-20 items-end justify-between gap-2 rounded-2xl bg-zinc-950/50 p-3 border border-zinc-800/50">
           {perDay.map((p, i) => {
-            const h = p.seconds === 0 ? 6 : Math.max(8, Math.round((p.seconds / maxSeconds) * 64));
+            const h = p.seconds === 0 ? 6 : Math.max(8, Math.round((p.seconds / maxSeconds) * 52));
             const isToday = p.day === today;
             const date = new Date(p.day);
             return (
-              <div key={p.day} className="flex flex-1 flex-col items-center gap-1">
+              <div key={p.day} className="flex flex-1 flex-col items-center gap-1.5">
                 <div
-                  className={`w-full rounded-md ${
+                  className={`w-full rounded-md transition-all duration-300 ${
                     p.seconds > 0
-                      ? "bg-emerald-500 dark:bg-emerald-400"
-                      : "bg-stone-200 dark:bg-stone-800"
-                  } ${isToday ? "ring-2 ring-emerald-300 dark:ring-emerald-700" : ""}`}
+                      ? "bg-gradient-to-t from-emerald-600 to-emerald-400 shadow-sm shadow-emerald-500/30"
+                      : "bg-zinc-800"
+                  } ${isToday ? "ring-2 ring-emerald-400" : ""}`}
                   style={{ height: `${h}px` }}
                   title={`${date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}: ${Math.round(p.seconds / 60)} min`}
-                  aria-label={`${date.toLocaleDateString(undefined, { weekday: "short" })}: ${Math.round(p.seconds / 60)} minutes`}
                 />
                 <span
-                  className={`text-[10px] font-semibold tabular-nums ${
+                  className={`text-[10px] font-bold tabular-nums ${
                     isToday
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-stone-400 dark:text-stone-500"
+                      ? "text-emerald-400"
+                      : "text-zinc-500"
                   }`}
                 >
                   {dayLabels[date.getDay()]}
@@ -1700,10 +1662,10 @@ function ProgressOverview({
       </div>
 
       {recent.length > 0 && (
-        <div className="mt-4">
-          <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
-              Recent workouts
+        <div className="mt-5 pt-4 border-t border-zinc-800/80">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+              Recent Completed Workouts
             </p>
             <button
               type="button"
@@ -1716,12 +1678,12 @@ function ProgressOverview({
                   window.setTimeout(() => setConfirmingClear(false), 3000);
                 }
               }}
-              className="text-[10px] font-semibold uppercase tracking-widest text-stone-400 transition active:scale-95 hover:text-stone-600 dark:text-stone-500 dark:hover:text-stone-300"
+              className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition"
             >
-              {confirmingClear ? "Tap to confirm" : "Clear"}
+              {confirmingClear ? "Confirm Clear?" : "Clear"}
             </button>
           </div>
-          <ul className="mt-2 space-y-1.5">
+          <ul className="space-y-2">
             {recent.map((s) => {
               const date = new Date(s.endedAt);
               const isToday = startOfDay(s.endedAt) === today;
@@ -1734,22 +1696,22 @@ function ProgressOverview({
               return (
                 <li
                   key={s.id}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-stone-50 px-3 py-2 dark:bg-stone-800/60"
+                  className="flex items-center justify-between gap-3 rounded-2xl bg-zinc-950/60 border border-zinc-800/60 px-3.5 py-2.5"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-stone-900 dark:text-stone-50">
+                    <p className="truncate text-xs font-bold text-white">
                       {s.firstExerciseName}
                       {s.exercises > 1 ? ` +${s.exercises - 1}` : ""}
                     </p>
-                    <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                    <p className="text-[10px] text-zinc-500 font-medium">
                       {when}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <p className="text-sm font-semibold tabular-nums text-stone-900 dark:text-stone-50">
+                    <p className="text-xs font-bold tabular-nums text-emerald-400">
                       {Math.max(1, Math.round(s.durationSeconds / 60))}m
                     </p>
-                    <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                    <p className="text-[10px] text-zinc-500">
                       {s.sets} {s.sets === 1 ? "set" : "sets"}
                     </p>
                   </div>
@@ -1771,6 +1733,7 @@ function DashboardScreen({
   onResetProfile,
   history,
   onClearHistory,
+  onOpenCastModal,
 }: {
   gender: Gender | null;
   onSelectExercise: (playlist: Exercise[], index: number) => void;
@@ -1779,6 +1742,7 @@ function DashboardScreen({
   onResetProfile: () => void;
   history: WorkoutSession[];
   onClearHistory: () => void;
+  onOpenCastModal?: () => void;
 }) {
   const [category, setCategory] = useLocalStorage<Category>(
     DASHBOARD_CATEGORY_KEY,
@@ -1794,15 +1758,12 @@ function DashboardScreen({
     );
   }, [gender]);
 
-  // If the persisted/active tab is unavailable for the current profile
-  // (e.g. saved tab was Women's Health but the user is now Man), reset.
   useEffect(() => {
     if (gender === "man" && category === "womens_health") {
       setCategory("core");
     }
   }, [gender, category, setCategory]);
 
-  // Reset to "All" whenever the active tab changes.
   useEffect(() => {
     setActiveChip(ALL_CHIP);
   }, [category]);
@@ -1823,8 +1784,8 @@ function DashboardScreen({
     });
   }, [gender, category, activeChip]);
 
-  // When viewing "All", group exercises by sub_category preserving the
-  // order declared in SUB_CATEGORIES so the layout is stable.
+  const featuredExercise = filtered[0] ?? null;
+
   const grouped = useMemo(() => {
     if (activeChip !== ALL_CHIP) return null;
     const order = chips.filter((c) => c !== ALL_CHIP);
@@ -1838,26 +1799,41 @@ function DashboardScreen({
   }, [activeChip, chips, filtered]);
 
   return (
-    <div className="absolute inset-0 flex flex-col">
-      <header className="pt-safe shrink-0 px-6 pb-4" style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 32px)" }}>
-        <div className="flex items-start justify-between gap-3">
+    <div className="absolute inset-0 flex flex-col bg-[#09090b] text-white">
+      {/* World-Class Header */}
+      <header className="pt-safe shrink-0 px-5 sm:px-6 pb-3" style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 24px)" }}>
+        <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
-                v1.1
-              </span>
-              <WiseBodyMark size={40} />
-            </div>
+            <WiseBodyLogo size={44} />
             <div className="min-w-0">
-              <p className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-black tracking-tight text-white uppercase">
+                  Wise<span className="text-emerald-500">Body</span>
+                </h1>
+                <span className="rounded-full bg-zinc-800 border border-zinc-700/60 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-widest text-emerald-400">
+                  {gender === "man" ? "Men's Track" : "Women's Sculpt"}
+                </span>
+              </div>
+              <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
                 {CATEGORY_HEADINGS[category]}
               </p>
-              <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
-                Wise Body
-              </h1>
             </div>
           </div>
+
           <div className="flex items-center gap-2">
+            {onOpenCastModal && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={onOpenCastModal}
+                aria-label="Cast to TV"
+                title="Cast workout to Smart TV / Big Screen"
+                className="flex h-9 items-center gap-1.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 px-3 shadow-sm transition active:scale-95 hover:bg-amber-500/25"
+              >
+                <CastIcon />
+                <span className="text-[11px] font-bold uppercase tracking-wider hidden sm:inline">Cast TV</span>
+              </motion.button>
+            )}
             <ThemeMenu pref={themePref} onSelect={onThemeChange} />
             <ProfileMenu gender={gender} onReset={onResetProfile} />
           </div>
@@ -1871,16 +1847,61 @@ function DashboardScreen({
       />
 
       <div
-        className="no-scrollbar list-fade min-h-0 flex-1 overflow-y-auto px-6 pt-2"
-        style={{ paddingBottom: 100 }}
+        className="no-scrollbar list-fade min-h-0 flex-1 overflow-y-auto px-5 sm:px-6 pt-2 scroll-touch"
+        style={{ paddingBottom: 110 }}
       >
+        {/* Featured Workout of the Day Hero Banner */}
+        {featuredExercise && (
+          <div className="mb-5 relative overflow-hidden rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-emerald-950/40 p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                    ⚡ Daily Featured Session
+                  </span>
+                  <span className="text-[11px] font-bold text-zinc-400">
+                    ~15 min burn
+                  </span>
+                </div>
+                <h3 className="mt-2 text-2xl font-black text-white tracking-tight">
+                  {featuredExercise.name}
+                </h3>
+                <p className="mt-1 text-xs text-zinc-400 leading-relaxed max-w-sm">
+                  Targeting {featuredExercise.targetMuscle} · No equipment needed · Complete technique coaching
+                </p>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                whileHover={{ scale: 1.04 }}
+                type="button"
+                onClick={() => onSelectExercise(filtered, filtered.indexOf(featuredExercise))}
+                className="shrink-0 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500 text-black shadow-lg shadow-emerald-500/30 transition font-black text-xl"
+                aria-label={`Start ${featuredExercise.name}`}
+              >
+                ▶
+              </motion.button>
+            </div>
+            <div className="mt-4 flex items-center justify-between border-t border-zinc-800/80 pt-3 text-[11px] font-bold text-zinc-400">
+              <span className="flex items-center gap-1.5">
+                <span>🎯 Focus:</span>
+                <span className="text-zinc-200">{featuredExercise.targetMuscle}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span>⚡ Gear:</span>
+                <span className="text-zinc-200">{featuredExercise.equipment.replace('_', ' ')}</span>
+              </span>
+            </div>
+          </div>
+        )}
+
         <ProgressOverview history={history} onClear={onClearHistory} />
+
         {grouped ? (
           grouped.map(([sub, items]) => (
-            <section key={sub} className="mb-4">
-              <h2 className="sticky top-0 z-10 -mx-6 mb-3 bg-stone-50/90 px-6 py-2 text-[11px] font-semibold uppercase tracking-widest text-stone-500 backdrop-blur dark:bg-stone-950/90 dark:text-stone-400">
+            <section key={sub} className="mb-5">
+              <h2 className="sticky top-0 z-10 -mx-5 sm:-mx-6 mb-3 bg-[#09090b]/90 px-5 sm:px-6 py-2.5 text-[11px] font-bold uppercase tracking-widest text-zinc-400 backdrop-blur border-b border-zinc-800/60">
                 {sub}
-                <span className="ml-2 text-stone-400 dark:text-stone-500">
+                <span className="ml-2 rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-emerald-400 font-extrabold">
                   {items.length}
                 </span>
               </h2>
@@ -1910,7 +1931,7 @@ function DashboardScreen({
           </div>
         )}
         {filtered.length === 0 && (
-          <p className="mt-8 text-center text-sm text-stone-400 dark:text-stone-500">
+          <p className="mt-8 text-center text-sm text-zinc-500">
             No exercises in this category yet.
           </p>
         )}
@@ -2797,9 +2818,9 @@ function WorkoutScreen({
   const estCalories = Math.round((index * 14) + (setNumber * 5));
 
   return (
-    <div className="absolute inset-0 flex flex-col md:flex-row bg-stone-50 dark:bg-stone-950 overflow-y-auto md:overflow-hidden no-scrollbar">
+    <div className="absolute inset-0 flex flex-col md:flex-row bg-[#09090b] text-white overflow-y-auto md:overflow-hidden scroll-touch pb-36 md:pb-0 no-scrollbar">
       {/* 1. Left / Main Studio Stage (Video Demonstration) */}
-      <div className="shrink-0 md:flex-1 md:h-full flex flex-col min-w-0 p-4 md:p-6 justify-between">
+      <div className="shrink-0 w-full md:flex-1 md:h-full flex flex-col min-w-0 p-4 md:p-6 justify-between md:overflow-y-auto">
         {/* Mobile Header (Back, Prev, Next, Cast, Mute) */}
         <div className="flex md:hidden items-center justify-between gap-2 pb-2">
           <div className="flex items-center gap-1.5">
@@ -2887,7 +2908,7 @@ function WorkoutScreen({
         </div>
 
         {/* Studio Video Player Container */}
-        <div className="relative shrink-0 h-[36vh] min-h-[220px] max-h-[380px] md:h-full md:max-h-none md:flex-1 w-full rounded-3xl overflow-hidden shadow-2xl">
+        <div className="relative w-full aspect-video max-h-[280px] sm:max-h-[360px] md:max-h-none md:flex-1 rounded-3xl overflow-hidden shadow-2xl border border-zinc-800/80 bg-zinc-950">
           <ExerciseLoop exercise={exercise} gender={gender} videoRef={videoRef} />
         </div>
 
@@ -2912,7 +2933,7 @@ function WorkoutScreen({
       </div>
 
       {/* 2. Right / Telemetry & Controls Panel */}
-      <div className="flex-1 md:w-[420px] lg:w-[460px] md:h-full p-4 md:p-6 flex flex-col justify-between md:border-l md:border-stone-200 dark:md:border-stone-800 md:bg-white/80 dark:md:bg-stone-900/80 md:backdrop-blur-xl md:shadow-2xl overflow-y-auto no-scrollbar space-y-4">
+      <div className="shrink-0 w-full md:flex-1 md:w-[420px] lg:w-[460px] md:h-full p-4 md:p-6 flex flex-col justify-between md:border-l border-zinc-800 bg-zinc-900/40 md:backdrop-blur-xl md:overflow-y-auto space-y-4">
         {/* Desktop Controls Header */}
         <div className="hidden md:flex items-center justify-between gap-2 pb-2 border-b border-stone-200/70 dark:border-stone-800">
           <div className="flex items-center gap-2">
@@ -3758,9 +3779,6 @@ function App() {
   const handleBackFromWorkout = () => {
     goScreen("dashboard", -1, "slide");
     cancelPendingUnmount();
-    // While casting, keep the workout layer (and therefore the
-    // video element) mounted so the cast session survives in-app
-    // navigation — the user can stop it via the dashboard pill.
     if (cast.state === "casting" || cast.state === "connecting") return;
     unmountTimeoutRef.current = window.setTimeout(() => {
       unmountTimeoutRef.current = null;
@@ -3771,8 +3789,6 @@ function App() {
 
   const handleStopCastFromDashboard = () => {
     cast.stop();
-    // Once cast is stopped, allow the workout layer to unmount
-    // shortly after if we're not on the workout screen.
     if (screen !== "workout") {
       cancelPendingUnmount();
       unmountTimeoutRef.current = window.setTimeout(() => {
@@ -3784,14 +3800,9 @@ function App() {
   };
 
   return (
-    <div className={`relative mx-auto h-dvh w-full overflow-hidden bg-stone-50 dark:bg-stone-950 transition-all duration-300 ${
+    <div className={`relative mx-auto h-dvh w-full overflow-hidden bg-[#09090b] text-white transition-all duration-300 ${
       screen === "workout" ? "max-w-7xl shadow-2xl" : "max-w-md md:max-w-5xl"
     }`}>
-      {/* Welcome and Dashboard slide in/out with a directional spring.
-          Workout is intentionally rendered OUTSIDE AnimatePresence so
-          its <video> element (and any active cast session) survives
-          navigation back to the dashboard — the original code held
-          this invariant via a permanently-mounted hidden div. */}
       <AnimatePresence initial={false} mode="sync" custom={navDirection}>
         {screen === "welcome" && (
           <ScreenSlide
@@ -3818,6 +3829,7 @@ function App() {
               onResetProfile={handleResetProfile}
               history={history}
               onClearHistory={clearHistory}
+              onOpenCastModal={() => setCastModalOpen(true)}
             />
           </ScreenSlide>
         )}
@@ -3860,14 +3872,12 @@ function App() {
         </motion.div>
       )}
 
-      {/* Casting pill — visible on dashboard while a cast session is
-          alive, so the user can always stop the cast even after
-          navigating away from the workout screen. */}
+      {/* Casting pill */}
       {screen === "dashboard" &&
         activeExercise &&
         (cast.state === "casting" || cast.state === "connecting") && (
           <div className="pointer-events-none absolute inset-x-0 bottom-24 z-40 flex justify-center px-4">
-            <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-stone-900 py-2 pl-4 pr-2 text-white shadow-lg dark:bg-stone-50 dark:text-stone-900">
+            <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-zinc-900 border border-zinc-700 py-2 pl-4 pr-2 text-white shadow-2xl">
               <CastingIcon />
               <span className="text-sm font-medium">
                 {cast.state === "connecting"
@@ -3877,7 +3887,7 @@ function App() {
               <button
                 type="button"
                 onClick={handleStopCastFromDashboard}
-                className="ml-1 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide active:scale-95 dark:bg-stone-900/15"
+                className="ml-1 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide active:scale-95 hover:bg-white/25"
               >
                 Stop
               </button>

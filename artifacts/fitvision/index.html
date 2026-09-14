@@ -7,7 +7,7 @@
     <meta name="description" content="Home workouts, recovery and breathing sessions — part of The Wise Cloud (fitness.thewise.cloud)." />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <link rel="manifest" href="./manifest.json" />
-    <meta name="theme-color" content="#1c1917" />
+    <meta name="theme-color" content="#09090b" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Wise Body" />
@@ -20,18 +20,15 @@
     <link rel="apple-touch-icon" href="./icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
       (function () {
         try {
-          var p = localStorage.getItem('fitvision.theme') || 'system';
-          var dark =
-            p === 'dark' ||
-            (p === 'system' &&
-              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var p = localStorage.getItem('fitvision.theme') || 'dark';
+          var dark = p !== 'light';
           if (dark) document.documentElement.classList.add('dark');
           var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute('content', dark ? '#0c0a09' : '#fafaf9');
+          if (meta) meta.setAttribute('content', dark ? '#09090b' : '#fafaf9');
         } catch (e) {}
       })();
     </script>
