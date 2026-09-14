@@ -337,6 +337,8 @@ function getCuesFor(ex: Exercise): ArabicCues {
 import { ExerciseVideoPlayer } from "./components/video/ExerciseVideoPlayer";
 import { getExerciseVideoUrl, EXERCISES } from "./data/exercises";
 import { playCountdownBeep, playHalfwayChime, playCompleteChime } from "./services/soundEffects";
+import { FormTipsDrawer } from "./components/workout/FormTipsDrawer";
+import { CastDialog } from "./components/cast/CastDialog";
 
 function ExerciseLoop({
   exercise,
@@ -1504,10 +1506,10 @@ function BottomNav({
   const reduced = useReducedMotion();
   return (
     <nav
-      className="pb-safe absolute bottom-0 left-0 right-0 w-full max-w-md border-t border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900"
+      className="pb-safe absolute bottom-0 left-0 right-0 w-full border-t border-stone-200 bg-white/90 backdrop-blur-md dark:border-stone-800 dark:bg-stone-900/90 z-20"
       aria-label="Primary"
     >
-      <div className="flex w-full items-stretch">
+      <div className="max-w-md md:max-w-3xl mx-auto flex w-full items-stretch">
         {tabs.map((tab) => {
           const isActive = tab.id === active;
           return (
@@ -1875,33 +1877,37 @@ function DashboardScreen({
         <ProgressOverview history={history} onClear={onClearHistory} />
         {grouped ? (
           grouped.map(([sub, items]) => (
-            <section key={sub} className="mb-2">
-              <h2 className="sticky top-0 z-10 -mx-6 mb-2 bg-stone-50/90 px-6 py-2 text-[11px] font-semibold uppercase tracking-widest text-stone-500 backdrop-blur dark:bg-stone-950/90 dark:text-stone-400">
+            <section key={sub} className="mb-4">
+              <h2 className="sticky top-0 z-10 -mx-6 mb-3 bg-stone-50/90 px-6 py-2 text-[11px] font-semibold uppercase tracking-widest text-stone-500 backdrop-blur dark:bg-stone-950/90 dark:text-stone-400">
                 {sub}
                 <span className="ml-2 text-stone-400 dark:text-stone-500">
                   {items.length}
                 </span>
               </h2>
-              {items.map((exercise) => {
-                const idxInFiltered = filtered.indexOf(exercise);
-                return (
-                  <ExerciseCard
-                    key={exercise.id}
-                    exercise={exercise}
-                    onClick={() => onSelectExercise(filtered, idxInFiltered)}
-                  />
-                );
-              })}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {items.map((exercise) => {
+                  const idxInFiltered = filtered.indexOf(exercise);
+                  return (
+                    <ExerciseCard
+                      key={exercise.id}
+                      exercise={exercise}
+                      onClick={() => onSelectExercise(filtered, idxInFiltered)}
+                    />
+                  );
+                })}
+              </div>
             </section>
           ))
         ) : (
-          filtered.map((exercise, idx) => (
-            <ExerciseCard
-              key={exercise.id}
-              exercise={exercise}
-              onClick={() => onSelectExercise(filtered, idx)}
-            />
-          ))
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filtered.map((exercise, idx) => (
+              <ExerciseCard
+                key={exercise.id}
+                exercise={exercise}
+                onClick={() => onSelectExercise(filtered, idx)}
+              />
+            ))}
+          </div>
         )}
         {filtered.length === 0 && (
           <p className="mt-8 text-center text-sm text-stone-400 dark:text-stone-500">
@@ -2786,144 +2792,205 @@ function WorkoutScreen({
   if (!exercise) return null;
 
   // Honest disclosure: surface the device limitation any time
-  // speech synthesis is supported but no Arabic voice is installed,
-  // regardless of mute state, so the user understands why turning
-  // voice on wouldn't speak Arabic.
   const showVoiceUnavailableHint = supported && !hasArabicVoice;
 
+  const estCalories = Math.round((index * 14) + (setNumber * 5));
+
   return (
-    <div className="absolute inset-0 flex flex-col bg-stone-50 dark:bg-stone-950 overflow-y-auto overflow-x-hidden no-scrollbar">
-      {/* Top bar with back + mute toggle */}
-      <div
-        className="pt-safe relative flex shrink-0 items-center justify-between gap-3 px-4"
-        style={{ paddingTop: "max(env(safe-area-inset-top, 0px), 16px)" }}
-      >
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              cancel();
-              onBack();
-            }}
-            aria-label="Back"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
-          >
-            <BackIcon />
-          </button>
-          <button
-            type="button"
-            onClick={goPrev}
-            disabled={!hasPrev}
-            aria-label="Previous exercise"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
-          >
-            <PrevIcon />
-          </button>
-          <motion.button
-            type="button"
-            onClick={goNext}
-            disabled={!hasNext}
-            aria-label="Next exercise"
-            whileTap={hasNext && !upNextReducedMotion ? { scale: 0.9 } : undefined}
-            whileHover={hasNext && !upNextReducedMotion ? { scale: 1.05 } : undefined}
-            transition={
-              upNextReducedMotion
-                ? { duration: 0 }
-                : { type: "spring", stiffness: 480, damping: 24 }
-            }
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
-          >
-            <NextIcon />
-          </motion.button>
-        </div>
-        <div className="flex items-center gap-2">
-          {(() => {
-            // Task #30: the workout demo is a live SVG, not a <video>,
-            // so there is no media element to hand to Chromecast/AirPlay.
-            // Render the cast button as a help-only affordance: tapping
-            // it opens the "how to mirror your screen" modal. This keeps
-            // the control discoverable without pretending it can do
-            // something it can't on this screen.
-            const label = "Cast help — mirror your screen to a TV";
-            const titleText = "How to cast this workout to a TV";
-            return (
-              <button
-                type="button"
-                onClick={() => onOpenCastModal()}
-                aria-label={label}
-                title={titleText}
-                className="flex h-11 items-center justify-center gap-1.5 rounded-full px-3 shadow-sm transition active:scale-95 bg-white/60 text-stone-500 active:bg-stone-100 dark:bg-stone-800/60 dark:text-stone-400 dark:active:bg-stone-700"
-              >
-                <CastIcon />
-              </button>
-            );
-          })()}
-          {supported && (
-            <motion.button
+    <div className="absolute inset-0 flex flex-col md:flex-row bg-stone-50 dark:bg-stone-950 overflow-y-auto md:overflow-hidden no-scrollbar">
+      {/* 1. Left / Main Studio Stage (Video Demonstration) */}
+      <div className="shrink-0 md:flex-1 md:h-full flex flex-col min-w-0 p-4 md:p-6 justify-between">
+        {/* Mobile Header (Back, Prev, Next, Cast, Mute) */}
+        <div className="flex md:hidden items-center justify-between gap-2 pb-2">
+          <div className="flex items-center gap-1.5">
+            <button
               type="button"
               onClick={() => {
-                const next = muted ? "0" : "1";
-                setMutedStr(next);
-                if (next === "1") cancel();
+                cancel();
+                onBack();
               }}
-              aria-pressed={!muted}
-              aria-label={
-                muted ? "Unmute Arabic coaching" : "Mute Arabic coaching"
-              }
-              title={muted ? "Voice off" : "Voice on"}
-              whileTap={upNextReducedMotion ? undefined : { scale: 0.9 }}
-              whileHover={upNextReducedMotion ? undefined : { scale: 1.05 }}
-              transition={
-                upNextReducedMotion
-                  ? { duration: 0 }
-                  : { type: "spring", stiffness: 480, damping: 24 }
-              }
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:active:bg-stone-700"
+              aria-label="Back"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 active:bg-stone-100 dark:bg-stone-800 dark:text-stone-50"
             >
-              {muted ? <SpeakerOffIcon /> : <SpeakerOnIcon />}
+              <BackIcon />
+            </button>
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={!hasPrev}
+              aria-label="Previous exercise"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50"
+            >
+              <PrevIcon />
+            </button>
+            <motion.button
+              type="button"
+              onClick={goNext}
+              disabled={!hasNext}
+              aria-label="Next exercise"
+              whileTap={hasNext && !upNextReducedMotion ? { scale: 0.9 } : undefined}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 disabled:opacity-30 dark:bg-stone-800 dark:text-stone-50"
+            >
+              <NextIcon />
             </motion.button>
-          )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <motion.button
+              type="button"
+              onClick={onOpenCastModal}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Cast to TV"
+              title="Cast workout to Smart TV / Big Screen"
+              className="flex h-10 items-center gap-1.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-3 shadow-sm transition active:scale-95"
+            >
+              <CastIcon />
+              <span className="text-[11px] font-bold uppercase tracking-wider">Cast</span>
+            </motion.button>
+
+            {supported && (
+              <button
+                type="button"
+                onClick={() => {
+                  const next = muted ? "0" : "1";
+                  setMutedStr(next);
+                  if (next === "1") cancel();
+                }}
+                aria-pressed={!muted}
+                aria-label={muted ? "Unmute coaching" : "Mute coaching"}
+                title={muted ? "Sound cues off" : "Sound cues on"}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-stone-900 shadow-sm transition active:scale-95 dark:bg-stone-800 dark:text-stone-50"
+              >
+                {muted ? <SpeakerOffIcon /> : <SpeakerOnIcon />}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop Header over Video Stage */}
+        <div className="hidden md:flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold uppercase tracking-widest text-stone-400">
+              Exercise {index + 1} of {playlist.length}
+            </span>
+            <span className="text-stone-300 dark:text-stone-700">·</span>
+            <span className="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+              {exercise.sub_category}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/20">
+              🎯 {exercise.targetMuscle}
+            </span>
+            <GearBadge equipment={exercise.equipment} />
+          </div>
+        </div>
+
+        {/* Studio Video Player Container */}
+        <div className="relative shrink-0 h-[36vh] min-h-[220px] max-h-[380px] md:h-full md:max-h-none md:flex-1 w-full rounded-3xl overflow-hidden shadow-2xl">
+          <ExerciseLoop exercise={exercise} gender={gender} videoRef={videoRef} />
+        </div>
+
+        {/* Mobile Exercise Title Under Video */}
+        <div className="md:hidden shrink-0 pt-3 text-center">
+          <h2 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+            {exercise.name}
+          </h2>
+          <div className="mt-1 flex items-center justify-center gap-2">
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              {exercise.targetMuscle}
+            </p>
+            <span aria-hidden="true" className="text-stone-300 dark:text-stone-600">·</span>
+            <GearBadge equipment={exercise.equipment} />
+          </div>
+        </div>
+
+        {/* Form Coaching Tips Drawer */}
+        <div className="shrink-0 pt-3">
+          <FormTipsDrawer exercise={exercise} />
         </div>
       </div>
 
-      {/* Top progress (exercise position in the playlist) */}
-      <div className="shrink-0 px-4 pt-2">
-        <ProgressBar value={(index + 1) / Math.max(1, playlist.length)} />
-        <div className="mt-1 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-400 dark:text-stone-500">
-          <span>Exercise {index + 1} / {playlist.length}</span>
-          <span>{exercise.sub_category}</span>
-        </div>
-      </div>
+      {/* 2. Right / Telemetry & Controls Panel */}
+      <div className="flex-1 md:w-[420px] lg:w-[460px] md:h-full p-4 md:p-6 flex flex-col justify-between md:border-l md:border-stone-200 dark:md:border-stone-800 md:bg-white/80 dark:md:bg-stone-900/80 md:backdrop-blur-xl md:shadow-2xl overflow-y-auto no-scrollbar space-y-4">
+        {/* Desktop Controls Header */}
+        <div className="hidden md:flex items-center justify-between gap-2 pb-2 border-b border-stone-200/70 dark:border-stone-800">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                cancel();
+                onBack();
+              }}
+              aria-label="Back to workouts"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-200 text-xs font-semibold transition"
+            >
+              <BackIcon />
+              <span>Exit</span>
+            </button>
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={!hasPrev}
+              aria-label="Previous"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-200 disabled:opacity-30 transition"
+            >
+              <PrevIcon />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={!hasNext}
+              aria-label="Next"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-200 disabled:opacity-30 transition"
+            >
+              <NextIcon />
+            </button>
+          </div>
 
-      {/* Looping animation */}
-      <div className="shrink-0 px-4 pt-2 h-[38vh] min-h-[220px] max-h-[380px]">
-        <ExerciseLoop exercise={exercise} gender={gender} videoRef={videoRef} />
-      </div>
-
-      {/* Honest UX fallback if no Arabic voice available */}
-      {showVoiceUnavailableHint && (
-        <div className="shrink-0 px-6 pt-2">
-          <p className="rounded-xl bg-amber-50 px-3 py-2 text-center text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-            Arabic voice unavailable on this device
-          </p>
+          <div className="flex items-center gap-2">
+            <motion.button
+              type="button"
+              onClick={onOpenCastModal}
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.03 }}
+              className="flex h-9 items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs px-3 shadow-md transition"
+            >
+              <CastIcon />
+              <span>Cast to TV</span>
+            </motion.button>
+            {supported && (
+              <button
+                type="button"
+                onClick={() => {
+                  const next = muted ? "0" : "1";
+                  setMutedStr(next);
+                  if (next === "1") cancel();
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-200 transition"
+                title={muted ? "Sound off" : "Sound on"}
+              >
+                {muted ? <SpeakerOffIcon /> : <SpeakerOnIcon />}
+              </button>
+            )}
+          </div>
         </div>
-      )}
 
-      {/* Exercise name + sets stepper */}
-      <div className="shrink-0 px-6 pt-3 pb-1 text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
-          {exercise.name}
-        </h2>
-        <div className="mt-1 flex items-center justify-center gap-2">
-          <p className="text-xs text-stone-500 dark:text-stone-400">
-            {exercise.targetMuscle}
-          </p>
-          <span aria-hidden="true" className="text-stone-300 dark:text-stone-600">·</span>
-          <GearBadge equipment={exercise.equipment} />
+        {/* Progress & Live Calorie Tracker */}
+        <div className="shrink-0">
+          <ProgressBar value={(index + 1) / Math.max(1, playlist.length)} />
+          <div className="mt-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-stone-400">
+            <span>Progress: {index + 1} / {playlist.length}</span>
+            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+              🔥 ~{estCalories} kcal
+            </span>
+          </div>
         </div>
-        <div className="mt-3 flex items-center justify-center gap-3">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
-            Sets
+
+        {/* Sets Stepper */}
+        <div className="shrink-0 flex items-center justify-between p-3 rounded-2xl bg-stone-100/70 dark:bg-stone-800/50 border border-stone-200/50 dark:border-stone-800">
+          <span className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-300">
+            Set {setNumber} of {totalSets}
           </span>
           <Stepper
             label="sets"
@@ -2940,75 +3007,77 @@ function WorkoutScreen({
             max={totalSets >= 10}
           />
         </div>
-      </div>
 
-      {/* Mode-conditional body */}
-      {exercise.mode === "timed" ? (
-        <TimedBody
-          key={`${exercise.id}-${setNumber}`}
-          exercise={exercise}
-          active={active && phase === "exercise"}
-          cues={cues}
-          speak={speak}
-          onSetComplete={handleSetComplete}
-          setNumber={setNumber}
-          totalSets={totalSets}
-        />
-      ) : (
-        <RepsBody
-          key={`${exercise.id}-${setNumber}`}
-          exercise={exercise}
-          onSetComplete={() => handleSetComplete()}
-          cues={cues}
-          speak={speak}
-          setNumber={setNumber}
-          totalSets={totalSets}
-        />
-      )}
-
-      {/* Up-next strip with a small family glyph for the next move */}
-      <div className="shrink-0 px-4 pb-safe" style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)" }}>
-        <div className="flex min-w-0 items-center gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm dark:bg-stone-800">
-          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-stone-400 dark:text-stone-500">
-            Up next
-          </span>
-          {nextExercise ? (
-            <>
-              <div
-                data-testid="up-next-illustration"
-                className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-stone-900 ring-1 ring-white/10"
-              >
-                <video
-                  src={getExerciseVideoUrl(nextExercise, gender)}
-                  data-anim-id={nextExercise.id}
-                  data-anim-sig={nextExercise.id}
-                  autoPlay
-                  muted
-                  playsInline
-                  loop
-                  preload="metadata"
-                  onLoadedMetadata={(e) => {
-                    const v = e.currentTarget;
-                    v.muted = true;
-                    v.play().catch(() => {});
-                  }}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-stone-900 dark:text-stone-50">
-                  {nextExercise.name}
-                </p>
-                <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
-                  {nextExercise.targetMuscle} · {nextExercise.mode === "timed" ? `${nextExercise.durationSeconds}s` : `${nextExercise.reps} reps`}
-                </p>
-              </div>
-            </>
+        {/* Timer / Reps Active Body */}
+        <div className="flex-1 flex flex-col justify-center min-h-[200px]">
+          {exercise.mode === "timed" ? (
+            <TimedBody
+              key={`${exercise.id}-${setNumber}`}
+              exercise={exercise}
+              active={active && phase === "exercise"}
+              cues={cues}
+              speak={speak}
+              onSetComplete={handleSetComplete}
+              setNumber={setNumber}
+              totalSets={totalSets}
+            />
           ) : (
-            <p className="min-w-0 flex-1 truncate text-sm font-medium text-stone-500 dark:text-stone-400">
-              Last one — finish strong
-            </p>
+            <RepsBody
+              key={`${exercise.id}-${setNumber}`}
+              exercise={exercise}
+              onSetComplete={() => handleSetComplete()}
+              cues={cues}
+              speak={speak}
+              setNumber={setNumber}
+              totalSets={totalSets}
+            />
           )}
+        </div>
+
+        {/* Up-Next Exercise Strip */}
+        <div className="shrink-0 pb-safe">
+          <div className="flex min-w-0 items-center gap-3 rounded-2xl bg-white dark:bg-stone-800/90 p-3 shadow-sm border border-stone-200/60 dark:border-stone-700/60">
+            <span className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-stone-400">
+              Up Next
+            </span>
+            {nextExercise ? (
+              <>
+                <div
+                  data-testid="up-next-illustration"
+                  className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-stone-900 ring-1 ring-white/10"
+                >
+                  <video
+                    src={getExerciseVideoUrl(nextExercise, gender)}
+                    data-anim-id={nextExercise.id}
+                    data-anim-sig={nextExercise.id}
+                    autoPlay
+                    muted
+                    playsInline
+                    loop
+                    preload="metadata"
+                    onLoadedMetadata={(e) => {
+                      const v = e.currentTarget;
+                      v.muted = true;
+                      v.play().catch(() => {});
+                    }}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-bold text-stone-900 dark:text-stone-50">
+                    {nextExercise.name}
+                  </p>
+                  <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
+                    {nextExercise.targetMuscle} · {nextExercise.mode === "timed" ? `${nextExercise.durationSeconds}s` : `${nextExercise.reps} reps`}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p className="min-w-0 flex-1 truncate text-xs font-semibold text-stone-500 dark:text-stone-400">
+                Final exercise — finish strong! 🏆
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -3715,7 +3784,9 @@ function App() {
   };
 
   return (
-    <div className="relative mx-auto h-dvh w-full max-w-md overflow-hidden bg-stone-50 dark:bg-stone-950">
+    <div className={`relative mx-auto h-dvh w-full overflow-hidden bg-stone-50 dark:bg-stone-950 transition-all duration-300 ${
+      screen === "workout" ? "max-w-7xl shadow-2xl" : "max-w-md md:max-w-5xl"
+    }`}>
       {/* Welcome and Dashboard slide in/out with a directional spring.
           Workout is intentionally rendered OUTSIDE AnimatePresence so
           its <video> element (and any active cast session) survives
@@ -3778,6 +3849,7 @@ function App() {
             index={playlistIndex}
             active={screen === "workout"}
             gender={gender}
+            videoRef={videoRef}
             onBack={handleBackFromWorkout}
             onChangeIndex={(next) =>
               setPlaylistIndex(Math.max(0, Math.min(playlist.length - 1, next)))
@@ -3813,9 +3885,11 @@ function App() {
           </div>
         )}
 
-      <CastInstructionsModal
+      <CastDialog
         open={castModalOpen}
         onClose={() => setCastModalOpen(false)}
+        videoRef={videoRef}
+        activeExerciseName={activeExercise?.name}
       />
 
       <InstallPrompt />
