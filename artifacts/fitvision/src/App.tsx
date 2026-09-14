@@ -2,6 +2,8 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { WiseBodyLogo } from "./components/brand/WiseBodyLogo";
+import { useLanguage, ROUTINE_TRANSLATIONS } from "./services/i18n";
+import { LanguageToggle } from "./components/brand/LanguageToggle";
 import { getUserProfile, calculateActiveCalories, calculateSessionCalories, getExerciseMET } from "./services/calorieService";
 import { audioFx } from "./services/audioFxService";
 import { CURATED_ROUTINES } from "./data/routines";
@@ -764,6 +766,7 @@ function WiseBodyMark({ size = 64, showText = false }: { size?: number; showText
 }
 
 function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
+  const { t, isRTL } = useLanguage();
   const reduced = useReducedMotion();
   const introSeen = useMemo(() => {
     try {
@@ -794,6 +797,9 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
 
   return (
     <div className="absolute inset-0 flex flex-col justify-between overflow-y-auto px-5 py-6 sm:px-8 bg-[#09090b] text-white no-scrollbar scroll-touch">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-8 z-30">
+        <LanguageToggle />
+      </div>
       {/* Ambient background glow */}
       <div
         className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-[340px] w-[340px] sm:w-[480px] rounded-full blur-[100px] opacity-25"
@@ -816,7 +822,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
         <motion.div {...fadeUp(0.12)} className="mt-4 flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-emerald-400">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            World-Class Athletic Training
+            {t("welcomeTitle")}
           </span>
         </motion.div>
 
@@ -831,7 +837,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
           {...fadeUp(0.24)}
           className="mt-2 max-w-sm text-sm sm:text-base font-normal leading-relaxed text-zinc-400"
         >
-          Studio-grade home workouts, real video coaching, and zero-login TV casting — right in your living room.
+          {t("welcomeSubtitle")}
         </motion.p>
 
         {/* Value Pills Grid */}
@@ -840,16 +846,16 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
           className="mt-4 flex flex-wrap items-center justify-center gap-2 max-w-md"
         >
           <span className="rounded-full bg-zinc-900/90 border border-zinc-800/80 px-3 py-1 text-[11px] font-semibold text-zinc-300">
-            ⚡ 82 HD Studio Video Loops
+            ⚡ {t("feature1")}
           </span>
           <span className="rounded-full bg-zinc-900/90 border border-zinc-800/80 px-3 py-1 text-[11px] font-semibold text-zinc-300">
-            📺 Wireless TV Screen Cast
+            📺 {t("feature2")}
           </span>
           <span className="rounded-full bg-zinc-900/90 border border-zinc-800/80 px-3 py-1 text-[11px] font-semibold text-zinc-300">
-            🎯 Technique Coaching Tips
+            🎯 {t("feature3")}
           </span>
           <span className="rounded-full bg-zinc-900/90 border border-zinc-800/80 px-3 py-1 text-[11px] font-semibold text-zinc-300">
-            🔊 Bilingual Audio Cues
+            🔊 {t("feature4")}
           </span>
         </motion.div>
       </div>
@@ -860,7 +866,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
           {...fadeUp(0.36)}
           className="text-center text-xs font-bold uppercase tracking-[0.2em] text-zinc-500"
         >
-          Select Your Training Track
+          {t("selectTrack")}
         </motion.p>
 
         {/* Card 1: Men's Strength & Conditioning */}
@@ -882,7 +888,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
                   Strength & Conditioning
                 </span>
                 <h2 className="text-xl font-black tracking-tight text-white group-hover:text-emerald-300 transition">
-                  Men's Athletic Track
+                  {t("mensTrackTitle")}
                 </h2>
               </div>
             </div>
@@ -927,7 +933,7 @@ function WelcomeScreen({ onSelect }: { onSelect: (gender: Gender) => void }) {
                   Sculpt, Pelvic & Wellness
                 </span>
                 <h2 className="text-xl font-black tracking-tight text-white group-hover:text-pink-300 transition">
-                  Women's Sculpt Track
+                  {t("womensTrackTitle")}
                 </h2>
               </div>
             </div>
@@ -1565,6 +1571,7 @@ function ProgressOverview({
   history: WorkoutSession[];
   onClear: () => void;
 }) {
+  const { t, isRTL } = useLanguage();
   const today = startOfDay(Date.now());
   const todays = history.filter((s) => startOfDay(s.endedAt) === today);
   const todaysSets = todays.reduce((acc, s) => acc + s.sets, 0);
@@ -1593,13 +1600,11 @@ function ProgressOverview({
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-emerald-400">
-              Today's Athletic Activity
+              {t("todayActivity")}
             </p>
           </div>
           <p className="mt-1 text-sm font-medium text-zinc-400">
-            {todays.length === 0
-              ? "Ready for action. Complete a session to log your metrics."
-              : `${todays.length} session${todays.length === 1 ? "" : "s"} logged today`}
+            {todays.length === 0 ? t("readyForAction") : t("loggedToday", { count: todays.length, plural: todays.length === 1 ? "" : "s" })}
           </p>
         </div>
         <div
@@ -1610,7 +1615,7 @@ function ProgressOverview({
             🔥 {streak}
           </span>
           <span className="mt-0.5 text-[8px] font-extrabold uppercase tracking-widest text-emerald-300">
-            Day Streak
+            {t("dayStreak")}
           </span>
         </div>
       </div>
@@ -1653,10 +1658,10 @@ function ProgressOverview({
       <div className="mt-5">
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-            Last 7 Days Matrix
+            {t("last7Days")}
           </p>
           <span className="text-[10px] font-semibold text-zinc-500">
-            Activity Volume
+            {t("activityVolume")}
           </span>
         </div>
         <div className="flex h-20 items-end justify-between gap-2 rounded-2xl bg-zinc-950/50 p-3 border border-zinc-800/50">
@@ -1782,6 +1787,7 @@ function DashboardScreen({
   const [activeChip, setActiveChip] = useState<string>(ALL_CHIP);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(() => getUserProfile());
+  const { t, lang, isRTL, translateSubCategory, translateEquipment, translateMuscle, translateCategory, translateCategoryHeading } = useLanguage();
 
   const visibleTabs = useMemo(() => {
     return ALL_TABS.filter(
@@ -1842,11 +1848,11 @@ function DashboardScreen({
                   Wise<span className="text-emerald-500">Body</span>
                 </h1>
                 <span className="rounded-full bg-zinc-800 border border-zinc-700/60 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-widest text-emerald-400">
-                  {gender === "man" ? "Men's Track" : "Women's Sculpt"}
+                  {gender === "man" ? t("mensTrackBadge") : t("womensTrackBadge")}
                 </span>
               </div>
               <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
-                {CATEGORY_HEADINGS[category]}
+                {translateCategoryHeading(category)}
               </p>
             </div>
           </div>
@@ -1878,6 +1884,7 @@ function DashboardScreen({
                 {profile.weightKg} {profile.unit}
               </span>
             </motion.button>
+            <LanguageToggle />
             <ThemeMenu pref={themePref} onSelect={onThemeChange} />
             <ProfileMenu gender={gender} onReset={onResetProfile} />
           </div>
@@ -1901,10 +1908,10 @@ function DashboardScreen({
               <div>
                 <div className="flex items-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-400">
-                    ⚡ Daily Featured Session
+                    ⚡ {t("dailyFeatured")}
                   </span>
                   <span className="text-[11px] font-bold text-zinc-400">
-                    ~15 min burn
+                    {t("minBurn")}
                   </span>
                 </div>
                 <h3 className="mt-2 text-2xl font-black text-white tracking-tight">
@@ -1927,11 +1934,11 @@ function DashboardScreen({
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-zinc-800/80 pt-3 text-[11px] font-bold text-zinc-400">
               <span className="flex items-center gap-1.5">
-                <span>🎯 Focus:</span>
+                <span>🎯 {t("focusOn")}:</span>
                 <span className="text-zinc-200">{featuredExercise.targetMuscle}</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <span>⚡ Gear:</span>
+                <span>⚡ {t("gear")}:</span>
                 <span className="text-zinc-200">{featuredExercise.equipment.replace('_', ' ')}</span>
               </span>
             </div>
@@ -1944,11 +1951,11 @@ function DashboardScreen({
             <div className="flex items-center gap-2">
               <span className="text-emerald-400 text-sm font-black">⚡</span>
               <h2 className="text-xs font-black uppercase tracking-wider text-white">
-                Curated Fast Routines
+                {t("curatedRoutines")}
               </h2>
             </div>
             <span className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400">
-              1-Tap Circuit
+              {t("oneTapCircuit")}
             </span>
           </div>
 
@@ -1965,10 +1972,10 @@ function DashboardScreen({
                     </span>
                     <div>
                       <h3 className="text-sm font-black text-white group-hover:text-emerald-400 transition">
-                        {routine.title}
+                        {lang === "ar" && ROUTINE_TRANSLATIONS[routine.id] ? ROUTINE_TRANSLATIONS[routine.id].arTitle : routine.title}
                       </h3>
                       <p className="text-[11px] font-semibold text-zinc-400">
-                        {routine.subtitle}
+                        {lang === "ar" && ROUTINE_TRANSLATIONS[routine.id] ? ROUTINE_TRANSLATIONS[routine.id].arSubtitle : routine.subtitle}
                       </p>
                     </div>
                   </div>
@@ -1978,7 +1985,7 @@ function DashboardScreen({
                 </div>
 
                 <p className="mt-2 text-xs text-zinc-400 line-clamp-2 leading-relaxed">
-                  {routine.description}
+                  {lang === "ar" && ROUTINE_TRANSLATIONS[routine.id] ? ROUTINE_TRANSLATIONS[routine.id].arDesc : routine.description}
                 </p>
 
                 <div className="mt-3 flex items-center justify-between border-t border-zinc-800/80 pt-2.5">
@@ -2002,7 +2009,7 @@ function DashboardScreen({
                     }}
                     className="flex items-center gap-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 px-3.5 py-1 text-xs font-black text-black transition active:scale-95 shadow-md shadow-emerald-500/20"
                   >
-                    <span>Start</span>
+                    <span>{t("start")}</span>
                     <span>▶</span>
                   </button>
                 </div>
@@ -2049,7 +2056,7 @@ function DashboardScreen({
         )}
         {filtered.length === 0 && (
           <p className="mt-8 text-center text-sm text-zinc-500">
-            No exercises in this category yet.
+            {t("noExercises")}
           </p>
         )}
       </div>
@@ -2232,6 +2239,7 @@ function CountdownIntro({
   onDone: () => void;
   onSkip: () => void;
 }) {
+  const { t } = useLanguage();
   const [n, setN] = useState(3);
   useEffect(() => {
     audioFx.playCountdownBeep(n);
@@ -2279,6 +2287,7 @@ function RestScreen({
   onSkip: () => void;
   onAdjustDefault?: (deltaSeconds: number) => void;
 }) {
+  const { t } = useLanguage();
   const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
   const totalRef = useRef(initialSeconds);
 
@@ -2438,6 +2447,7 @@ function TimedBody({
   setNumber: number;
   totalSets: number;
 }) {
+  const { t } = useLanguage();
   const [secondsLeft, setSecondsLeft] = useState(exercise.durationSeconds);
   const [running, setRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
@@ -2521,7 +2531,7 @@ function TimedBody({
       <div className="mt-2">
         <ProgressBar value={progress} />
         <div className="mt-1.5 flex items-center justify-between text-[11px] font-medium uppercase tracking-widest text-stone-400 dark:text-stone-500">
-          <span>Set {setNumber} of {totalSets}</span>
+          <span>{t("setCount", { current: setNumber, total: totalSets })}</span>
           <span>{formatTime(exercise.durationSeconds - secondsLeft)} / {formatTime(exercise.durationSeconds)}</span>
         </div>
       </div>
@@ -2598,6 +2608,7 @@ function RepsBody({
   totalSets: number;
   externalRepTrigger?: number;
 }) {
+  const { t } = useLanguage();
   const [reps, setReps] = useState(0);
   const reduced = useReducedMotion();
   useEffect(() => {
@@ -2616,13 +2627,13 @@ function RepsBody({
       <div className="mt-2">
         <ProgressBar value={Math.min(1, reps / Math.max(1, exercise.reps))} />
         <div className="mt-1.5 flex items-center justify-between text-[11px] font-medium uppercase tracking-widest text-stone-400 dark:text-stone-500">
-          <span>Set {setNumber} of {totalSets}</span>
-          <span>Target {exercise.reps} reps</span>
+          <span>{t("setCount", { current: setNumber, total: totalSets })}</span>
+          <span>{t("repsTarget", { count: exercise.reps })}</span>
         </div>
       </div>
       <div className="flex flex-1 flex-col items-center justify-center py-2">
         <p className="text-xs font-medium uppercase tracking-widest text-stone-400 dark:text-stone-500">
-          Reps
+          {t("reps")}
         </p>
         <div
           className="mt-1 text-center font-bold tabular-nums text-stone-900 dark:text-stone-50 text-6xl sm:text-7xl leading-none"
@@ -2656,7 +2667,7 @@ function RepsBody({
         className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 text-lg font-semibold text-white shadow-md transition active:scale-[0.98] active:bg-emerald-600 min-h-[52px]"
       >
         <CheckIcon />
-        Complete set
+        {t("completeSet")}
       </motion.button>
     </div>
   );
@@ -2750,6 +2761,7 @@ function WorkoutScreen({
   onOpenCastModal: () => void;
   onLogSession: (s: Omit<WorkoutSession, "id" | "endedAt">) => void;
 }) {
+  const { t, isRTL, translateMuscle, translateEquipment } = useLanguage();
   const exercise = playlist[index] ?? null;
   const nextExercise = playlist[index + 1] ?? null;
   const hasPrev = index > 0;
@@ -3020,6 +3032,7 @@ function WorkoutScreen({
           </div>
 
           <div className="flex items-center gap-1.5">
+            <LanguageToggle compact />
             <HeartRateWidget onHeartRateUpdate={setHeartRate} compact />
 
             <motion.button
@@ -3069,7 +3082,7 @@ function WorkoutScreen({
         <div className="hidden md:flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold uppercase tracking-widest text-stone-400">
-              Exercise {index + 1} of {playlist.length}
+              {t("exerciseCount", { current: index + 1, total: playlist.length })}
             </span>
             <span className="text-stone-300 dark:text-stone-700">·</span>
             <span className="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wider">
@@ -3124,7 +3137,7 @@ function WorkoutScreen({
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-200 text-xs font-semibold transition"
             >
               <BackIcon />
-              <span>Exit</span>
+              <span>{t("exit")}</span>
             </button>
             <button
               type="button"
@@ -3147,6 +3160,7 @@ function WorkoutScreen({
           </div>
 
           <div className="flex items-center gap-2">
+            <LanguageToggle compact />
             <HeartRateWidget onHeartRateUpdate={setHeartRate} />
 
             <motion.button
@@ -3158,7 +3172,7 @@ function WorkoutScreen({
               className="flex h-9 items-center gap-1.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-3 text-xs font-bold shadow-sm transition hover:bg-emerald-500/25"
             >
               <CameraIcon />
-              <span>AI Coach</span>
+              <span>{t("aiCoach")}</span>
             </motion.button>
 
             <motion.button
@@ -3169,7 +3183,7 @@ function WorkoutScreen({
               className="flex h-9 items-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs px-3 shadow-md transition"
             >
               <CastIcon />
-              <span>Cast to TV</span>
+              <span>{t("castToTV")}</span>
             </motion.button>
             {supported && (
               <button
@@ -3192,7 +3206,7 @@ function WorkoutScreen({
         <div className="shrink-0">
           <ProgressBar value={(index + 1) / Math.max(1, playlist.length)} />
           <div className="mt-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-stone-400">
-            <span>Progress: {index + 1} / {playlist.length}</span>
+            <span>{t("exerciseCount", { current: index + 1, total: playlist.length })}</span>
             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
               🔥 ~{estCalories} kcal
             </span>
@@ -3287,7 +3301,7 @@ function WorkoutScreen({
               </>
             ) : (
               <p className="min-w-0 flex-1 truncate text-xs font-semibold text-stone-500 dark:text-stone-400">
-                Final exercise — finish strong! 🏆
+                {t("finalExerciseMsg")}
               </p>
             )}
           </div>
@@ -3307,7 +3321,7 @@ function WorkoutScreen({
           nextLabel={
             setNumber < totalSets
               ? `${exercise.name} · Set ${setNumber + 1}`
-              : nextExercise?.name ?? "Workout complete"
+              : nextExercise?.name ?? t("workoutComplete")
           }
           onComplete={handleRestComplete}
           onSkip={handleRestComplete}
@@ -3559,6 +3573,7 @@ function WorkoutSummary({
   onDone: () => void;
   onShare?: () => void;
 }) {
+  const { t } = useLanguage();
   const doneRef = useRef<HTMLButtonElement | null>(null);
   const reduced = useReducedMotion();
   const dismissedRef = useRef(false);
@@ -3624,10 +3639,10 @@ function WorkoutSummary({
           id="workout-summary-title"
           className="mt-2 text-center text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50"
         >
-          Great work!
+          {t("greatWork")}
         </h2>
         <p className="mt-1 text-center text-sm text-stone-500 dark:text-stone-400">
-          Here's what you just did.
+          {t("summaryDesc")}
         </p>
 
         <dl className="mt-6 grid grid-cols-4 gap-2">
@@ -3695,7 +3710,7 @@ function WorkoutSummary({
               <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
-            Share Story Card (9:16)
+            {t("shareStoryCard")}
           </motion.button>
         )}
 

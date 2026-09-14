@@ -1,3 +1,4 @@
+import { useLanguage } from "../../services/i18n";
 import React, { useEffect, useRef, useState } from "react";
 
 interface CameraCoachModalProps {
@@ -20,7 +21,8 @@ export function CameraCoachModal({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [active, setActive] = useState(false);
-  const [statusMsg, setStatusMsg] = useState("Position yourself in frame…");
+  const { t, lang } = useLanguage();
+  const [statusMsg, setStatusMsg] = useState(lang === "ar" ? "ضع نفسك داخل إطار الكاميرا…" : "Position yourself in frame…");
   const prevFrameData = useRef<Uint8ClampedArray | null>(null);
   const motionPhase = useRef<"idle" | "down" | "up">("idle");
   const lastRepTime = useRef<number>(0);
@@ -136,7 +138,7 @@ export function CameraCoachModal({
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
           <div className="flex items-center gap-2">
             <span className="flex h-3 w-3 rounded-full bg-emerald-400 animate-ping" />
-            <h2 className="text-base font-black tracking-tight uppercase">AI Camera Rep Coach</h2>
+            <h2 className="text-base font-black tracking-tight uppercase">{lang === "ar" ? "مدرب التكرارات بالذكاء الاصطناعي" : "AI Camera Rep Coach"}</h2>
           </div>
           <button
             type="button"

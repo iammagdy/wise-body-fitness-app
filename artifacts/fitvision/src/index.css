@@ -224,3 +224,11 @@ button {
     transparent 100%
   );
 }
+
+
+/* Arabic RTL Typography */
+[dir="rtl"],
+[dir="rtl"] body {
+  font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+  letter-spacing: normal;
+}

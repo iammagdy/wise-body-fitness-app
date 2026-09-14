@@ -1,3 +1,4 @@
+import { useLanguage } from "../../services/i18n";
 import React, { useEffect, useRef, useState } from "react";
 
 interface WorkoutShareModalProps {
@@ -33,6 +34,7 @@ export function WorkoutShareModal({
   const sets = stats ? stats.sets : propSets;
   const streak = propStreak;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { t, lang } = useLanguage();
   const [dataUrl, setDataUrl] = useState<string | null>(null);
 
   useEffect(() => {

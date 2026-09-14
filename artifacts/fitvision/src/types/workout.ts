@@ -1,3 +1,5 @@
+export type Language = "en" | "ar";
+
 export type Category = "core" | "womens_health" | "recovery";
 
 export type Gender = "man" | "woman";

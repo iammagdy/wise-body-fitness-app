@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { Gender, UserProfile, WeightUnit } from "../../types/workout";
 import { getUserProfile, saveUserProfile, kgToLbs, lbsToKg } from "../../services/calorieService";
+import { useLanguage } from "../../services/i18n";
 
 interface AthleteProfileModalProps {
   open: boolean;
@@ -17,6 +18,7 @@ export function AthleteProfileModal({
   onProfileUpdated,
   onSave,
 }: AthleteProfileModalProps) {
+  const { t, lang, isRTL } = useLanguage();
   const initial = getUserProfile(gender);
   const [unit, setUnit] = useState<WeightUnit>(initial.unit);
   const [weightValue, setWeightValue] = useState<number>(
@@ -46,10 +48,10 @@ export function AthleteProfileModal({
     };
     saveUserProfile(profile);
     if (onProfileUpdated) onProfileUpdated(profile);
+    if (onSave) onSave(profile);
     onClose();
   };
 
-  // Rough Mifflin-St Jeor estimate for user education
   const estKg = unit === "lbs" ? lbsToKg(weightValue) : weightValue;
   const bmr = Math.round(10 * estKg + 6.25 * heightCm - 5 * 28 + (gender === "woman" ? -161 : 5));
 
@@ -61,7 +63,7 @@ export function AthleteProfileModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-3xl bg-zinc-900 border border-zinc-800 p-6 text-white shadow-2xl space-y-5"
+        className={`w-full max-w-md rounded-3xl bg-zinc-900 border border-zinc-800 p-6 text-white shadow-2xl space-y-5 ${isRTL ? "text-right" : "text-left"}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
@@ -70,8 +72,8 @@ export function AthleteProfileModal({
               ⚡
             </span>
             <div>
-              <h2 className="text-lg font-black tracking-tight uppercase">Athlete Body Profile</h2>
-              <p className="text-xs text-zinc-400">Scientific MET Calorie Calibration</p>
+              <h2 className="text-lg font-black tracking-tight uppercase">{t("calibrateTitle")}</h2>
+              <p className="text-xs text-zinc-400">{t("calibrateSubtitle")}</p>
             </div>
           </div>
           <button
@@ -95,7 +97,7 @@ export function AthleteProfileModal({
                 : "text-zinc-400 hover:text-white"
             }`}
           >
-            Kilograms (kg)
+            {lang === "ar" ? "كيلوجرام (كجم)" : "Kilograms (kg)"}
           </button>
           <button
             type="button"
@@ -106,7 +108,7 @@ export function AthleteProfileModal({
                 : "text-zinc-400 hover:text-white"
             }`}
           >
-            Pounds (lbs)
+            {lang === "ar" ? "باوند (رطل)" : "Pounds (lbs)"}
           </button>
         </div>
 
@@ -114,7 +116,7 @@ export function AthleteProfileModal({
         <div>
           <div className="flex justify-between items-center mb-1">
             <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-              Current Body Weight
+              {t("weightLabel")}
             </label>
             <span className="text-emerald-400 font-mono font-black text-xl">
               {weightValue} {unit}
@@ -135,7 +137,7 @@ export function AthleteProfileModal({
         <div>
           <div className="flex justify-between items-center mb-1">
             <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-              Height
+              {t("heightLabel")}
             </label>
             <span className="text-zinc-200 font-mono font-bold text-base">
               {heightCm} cm
@@ -155,11 +157,13 @@ export function AthleteProfileModal({
         {/* Clinical Info Badge */}
         <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 p-3.5 space-y-1.5 text-xs text-zinc-400 leading-relaxed">
           <div className="flex items-center justify-between text-zinc-300 font-bold">
-            <span>Estimated Basal Burn (BMR):</span>
-            <span className="text-emerald-400 font-mono">~{bmr} kcal/day</span>
+            <span>{lang === "ar" ? "معدل الحرق الأساسي (BMR):" : "Estimated Basal Burn (BMR):"}</span>
+            <span className="text-emerald-400 font-mono">~{bmr} {lang === "ar" ? "سعرة/يوم" : "kcal/day"}</span>
           </div>
           <p className="text-[11px] text-zinc-500">
-            Calorie expenditure is calculated using the Stanford Compendium of Physical Activities MET formula, adjusted for your exact mass.
+            {lang === "ar"
+              ? "يتم حساب معدل استهلاك الطاقة وفق دليل جامعة ستانفورد للنشاط البدني (معادلة MET) بناءً على كتلة جسمك الدقيقة."
+              : "Calorie expenditure is calculated using the Stanford Compendium of Physical Activities MET formula, adjusted for your exact mass."}
           </p>
         </div>
 
@@ -168,7 +172,7 @@ export function AthleteProfileModal({
           onClick={handleSave}
           className="w-full py-3.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold uppercase text-sm tracking-wider shadow-lg shadow-emerald-500/25 transition active:scale-[0.98]"
         >
-          Save & Recalibrate Metrics
+          {t("saveCalibration")}
         </button>
       </div>
     </div>
