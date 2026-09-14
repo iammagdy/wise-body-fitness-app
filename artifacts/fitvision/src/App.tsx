@@ -2367,11 +2367,11 @@ function TimedBody({
           <span>{formatTime(exercise.durationSeconds - secondsLeft)} / {formatTime(exercise.durationSeconds)}</span>
         </div>
       </div>
-      <div className="flex flex-1 flex-col items-center justify-center">
-        <div className="relative" style={{ width: 240, height: 240 }}>
+      <div className="flex flex-1 flex-col items-center justify-center py-2">
+        <div className="relative h-44 w-44 sm:h-52 sm:w-52 max-w-[210px] max-h-[210px]">
           <svg
             viewBox="0 0 120 120"
-            className="absolute inset-0 -rotate-90"
+            className="absolute inset-0 h-full w-full -rotate-90"
             aria-hidden="true"
           >
             <circle
@@ -2396,8 +2396,8 @@ function TimedBody({
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
             <div
-              className="text-center font-mono font-bold tabular-nums text-stone-900 dark:text-stone-50"
-              style={{ fontSize: 64, lineHeight: 1 }}
+              className="text-center font-mono font-bold tabular-nums text-stone-900 dark:text-stone-50 text-5xl sm:text-6xl"
+              style={{ lineHeight: 1 }}
             >
               {formatTime(secondsLeft)}
             </div>
@@ -2414,8 +2414,7 @@ function TimedBody({
               ? { duration: 0 }
               : { type: "spring", stiffness: 420, damping: 22 }
           }
-          className={`mt-8 flex items-center justify-center rounded-full bg-emerald-500 text-white shadow-xl transition active:scale-95 active:bg-emerald-600 dark:bg-emerald-500 dark:text-white ${running ? "cta-pulse" : ""}`}
-          style={{ width: 92, height: 92 }}
+          className={`mt-4 sm:mt-6 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-emerald-500 text-white shadow-xl transition active:scale-95 active:bg-emerald-600 dark:bg-emerald-500 dark:text-white ${running ? "cta-pulse" : ""}`}
         >
           {running ? <PauseIcon /> : <PlayIcon />}
         </motion.button>
@@ -2454,17 +2453,16 @@ function RepsBody({
           <span>Target {exercise.reps} reps</span>
         </div>
       </div>
-      <div className="flex flex-1 flex-col items-center justify-center">
+      <div className="flex flex-1 flex-col items-center justify-center py-2">
         <p className="text-xs font-medium uppercase tracking-widest text-stone-400 dark:text-stone-500">
           Reps
         </p>
         <div
-          className="mt-1 text-center font-bold tabular-nums text-stone-900 dark:text-stone-50"
-          style={{ fontSize: 112, lineHeight: 1 }}
+          className="mt-1 text-center font-bold tabular-nums text-stone-900 dark:text-stone-50 text-6xl sm:text-7xl leading-none"
         >
           {reps}
         </div>
-        <div className="mt-4">
+        <div className="mt-3">
           <Stepper
             label="reps"
             value={reps}
@@ -2488,8 +2486,7 @@ function RepsBody({
             ? { duration: 0 }
             : { type: "spring", stiffness: 420, damping: 24 }
         }
-        className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 text-lg font-semibold text-white shadow-md transition active:scale-[0.98] active:bg-emerald-600"
-        style={{ minHeight: 64 }}
+        className="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 text-lg font-semibold text-white shadow-md transition active:scale-[0.98] active:bg-emerald-600 min-h-[52px]"
       >
         <CheckIcon />
         Complete set
@@ -2795,7 +2792,7 @@ function WorkoutScreen({
   const showVoiceUnavailableHint = supported && !hasArabicVoice;
 
   return (
-    <div className="absolute inset-0 flex flex-col bg-stone-50 dark:bg-stone-950">
+    <div className="absolute inset-0 flex flex-col bg-stone-50 dark:bg-stone-950 overflow-y-auto overflow-x-hidden no-scrollbar">
       {/* Top bar with back + mute toggle */}
       <div
         className="pt-safe relative flex shrink-0 items-center justify-between gap-3 px-4"
@@ -2899,7 +2896,7 @@ function WorkoutScreen({
       </div>
 
       {/* Looping animation */}
-      <div className="shrink-0 px-4 pt-2" style={{ height: "34%" }}>
+      <div className="shrink-0 px-4 pt-2 h-[38vh] min-h-[220px] max-h-[380px]">
         <ExerciseLoop exercise={exercise} gender={gender} videoRef={videoRef} />
       </div>
 
@@ -2983,9 +2980,18 @@ function WorkoutScreen({
               >
                 <video
                   src={getExerciseVideoUrl(nextExercise, gender)}
+                  data-anim-id={nextExercise.id}
+                  data-anim-sig={nextExercise.id}
+                  autoPlay
                   muted
                   playsInline
+                  loop
                   preload="metadata"
+                  onLoadedMetadata={(e) => {
+                    const v = e.currentTarget;
+                    v.muted = true;
+                    v.play().catch(() => {});
+                  }}
                   className="h-full w-full object-cover"
                 />
               </div>
