@@ -2,6 +2,23 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { WiseBodyLogo } from "./components/brand/WiseBodyLogo";
+import { getUserProfile, calculateActiveCalories, calculateSessionCalories, getExerciseMET } from "./services/calorieService";
+import { audioFx } from "./services/audioFxService";
+import { CURATED_ROUTINES } from "./data/routines";
+import { AthleteProfileModal } from "./components/profile/AthleteProfileModal";
+import { HeartRateWidget } from "./components/bluetooth/HeartRateWidget";
+import { WorkoutShareModal } from "./components/workout/WorkoutShareModal";
+import { CameraCoachModal } from "./components/workout/CameraCoachModal";
+import type { UserProfile, HeartRateData, CuratedRoutine } from "./types/workout";
+
+function CameraIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </svg>
+  );
+}
 
 
 type ThemePref = "system" | "light" | "dark";
@@ -136,6 +153,7 @@ type WorkoutSession = {
   sets: number;
   category: "core" | "womens_health" | "recovery";
   firstExerciseName: string;
+  caloriesBurned?: number;
 };
 
 function isWorkoutSession(v: unknown): v is WorkoutSession {
@@ -148,7 +166,8 @@ function isWorkoutSession(v: unknown): v is WorkoutSession {
     typeof s.exercises === "number" &&
     typeof s.sets === "number" &&
     (s.category === "core" || s.category === "womens_health" || s.category === "recovery") &&
-    typeof s.firstExerciseName === "string"
+    typeof s.firstExerciseName === "string" &&
+    (s.caloriesBurned === undefined || typeof s.caloriesBurned === "number")
   );
 }
 
@@ -202,6 +221,7 @@ function useWorkoutHistory() {
         sets: Math.max(0, Math.round(s.sets)),
         category: s.category,
         firstExerciseName: s.firstExerciseName,
+        caloriesBurned: s.caloriesBurned !== undefined ? Math.max(0, Math.round(s.caloriesBurned)) : undefined,
       };
       const next = [...loadHistory(), session].slice(-HISTORY_MAX);
       persistHistory(next);
@@ -1564,6 +1584,7 @@ function ProgressOverview({
   const [confirmingClear, setConfirmingClear] = useState(false);
 
   const minutesLabel = Math.round(todaysSeconds / 60);
+  const todaysCalories = todays.reduce((acc, s) => acc + (s.caloriesBurned ?? Math.round((s.durationSeconds / 60) * 7.5)), 0);
 
   return (
     <section className="mb-5 rounded-3xl bg-zinc-900/90 border border-zinc-800/80 p-5 shadow-xl text-white">
@@ -1594,29 +1615,37 @@ function ProgressOverview({
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-3 gap-2.5">
-        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 px-2 py-3 text-center">
-          <dt className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+      <dl className="mt-4 grid grid-cols-4 gap-2">
+        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 px-1.5 sm:px-2 py-3 text-center">
+          <dt className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-zinc-400">
             Sessions
           </dt>
-          <dd className="mt-1 text-2xl font-black tabular-nums text-white">
+          <dd className="mt-1 text-xl sm:text-2xl font-black tabular-nums text-white">
             {todays.length}
           </dd>
         </div>
-        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 px-2 py-3 text-center">
-          <dt className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 px-1.5 sm:px-2 py-3 text-center">
+          <dt className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-zinc-400">
             Sets
           </dt>
-          <dd className="mt-1 text-2xl font-black tabular-nums text-white">
+          <dd className="mt-1 text-xl sm:text-2xl font-black tabular-nums text-white">
             {todaysSets}
           </dd>
         </div>
-        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 px-2 py-3 text-center">
-          <dt className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 px-1.5 sm:px-2 py-3 text-center">
+          <dt className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-zinc-400">
             Minutes
           </dt>
-          <dd className="mt-1 text-2xl font-black tabular-nums text-emerald-400">
+          <dd className="mt-1 text-xl sm:text-2xl font-black tabular-nums text-emerald-400">
             {minutesLabel}
+          </dd>
+        </div>
+        <div className="rounded-2xl bg-zinc-950/70 border border-zinc-800/80 px-1.5 sm:px-2 py-3 text-center">
+          <dt className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+            Calories
+          </dt>
+          <dd className="mt-1 text-xl sm:text-2xl font-black tabular-nums text-amber-400">
+            {todaysCalories}
           </dd>
         </div>
       </dl>
@@ -1751,6 +1780,8 @@ function DashboardScreen({
   );
   const chips = SUB_CATEGORIES[category];
   const [activeChip, setActiveChip] = useState<string>(ALL_CHIP);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profile, setProfile] = useState<UserProfile>(() => getUserProfile());
 
   const visibleTabs = useMemo(() => {
     return ALL_TABS.filter(
@@ -1834,6 +1865,19 @@ function DashboardScreen({
                 <span className="text-[11px] font-bold uppercase tracking-wider hidden sm:inline">Cast TV</span>
               </motion.button>
             )}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              type="button"
+              onClick={() => setProfileModalOpen(true)}
+              aria-label="Athlete Profile & Calorie Calibration"
+              title="Calibrate athlete weight and view MET calorie burn metrics"
+              className="flex h-9 items-center gap-1.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 sm:px-3 shadow-sm transition active:scale-95 hover:bg-emerald-500/25"
+            >
+              <span className="text-xs">🔥</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider hidden sm:inline">
+                {profile.weightKg} {profile.unit}
+              </span>
+            </motion.button>
             <ThemeMenu pref={themePref} onSelect={onThemeChange} />
             <ProfileMenu gender={gender} onReset={onResetProfile} />
           </div>
@@ -1894,6 +1938,79 @@ function DashboardScreen({
           </div>
         )}
 
+        {/* Curated Fast Routines Section */}
+        <section className="mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-emerald-400 text-sm font-black">⚡</span>
+              <h2 className="text-xs font-black uppercase tracking-wider text-white">
+                Curated Fast Routines
+              </h2>
+            </div>
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-zinc-400">
+              1-Tap Circuit
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {CURATED_ROUTINES.map((routine) => (
+              <div
+                key={routine.id}
+                className="group relative overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/80 p-4 transition hover:border-emerald-500/50 hover:bg-zinc-900 shadow-lg"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl" role="img" aria-label={routine.title}>
+                      {routine.icon}
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-black text-white group-hover:text-emerald-400 transition">
+                        {routine.title}
+                      </h3>
+                      <p className="text-[11px] font-semibold text-zinc-400">
+                        {routine.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-emerald-400">
+                    {routine.estimatedMinutes}m · {routine.level}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                  {routine.description}
+                </p>
+
+                <div className="mt-3 flex items-center justify-between border-t border-zinc-800/80 pt-2.5">
+                  <span className="text-[11px] font-bold text-amber-400 flex items-center gap-1">
+                    <span>🔥</span>
+                    <span>~{routine.estimatedCalories} kcal</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const focus = gender === "man" ? "men" : "women";
+                      const routineExercises: Exercise[] = [];
+                      for (const id of routine.exerciseIds) {
+                        const match = EXERCISES.find((e) => e.id === id && (e.genderFocus === focus || e.genderFocus === "both"))
+                          || EXERCISES.find((e) => e.id === id);
+                        if (match) routineExercises.push(match);
+                      }
+                      if (routineExercises.length > 0) {
+                        onSelectExercise(routineExercises, 0);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 px-3.5 py-1 text-xs font-black text-black transition active:scale-95 shadow-md shadow-emerald-500/20"
+                  >
+                    <span>Start</span>
+                    <span>▶</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <ProgressOverview history={history} onClear={onClearHistory} />
 
         {grouped ? (
@@ -1941,6 +2058,13 @@ function DashboardScreen({
         tabs={visibleTabs}
         active={category}
         onChange={handleCategoryChange}
+      />
+
+      <AthleteProfileModal
+        open={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        gender={gender}
+        onSave={(updated: UserProfile) => setProfile(updated)}
       />
     </div>
   );
@@ -2110,6 +2234,7 @@ function CountdownIntro({
 }) {
   const [n, setN] = useState(3);
   useEffect(() => {
+    audioFx.playCountdownBeep(n);
     if (n <= 0) {
       const t = window.setTimeout(onDone, 350);
       return () => window.clearTimeout(t);
@@ -2163,7 +2288,13 @@ function RestScreen({
       return () => window.clearTimeout(t);
     }
     const t = window.setInterval(() => {
-      setSecondsLeft((v) => Math.max(0, v - 1));
+      setSecondsLeft((v) => {
+        const next = Math.max(0, v - 1);
+        if (next <= 3 && next > 0) {
+          audioFx.playCountdownBeep(next);
+        }
+        return next;
+      });
     }, 1000);
     return () => window.clearInterval(t);
   }, [secondsLeft, onComplete]);
@@ -2457,19 +2588,28 @@ function RepsBody({
   speak,
   setNumber,
   totalSets,
+  externalRepTrigger,
 }: {
   exercise: Exercise;
-  onSetComplete: () => void;
+  onSetComplete: (repsCompleted?: number) => void;
   cues: ArabicCues;
   speak: (text: string) => void;
   setNumber: number;
   totalSets: number;
+  externalRepTrigger?: number;
 }) {
   const [reps, setReps] = useState(0);
   const reduced = useReducedMotion();
   useEffect(() => {
     setReps(0);
   }, [exercise.id, exercise.reps, setNumber]);
+
+  useEffect(() => {
+    if (externalRepTrigger && externalRepTrigger > 0) {
+      setReps((r) => r + 1);
+      audioFx.playCountdownBeep(1);
+    }
+  }, [externalRepTrigger]);
 
   return (
     <div className="flex flex-1 flex-col px-6">
@@ -2503,7 +2643,7 @@ function RepsBody({
         type="button"
         onClick={() => {
           speak(cues.end);
-          window.setTimeout(() => onSetComplete(), 500);
+          window.setTimeout(() => onSetComplete(reps || exercise.reps), 500);
         }}
         aria-label="Complete set"
         whileTap={reduced ? undefined : { scale: 0.97 }}
@@ -2661,6 +2801,14 @@ function WorkoutScreen({
   const [setNumber, setSetNumber] = useState(1);
   const [phase, setPhase] = useState<"intro" | "exercise" | "rest">("intro");
 
+  // ===== Athlete Profile & Calorie Science =====
+  const [profile] = useState<UserProfile>(() => getUserProfile());
+  const [activeKcal, setActiveKcal] = useState(0);
+  const [heartRate, setHeartRate] = useState<HeartRateData | null>(null);
+  const [cameraCoachOpen, setCameraCoachOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [cameraRepTrigger, setCameraRepTrigger] = useState(0);
+
   // ===== Workout session totals (for end-of-workout summary) =====
   const [completedSets, setCompletedSets] = useState(0);
   const [completedExercises, setCompletedExercises] = useState(0);
@@ -2669,6 +2817,7 @@ function WorkoutScreen({
         totalExercises: number;
         completedSets: number;
         elapsedSeconds: number;
+        caloriesBurned: number;
       }
     | null
   >(null);
@@ -2685,6 +2834,7 @@ function WorkoutScreen({
     sessionStartRef.current = Date.now();
     setCompletedSets(0);
     setCompletedExercises(0);
+    setActiveKcal(0);
     setSummary(null);
   }, [active, playlist[0]?.id]);
 
@@ -2703,18 +2853,21 @@ function WorkoutScreen({
   }, [active, cancel]);
 
   const finishWorkout = useCallback(
-    (finalSetCount: number, finalExerciseCount: number) => {
+    (finalSetCount: number, finalExerciseCount: number, finalKcal: number = activeKcal) => {
       const start = sessionStartRef.current ?? Date.now();
       const elapsedSeconds = Math.max(
         0,
         Math.round((Date.now() - start) / 1000),
       );
       cancel();
+      audioFx.playVictoryFanfare();
       setPhase("exercise");
+      const burned = Math.max(1, Math.round(finalKcal));
       setSummary({
         totalExercises: finalExerciseCount,
         completedSets: finalSetCount,
         elapsedSeconds,
+        caloriesBurned: burned,
       });
       const first = playlist[0];
       if (first && finalSetCount > 0) {
@@ -2724,13 +2877,20 @@ function WorkoutScreen({
           sets: finalSetCount,
           category: first.category,
           firstExerciseName: first.name,
+          caloriesBurned: burned,
         });
       }
     },
     [cancel, playlist, onLogSession],
   );
 
-  const handleSetComplete = useCallback(() => {
+  const handleSetComplete = useCallback((repsDone?: number) => {
+    audioFx.playSetComplete();
+    const duration = exercise.mode === "timed" ? exercise.durationSeconds : ((repsDone ?? exercise.reps) * 3.5);
+    const addedKcal = calculateActiveCalories(exercise, duration, profile.weightKg);
+    const updatedKcal = activeKcal + addedKcal;
+    setActiveKcal(updatedKcal);
+
     const nextCompletedSets = completedSets + 1;
     setCompletedSets(nextCompletedSets);
     if (setNumber < totalSets) {
@@ -2743,9 +2903,12 @@ function WorkoutScreen({
     if (hasNext) {
       setPhase("rest");
     } else {
-      finishWorkout(nextCompletedSets, nextCompletedExercises);
+      finishWorkout(nextCompletedSets, nextCompletedExercises, updatedKcal);
     }
   }, [
+    exercise,
+    profile.weightKg,
+    activeKcal,
     setNumber,
     totalSets,
     hasNext,
@@ -2815,7 +2978,7 @@ function WorkoutScreen({
   // Honest disclosure: surface the device limitation any time
   const showVoiceUnavailableHint = supported && !hasArabicVoice;
 
-  const estCalories = Math.round((index * 14) + (setNumber * 5));
+  const estCalories = Math.round(activeKcal);
 
   return (
     <div className="absolute inset-0 flex flex-col md:flex-row bg-[#09090b] text-white overflow-y-auto md:overflow-hidden scroll-touch pb-36 md:pb-0 no-scrollbar">
@@ -2856,17 +3019,31 @@ function WorkoutScreen({
             </motion.button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <HeartRateWidget onHeartRateUpdate={setHeartRate} compact />
+
+            <motion.button
+              type="button"
+              onClick={() => setCameraCoachOpen(true)}
+              whileTap={{ scale: 0.95 }}
+              aria-label="AI Camera Rep Coach"
+              title="Hands-free AI Camera Rep Tracker"
+              className="flex h-10 items-center gap-1.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 shadow-sm transition active:scale-95 hover:bg-emerald-500/25"
+            >
+              <CameraIcon />
+              <span className="text-[10px] font-bold uppercase tracking-wider hidden xs:inline">AI</span>
+            </motion.button>
+
             <motion.button
               type="button"
               onClick={onOpenCastModal}
               whileTap={{ scale: 0.95 }}
               aria-label="Cast to TV"
               title="Cast workout to Smart TV / Big Screen"
-              className="flex h-10 items-center gap-1.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-3 shadow-sm transition active:scale-95"
+              className="flex h-10 items-center gap-1.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-2.5 shadow-sm transition active:scale-95"
             >
               <CastIcon />
-              <span className="text-[11px] font-bold uppercase tracking-wider">Cast</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">Cast</span>
             </motion.button>
 
             {supported && (
@@ -2970,6 +3147,20 @@ function WorkoutScreen({
           </div>
 
           <div className="flex items-center gap-2">
+            <HeartRateWidget onHeartRateUpdate={setHeartRate} />
+
+            <motion.button
+              type="button"
+              onClick={() => setCameraCoachOpen(true)}
+              whileTap={{ scale: 0.95 }}
+              aria-label="AI Camera Rep Coach"
+              title="Hands-free AI Camera Rep Tracker"
+              className="flex h-9 items-center gap-1.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-3 text-xs font-bold shadow-sm transition hover:bg-emerald-500/25"
+            >
+              <CameraIcon />
+              <span>AI Coach</span>
+            </motion.button>
+
             <motion.button
               type="button"
               onClick={onOpenCastModal}
@@ -3046,11 +3237,12 @@ function WorkoutScreen({
             <RepsBody
               key={`${exercise.id}-${setNumber}`}
               exercise={exercise}
-              onSetComplete={() => handleSetComplete()}
+              onSetComplete={(repsDone) => handleSetComplete(repsDone)}
               cues={cues}
               speak={speak}
               setNumber={setNumber}
               totalSets={totalSets}
+              externalRepTrigger={cameraRepTrigger}
             />
           )}
         </div>
@@ -3127,12 +3319,38 @@ function WorkoutScreen({
           totalExercises={summary.totalExercises}
           completedSets={summary.completedSets}
           elapsedSeconds={summary.elapsedSeconds}
+          caloriesBurned={summary.caloriesBurned}
           onDone={() => {
             setSummary(null);
             onBack();
           }}
+          onShare={() => setShareModalOpen(true)}
         />
       )}
+
+      {summary && (
+        <WorkoutShareModal
+          open={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          stats={{
+            exercises: summary.totalExercises,
+            sets: summary.completedSets,
+            durationSeconds: summary.elapsedSeconds,
+            caloriesBurned: summary.caloriesBurned,
+            firstExerciseName: playlist[0]?.name ?? "WiseBody Workout",
+          }}
+        />
+      )}
+
+      <CameraCoachModal
+        open={cameraCoachOpen}
+        onClose={() => setCameraCoachOpen(false)}
+        exerciseName={exercise.name}
+        targetReps={exercise.reps}
+        onRepDetected={() => {
+          setCameraRepTrigger((v) => v + 1);
+        }}
+      />
     </div>
   );
 }
@@ -3330,17 +3548,19 @@ function WorkoutSummary({
   totalExercises,
   completedSets,
   elapsedSeconds,
+  caloriesBurned,
   onDone,
+  onShare,
 }: {
   totalExercises: number;
   completedSets: number;
   elapsedSeconds: number;
+  caloriesBurned: number;
   onDone: () => void;
+  onShare?: () => void;
 }) {
   const doneRef = useRef<HTMLButtonElement | null>(null);
   const reduced = useReducedMotion();
-  // One-shot guard: backdrop click, Done click, and the auto-dismiss
-  // timer can race with each other; we only want onDone to fire once.
   const dismissedRef = useRef(false);
   const dismiss = useCallback(() => {
     if (dismissedRef.current) return;
@@ -3349,17 +3569,8 @@ function WorkoutSummary({
   }, [onDone]);
   useEffect(() => {
     doneRef.current?.focus();
+    audioFx.playVictoryFanfare();
   }, []);
-  // Celebration is meant to be a quick high-five, not a screen the
-  // user has to tap through. Auto-dismiss after ~2.5s, but also
-  // accept a tap on the backdrop or the Done button so eager users
-  // can move on instantly.
-  useEffect(() => {
-    const t = window.setTimeout(() => {
-      dismiss();
-    }, 2500);
-    return () => window.clearTimeout(t);
-  }, [dismiss]);
   const stat = (delay: number) => ({
     initial: reduced ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 12, scale: 0.92 },
     animate: { opacity: 1, y: 0, scale: 1 },
@@ -3419,41 +3630,74 @@ function WorkoutSummary({
           Here's what you just did.
         </p>
 
-        <dl className="mt-6 grid grid-cols-3 gap-3">
+        <dl className="mt-6 grid grid-cols-4 gap-2">
           <motion.div
             {...stat(0.22)}
-            className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800"
+            className="rounded-2xl bg-stone-100 px-2 py-3 text-center dark:bg-stone-800"
           >
-            <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+            <dt className="text-[9px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
               Exercises
             </dt>
-            <dd className="mt-1 text-2xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
+            <dd className="mt-1 text-xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
               {totalExercises}
             </dd>
           </motion.div>
           <motion.div
-            {...stat(0.3)}
-            className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800"
+            {...stat(0.28)}
+            className="rounded-2xl bg-stone-100 px-2 py-3 text-center dark:bg-stone-800"
           >
-            <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+            <dt className="text-[9px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
               Sets
             </dt>
-            <dd className="mt-1 text-2xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
+            <dd className="mt-1 text-xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
               {completedSets}
             </dd>
           </motion.div>
           <motion.div
-            {...stat(0.38)}
-            className="rounded-2xl bg-stone-100 px-3 py-4 text-center dark:bg-stone-800"
+            {...stat(0.34)}
+            className="rounded-2xl bg-stone-100 px-2 py-3 text-center dark:bg-stone-800"
           >
-            <dt className="text-[10px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
+            <dt className="text-[9px] font-semibold uppercase tracking-widest text-stone-500 dark:text-stone-400">
               Time
             </dt>
-            <dd className="mt-1 text-2xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
+            <dd className="mt-1 text-xl font-bold text-stone-900 tabular-nums dark:text-stone-50">
               {formatElapsed(elapsedSeconds)}
             </dd>
           </motion.div>
+          <motion.div
+            {...stat(0.40)}
+            className="rounded-2xl bg-amber-500/15 border border-amber-500/30 px-2 py-3 text-center"
+          >
+            <dt className="text-[9px] font-bold uppercase tracking-widest text-amber-500 dark:text-amber-400">
+              Burned
+            </dt>
+            <dd className="mt-1 text-xl font-black text-amber-500 tabular-nums dark:text-amber-400">
+              {caloriesBurned} <span className="text-[9px]">kcal</span>
+            </dd>
+          </motion.div>
         </dl>
+
+        {onShare && (
+          <motion.button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onShare();
+            }}
+            whileTap={reduced ? undefined : { scale: 0.96 }}
+            whileHover={reduced ? undefined : { scale: 1.015 }}
+            className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-emerald-500 text-sm font-black uppercase tracking-wider text-white shadow-lg transition active:scale-[0.98]"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+            Share Story Card (9:16)
+          </motion.button>
+        )}
 
         <motion.button
           ref={doneRef}
@@ -3464,7 +3708,7 @@ function WorkoutSummary({
           }}
           whileTap={reduced ? undefined : { scale: 0.96 }}
           whileHover={reduced ? undefined : { scale: 1.015 }}
-          className="mt-6 flex h-12 w-full items-center justify-center rounded-full bg-stone-900 text-base font-semibold text-white shadow-sm transition active:scale-[0.98] dark:bg-stone-50 dark:text-stone-900"
+          className="mt-3 flex h-12 w-full items-center justify-center rounded-2xl bg-stone-900 text-base font-semibold text-white shadow-sm transition active:scale-[0.98] dark:bg-stone-50 dark:text-stone-900"
         >
           Done
         </motion.button>

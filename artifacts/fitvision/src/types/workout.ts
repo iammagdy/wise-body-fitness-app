@@ -29,6 +29,7 @@ export type Exercise = {
   genderFocus: "men" | "women" | "both";
   equipment: Equipment;
   tips?: string[];
+  met?: number;
 };
 
 export type WorkoutSession = {
@@ -39,6 +40,7 @@ export type WorkoutSession = {
   sets: number;
   category: Category;
   firstExerciseName: string;
+  caloriesBurned?: number;
 };
 
 export type ArabicCues = {
@@ -50,3 +52,34 @@ export type ArabicCues = {
 export type ThemePref = "system" | "light" | "dark";
 
 export type Screen = "welcome" | "dashboard" | "workout";
+
+export type WeightUnit = "kg" | "lbs";
+
+export interface UserProfile {
+  weightKg: number;
+  heightCm?: number;
+  unit: WeightUnit;
+}
+
+export type HeartRateZone = "warmup" | "fat_burn" | "cardio" | "peak";
+
+export interface HeartRateData {
+  bpm: number;
+  connected: boolean;
+  deviceName?: string;
+  zone: HeartRateZone;
+}
+
+export interface CuratedRoutine {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  durationSeconds: number;
+  estimatedMinutes: number;
+  estimatedCalories: number;
+  icon: string;
+  category: Category;
+  level: string;
+  exerciseIds: string[];
+}
